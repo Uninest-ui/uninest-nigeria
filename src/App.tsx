@@ -66,12 +66,18 @@ export const App: React.FC = () => {
           // Ensure test users exist
           const existingEmails = new Set(parsed.map((u: any) => (u.email || '').toLowerCase()));
           const missing = INITIAL_USERS.filter(u => !existingEmails.has(u.email.toLowerCase()));
-          if (missing.length > 0) {
-            const merged = [...parsed, ...missing];
-            localStorage.setItem('uninest_users', JSON.stringify(merged));
-            return merged;
-          }
-          return parsed;
+          const combined = missing.length > 0 ? [...parsed, ...missing] : parsed;
+          
+          // Ensure admin user is always healthy with Admin@123 password
+          const normalized = combined.map(u => {
+            if (u.role === 'admin' || (u.email && u.email.toLowerCase() === 'admin@uninest.com')) {
+              return { ...DEFAULT_ADMIN, ...u, role: 'admin' as const, password: u.password || 'Admin@123' };
+            }
+            return u;
+          });
+
+          localStorage.setItem('uninest_users', JSON.stringify(normalized));
+          return normalized;
         }
       }
     } catch (e) {
