@@ -1604,8 +1604,8 @@ export const App: React.FC = () => {
 
   return (
     <div className="w-full max-w-full min-h-screen overflow-x-hidden bg-white">
-      {/* 1. AUTH SCREEN (Default) */}
-      {currentView === 'auth' && (
+      {/* 1. AUTH SCREEN (Default or fallback if session is not active) */}
+      {(currentView === 'auth' || (!currentUser && currentView !== 'guest')) && (
         <AuthCard
           onLoginSuccess={handleLoginSuccess}
           onContinueAsGuest={() => setCurrentView('guest')}
