@@ -1,0 +1,198 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --color-navy: #0A1931;
+  --color-orange: #FF6A00;
+  --color-white: #FFFFFF;
+}
+
+html {
+  background-color: #FFFFFF;
+  color: #0A1931;
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+html.dark {
+  color-scheme: dark;
+  background-color: #0A1931;
+  color: #FFFFFF;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background-color: #FFFFFF;
+  color: #0A1931;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+#root {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+html.dark body {
+  background-color: #0A1931;
+  color: #FFFFFF;
+}
+
+/* Strict 3-Color Design Utilities */
+.bg-navy { background-color: #0A1931 !important; }
+.text-navy { color: #0A1931 !important; }
+.border-navy { border-color: #0A1931 !important; }
+
+.bg-orange { background-color: #FF6A00 !important; }
+.text-orange { color: #FF6A00 !important; }
+.border-orange { border-color: #FF6A00 !important; }
+
+.bg-white-pure { background-color: #FFFFFF !important; }
+.text-white-pure { color: #FFFFFF !important; }
+.border-white-pure { border-color: #FFFFFF !important; }
+
+/* Neutralize extraneous multi-color clutter to maintain strict Navy / Orange / White elegance */
+.btn-primary,
+button.bg-emerald-600,
+button.bg-emerald-500,
+button.bg-green-600,
+button.bg-blue-600,
+button.bg-indigo-600 {
+  background-color: #FF6A00 !important;
+  color: #FFFFFF !important;
+}
+
+button.bg-emerald-600:hover,
+button.bg-emerald-500:hover,
+button.bg-green-600:hover,
+button.bg-blue-600:hover,
+button.bg-indigo-600:hover {
+  background-color: #E55E00 !important;
+}
+
+/* Dark mode enhancements keeping strictly to Navy #0A1931, Orange #FF6A00, and White #FFFFFF */
+.dark,
+html.dark {
+  color-scheme: dark;
+}
+
+.dark .bg-white,
+.dark .bg-\[\#FFFFFF\],
+.dark .bg-white\/90,
+.dark .bg-white\/80 {
+  background-color: #0d1e38 !important;
+  color: #FFFFFF !important;
+}
+
+.dark .bg-slate-50,
+.dark .bg-slate-100,
+.dark .bg-slate-200,
+.dark .bg-\[\#0A1931\]\/5,
+.dark .bg-\[\#0A1931\]\/10 {
+  background-color: #061426 !important;
+}
+
+.dark .border-slate-100,
+.dark .border-slate-200,
+.dark .border-slate-300,
+.dark .border-slate-700,
+.dark .border-slate-800,
+.dark .border-\[\#0A1931\]\/10,
+.dark .border-\[\#0A1931\]\/15,
+.dark .border-\[\#0A1931\]\/20,
+.dark .border-\[\#0A1931\] {
+  border-color: rgba(255, 255, 255, 0.18) !important;
+}
+
+/* All dark text forced to crisp visible pure white in dark mode */
+.dark .text-\[\#0A1931\],
+.dark .text-\[\#0a1931\],
+.dark .text-\[\#0f172a\],
+.dark .text-\[\#061730\],
+.dark .text-navy,
+.dark .text-slate-950,
+.dark .text-slate-900,
+.dark .text-slate-800,
+.dark .text-gray-950,
+.dark .text-gray-900,
+.dark .text-gray-800,
+.dark .text-black,
+.dark h1,
+.dark h2,
+.dark h3,
+.dark h4,
+.dark h5,
+.dark h6 {
+  color: #FFFFFF !important;
+}
+
+/* Semi-transparent navy text becomes high-contrast light text */
+.dark .text-\[\#0A1931\]\/90,
+.dark .text-\[\#0A1931\]\/85,
+.dark .text-\[\#0A1931\]\/80,
+.dark .text-\[\#0A1931\]\/75,
+.dark .text-\[\#0A1931\]\/70,
+.dark .text-slate-700,
+.dark .text-slate-600,
+.dark .text-gray-700,
+.dark .text-gray-600 {
+  color: rgba(255, 255, 255, 0.88) !important;
+}
+
+.dark .text-\[\#0A1931\]\/60,
+.dark .text-\[\#0A1931\]\/50,
+.dark .text-\[\#0A1931\]\/40,
+.dark .text-slate-500,
+.dark .text-gray-500,
+.dark .text-gray-400 {
+  color: rgba(255, 255, 255, 0.72) !important;
+}
+
+.dark input:not([type="checkbox"]):not([type="radio"]),
+.dark select,
+.dark textarea {
+  background-color: #071325 !important;
+  color: #FFFFFF !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: rgba(255, 255, 255, 0.45) !important;
+}
+
+@keyframes marqueeLeft {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
+}
+
+@keyframes marqueeRight {
+  0% { transform: translateX(-50%); }
+  100% { transform: translateX(0%); }
+}
+
+.animate-marquee-left {
+  display: flex;
+  width: max-content;
+  animation: marqueeLeft 35s linear infinite;
+}
+
+.animate-marquee-right {
+  display: flex;
+  width: max-content;
+  animation: marqueeRight 40s linear infinite;
+}
+
+@keyframes kenBurnsSlow {
+  0% { transform: scale(1.0); }
+  100% { transform: scale(1.08); }
+}
+
+.animate-ken-burns {
+  animation: kenBurnsSlow 6s ease-out forwards;
+}

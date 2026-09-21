@@ -1,0 +1,6 @@
+{
+  "name": "UniNest",
+  "description": "UniNest - making Nigerian students comfortable. STS Save Till Sign-Out available to Bayelsa State universities and Abia State University (ABSU) students, student gifting accounts, campus marketplace with escrow protection and WhatsApp order confirmation, verified vendor dashboard, and digital student wallet.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
