@@ -323,7 +323,7 @@ export const AdminLiveSupportModule: React.FC<AdminLiveSupportModuleProps> = ({
                     }`}
                   >
                     <img
-                      src={conv.avatarUrl}
+                      src={conv.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'}
                       alt={conv.studentName}
                       className="w-10 h-10 rounded-xl object-cover shrink-0 border border-slate-700"
                     />
@@ -373,7 +373,7 @@ export const AdminLiveSupportModule: React.FC<AdminLiveSupportModuleProps> = ({
               <div className="p-4 border-b border-slate-800 bg-slate-950/60 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <img
-                    src={selectedConv.avatarUrl}
+                    src={selectedConv.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'}
                     alt={selectedConv.studentName}
                     className="w-11 h-11 rounded-2xl object-cover border border-amber-500/40"
                   />

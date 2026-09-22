@@ -1,7 +1,7 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import * as React from 'react';
 
 interface Props {
-  children: ReactNode;
+  children: React.ReactNode;
 }
 
 interface State {
@@ -9,17 +9,20 @@ interface State {
   error: Error | null;
 }
 
-export class ErrorBoundary extends Component<Props, State> {
-  public state: State = {
-    hasError: false,
-    error: null,
-  };
+export class ErrorBoundary extends React.Component<Props, State> {
+  constructor(props: Props) {
+    super(props);
+    (this as any).state = {
+      hasError: false,
+      error: null,
+    };
+  }
 
   public static getDerivedStateFromError(error: Error): State {
     return { hasError: true, error };
   }
 
-  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  public componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error('UniNest ErrorBoundary caught an error:', error, errorInfo);
   }
 
@@ -29,12 +32,13 @@ export class ErrorBoundary extends Component<Props, State> {
     } catch {
       // ignore
     }
-    this.setState({ hasError: false, error: null });
+    (this as any).setState({ hasError: false, error: null });
     window.location.reload();
   };
 
   public render() {
-    if (this.state.hasError) {
+    const st = (this as any).state as State;
+    if (st.hasError) {
       return (
         <div className="min-h-screen w-full bg-[#0A1931] flex items-center justify-center p-4">
           <div className="max-w-md w-full bg-white rounded-3xl p-6 text-center space-y-4 shadow-2xl border border-slate-100">
@@ -45,9 +49,9 @@ export class ErrorBoundary extends Component<Props, State> {
             <p className="text-xs text-slate-600 leading-relaxed">
               We encountered an issue loading this section. Click below to safely reload the UniNest app and return to the main portal.
             </p>
-            {this.state.error && (
+            {st.error && (
               <pre className="p-3 bg-slate-50 rounded-xl text-[10px] text-left text-slate-700 font-mono overflow-x-auto max-h-24">
-                {this.state.error.message || String(this.state.error)}
+                {st.error.message || String(st.error)}
               </pre>
             )}
             <button
@@ -62,6 +66,6 @@ export class ErrorBoundary extends Component<Props, State> {
       );
     }
 
-    return this.props.children;
+    return (this as any).props.children;
   }
 }

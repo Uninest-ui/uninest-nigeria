@@ -842,7 +842,7 @@ export const BayelsaHousingTab: React.FC<BayelsaHousingTabProps> = ({
                         <div className="flex items-center gap-3.5">
                           <div className="relative shrink-0">
                             <img 
-                              src={p.facePhotoUrl || p.avatarUrl} 
+                              src={p.facePhotoUrl || p.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80'} 
                               alt={p.name} 
                               className="w-14 h-14 rounded-2xl object-cover border-2 border-orange-400 bg-slate-100 shadow-sm"
                             />
@@ -1057,8 +1057,8 @@ export const BayelsaHousingTab: React.FC<BayelsaHousingTabProps> = ({
                     >
                       <div>
                         {/* Image & Header Tags */}
-                      <div className={`relative ${acc.images && acc.images[0] ? 'h-48 bg-slate-200' : 'h-24 bg-gradient-to-r from-slate-900 to-slate-800'}`}>
-                        {acc.images && acc.images[0] ? (
+                      <div className={`relative ${acc.images && acc.images[0] && acc.images[0].trim() !== '' ? 'h-48 bg-slate-200' : 'h-24 bg-gradient-to-r from-slate-900 to-slate-800'}`}>
+                        {acc.images && acc.images[0] && acc.images[0].trim() !== '' ? (
                           <img 
                             src={acc.images[0]} 
                             alt={acc.title} 
@@ -1466,7 +1466,7 @@ export const BayelsaHousingTab: React.FC<BayelsaHousingTabProps> = ({
                     </p>
                   </div>
                   <img 
-                    src={reqFacePhoto} 
+                    src={reqFacePhoto || user.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80'} 
                     alt="Face preview" 
                     className="w-14 h-14 rounded-2xl object-cover border-2 border-orange-500 bg-white shadow-xs shrink-0"
                   />
@@ -1830,7 +1830,7 @@ export const BayelsaHousingTab: React.FC<BayelsaHousingTabProps> = ({
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-3">
                         <img 
-                          src={notif.avatarUrl} 
+                          src={notif.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80'} 
                           alt={notif.candidateName} 
                           className="w-12 h-12 rounded-2xl object-cover border border-orange-300 shrink-0" 
                         />

@@ -534,7 +534,7 @@ export const GuestDashboard: React.FC<GuestDashboardProps> = ({
                       {/* Item Image */}
                       <div className="relative h-48 bg-slate-100 overflow-hidden">
                         <img
-                          src={item.imageUrl}
+                          src={(item as any).imageUrl || item.image || 'https://images.unsplash.com/photo-1526738549149-8e07eca6c147?w=500&auto=format&fit=crop&q=80'}
                           alt={item.title}
                           referrerPolicy="no-referrer"
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
@@ -702,7 +702,7 @@ export const GuestDashboard: React.FC<GuestDashboardProps> = ({
                       {m.text && <p className="leading-relaxed whitespace-pre-wrap">{m.text}</p>}
 
                       {/* Attached File/Image */}
-                      {m.attachmentUrl && (
+                      {m.attachmentUrl && m.attachmentUrl.trim() !== '' && (
                         <div className="pt-2 border-t border-black/10 dark:border-white/10">
                           {isImage ? (
                             <div className="space-y-1">
@@ -828,7 +828,7 @@ export const GuestDashboard: React.FC<GuestDashboardProps> = ({
       </main>
 
       {/* Full-Size Image Lightbox Modal */}
-      {activeImageModal && (
+      {activeImageModal && activeImageModal.trim() !== '' && (
         <div 
           onClick={() => setActiveImageModal(null)}
           className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn"
@@ -962,7 +962,7 @@ export const GuestDashboard: React.FC<GuestDashboardProps> = ({
                 {/* Product Summary Card */}
                 <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex gap-3 items-center">
                   <img
-                    src={selectedItemForGuestBuy.imageUrl}
+                    src={(selectedItemForGuestBuy as any).imageUrl || selectedItemForGuestBuy.image || 'https://images.unsplash.com/photo-1526738549149-8e07eca6c147?w=500&auto=format&fit=crop&q=80'}
                     alt={selectedItemForGuestBuy.title}
                     referrerPolicy="no-referrer"
                     className="w-16 h-16 rounded-xl object-cover border border-slate-200"

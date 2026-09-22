@@ -642,10 +642,10 @@ export const VerifiedBusinessesTab: React.FC<VerifiedBusinessesTabProps> = ({
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {selectedGallery.images.map((img, idx) => (
+              {selectedGallery.images.filter(Boolean).map((img, idx) => (
                 <img
                   key={idx}
-                  src={img}
+                  src={img || 'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=600&auto=format&fit=crop&q=80'}
                   alt="Gallery item"
                   className="w-full h-44 rounded-2xl object-cover border border-slate-200 shadow-xs"
                 />

@@ -194,7 +194,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
     try {
       const saved = localStorage.getItem('uninest_remembered');
       if (saved) {
-        if (saved.toLowerCase() === 'admin@uninest.com' || saved.toLowerCase() === 'admin') {
+        if (saved.toLowerCase() === 'admin@uninest.com' || saved.toLowerCase() === 'amaechihellis@gmail.com' || saved.toLowerCase() === 'admin') {
           localStorage.removeItem('uninest_remembered');
         } else {
           setIdentifier(saved);
@@ -236,7 +236,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
     localStorage.setItem('uninest_current_user', JSON.stringify({ email: user.email, phone: user.phone }));
 
     // Admin goes directly to admin dashboard
-    if (user.email === 'admin@uninest.com' || user.role === 'admin') {
+    if (user.email === 'admin@uninest.com' || user.email === 'amaechihellis@gmail.com' || user.role === 'admin') {
       onLoginSuccess(user);
       return;
     }
@@ -286,6 +286,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
       inputVal === 'admin' ||
       inputVal === (activeAdmin.email || '').toLowerCase() ||
       inputVal === 'admin@uninest.com' ||
+      inputVal === 'amaechihellis@gmail.com' ||
       inputVal === adminCleanPhone ||
       inputVal === '08000000000';
 
@@ -304,7 +305,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
           ...DEFAULT_ADMIN,
           ...activeAdmin,
           role: 'admin',
-          email: activeAdmin.email || 'admin@uninest.com',
+          email: activeAdmin.email || 'amaechihellis@gmail.com',
           password: 'Admin@123'
         };
 
@@ -314,7 +315,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
           if (stored) {
             const parsed: UniNestUser[] = JSON.parse(stored);
             const updated = parsed.map(u => 
-              u.role === 'admin' || (u.email && u.email.toLowerCase() === 'admin@uninest.com')
+              u.role === 'admin' || (u.email && (u.email.toLowerCase() === 'admin@uninest.com' || u.email.toLowerCase() === 'amaechihellis@gmail.com'))
                 ? { ...u, password: 'Admin@123', role: 'admin' as const }
                 : u
             );
@@ -605,12 +606,12 @@ export const AuthCard: React.FC<AuthCardProps> = ({
     }
 
     // Check user exists (support email, phone, or 'admin')
-    const activeAdmin = users.find(u => u.role === 'admin') || DEFAULT_ADMIN;
+    const activeAdmin = users.find(u => u.role === 'admin' || u.email.toLowerCase() === 'admin@uninest.com' || u.email.toLowerCase() === 'amaechihellis@gmail.com') || DEFAULT_ADMIN;
     let user = users.find(u => 
       u.email.toLowerCase() === val || 
       u.phone.replace(/[^0-9]/g, '') === val.replace(/[^0-9]/g, '') ||
-      (val === 'admin' && u.role === 'admin')
-    ) || (val === 'admin' ? activeAdmin : null);
+      ((val === 'admin' || val === 'admin@uninest.com' || val === 'amaechihellis@gmail.com') && (u.role === 'admin' || u.email.toLowerCase() === 'admin@uninest.com' || u.email.toLowerCase() === 'amaechihellis@gmail.com'))
+    ) || ((val === 'admin' || val === 'admin@uninest.com' || val === 'amaechihellis@gmail.com') ? activeAdmin : null);
 
     if (!user && val.includes('@')) {
       try {
@@ -835,10 +836,18 @@ export const AuthCard: React.FC<AuthCardProps> = ({
       {/* ================= NIGERIAN UNIVERSITIES VIDEO BACKGROUND (STRICTLY NIGERIAN CAMPUSES) ================= */}
       <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
         {(() => {
-          const currentVideo = NIGERIAN_CAMPUS_VIDEOS[currentVideoIndex] || NIGERIAN_CAMPUS_VIDEOS[0];
+          const defaultPoster = 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=1600&auto=format&fit=crop&q=80';
+          const currentVideo = NIGERIAN_CAMPUS_VIDEOS[currentVideoIndex] || NIGERIAN_CAMPUS_VIDEOS[0] || {
+            id: 'default-campus',
+            university: 'Niger Delta University',
+            videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-aerial-view-of-a-large-university-campus-with-lush-greenery-42878-large.mp4',
+            posterUrl: defaultPoster
+          };
+          const videoPoster = currentVideo.posterUrl || defaultPoster;
+          const photoUrl = NIGERIAN_CAMPUS_PHOTOS[currentPhotoIndex]?.imageUrl || videoPoster;
           return (
             <div className="absolute inset-0 w-full h-full">
-              {isVideoMode ? (
+              {isVideoMode && currentVideo.videoUrl ? (
                 <video
                   ref={videoRef}
                   key={currentVideo.id}
@@ -846,20 +855,20 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                   loop
                   muted={isVideoMuted}
                   playsInline
-                  poster={currentVideo.posterUrl}
+                  poster={videoPoster}
                   className="w-full h-full object-cover transform duration-1000 scale-105 filter brightness-95"
                 >
                   <source src={currentVideo.videoUrl} type="video/mp4" />
                   {/* Fallback image if video cannot be played */}
                   <img
-                    src={currentVideo.posterUrl}
-                    alt={`${currentVideo.university} Campus`}
+                    src={videoPoster}
+                    alt={`${currentVideo.university || 'Campus'} Campus`}
                     className="w-full h-full object-cover"
                   />
                 </video>
               ) : (
                 <img
-                  src={NIGERIAN_CAMPUS_PHOTOS[currentPhotoIndex]?.imageUrl || currentVideo.posterUrl}
+                  src={photoUrl}
                   alt="Nigerian Campus"
                   className="w-full h-full object-cover"
                 />
@@ -1053,22 +1062,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                 </span>
               </button>
 
-              {/* Admin Quick Fill Helper */}
-              <div className="flex items-center justify-between px-1 text-xs">
-                <span className="text-slate-500 text-[11px]">UniNest Admin?</span>
-                <button
-                  type="button"
-                  id="btn-admin-quick-fill"
-                  onClick={() => {
-                    setIdentifier('admin@uninest.com');
-                    setPassword('Admin@123');
-                    if (loginError) setLoginError(null);
-                  }}
-                  className="text-[11px] font-bold text-[#0A1931] hover:text-[#FF6A00] flex items-center gap-1 transition cursor-pointer underline decoration-dotted"
-                >
-                  <span>Quick-fill Admin Credentials</span>
-                </button>
-              </div>
+
 
               {/* OR DIVIDER */}
               <div className="relative my-2.5">
@@ -2088,10 +2082,10 @@ export const AuthCard: React.FC<AuthCardProps> = ({
               />
             </div>
 
-            {selectedImages.length > 0 && (
+            {selectedImages.filter(Boolean).length > 0 && (
               <div className="flex gap-2 overflow-x-auto py-2">
-                {selectedImages.map((src, idx) => (
-                  <img key={idx} src={src} alt="Uploaded" className="w-16 h-16 rounded-xl object-cover border" />
+                {selectedImages.filter(Boolean).map((src, idx) => (
+                  <img key={idx} src={src || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'} alt="Uploaded" className="w-16 h-16 rounded-xl object-cover border" />
                 ))}
               </div>
             )}

@@ -599,7 +599,7 @@ export const OfficialBankPaymentCard: React.FC<OfficialBankPaymentCardProps> = (
                 id="uninest-proof-file-input"
               />
 
-              {proofPreview ? (
+              {proofPreview && proofPreview.trim() !== '' ? (
                 <div className="p-3 rounded-2xl bg-slate-50 border-2 border-emerald-300 flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3 overflow-hidden">
                     <img

@@ -57,7 +57,7 @@ export const StudentWalletTab: React.FC<StudentWalletTabProps> = ({
     email: 'student@campus.ng',
     university: 'Nigerian University',
     department: 'General Studies',
-    avatarUrl: ''
+    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
   };
 
   // Filter States

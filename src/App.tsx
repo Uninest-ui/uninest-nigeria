@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Login from './pages/Login';
+import AdminLogin from './pages/AdminLogin';
 import { 
   UniNestUser, 
   STSAccount, 
@@ -70,7 +73,7 @@ export const App: React.FC = () => {
           
           // Ensure admin user is always healthy with Admin@123 password
           const normalized = combined.map(u => {
-            if (u.role === 'admin' || (u.email && u.email.toLowerCase() === 'admin@uninest.com')) {
+            if (u.role === 'admin' || (u.email && (u.email.toLowerCase() === 'admin@uninest.com' || u.email.toLowerCase() === 'amaechihellis@gmail.com'))) {
               return { ...DEFAULT_ADMIN, ...u, role: 'admin' as const, password: u.password || 'Admin@123' };
             }
             return u;
@@ -117,7 +120,9 @@ export const App: React.FC = () => {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed)) {
-          return parsed.filter((r: any) => !r.id?.startsWith('bm-') && !r.id?.startsWith('demo-'));
+          const filtered = parsed.filter((r: any) => !r.id?.startsWith('bm-') && !r.id?.startsWith('demo-') && !r.id?.startsWith('roommate-'));
+          localStorage.setItem('uninest_bayelsa_roommates', JSON.stringify(filtered));
+          return filtered;
         }
       }
     } catch (e) {
@@ -133,7 +138,7 @@ export const App: React.FC = () => {
       const saved = localStorage.getItem('uninest_accommodations');
       if (saved) {
         const parsed = JSON.parse(saved);
-        const filtered = Array.isArray(parsed) ? parsed.filter((a: any) => a && a.id && !a.id.startsWith('acc-0')) : [];
+        const filtered = Array.isArray(parsed) ? parsed.filter((a: any) => a && a.id && !a.id.startsWith('acc-') && !a.id.startsWith('lodge-') && !a.id.startsWith('demo-')) : [];
         localStorage.setItem('uninest_accommodations', JSON.stringify(filtered));
         return filtered;
       }
@@ -148,12 +153,17 @@ export const App: React.FC = () => {
   const [academicRequests, setAcademicRequests] = useState<AcademicAssistRequest[]>(() => {
     try {
       const saved = localStorage.getItem('uninest_academic_requests');
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        const filtered = Array.isArray(parsed) ? parsed.filter((ar: any) => ar && ar.id && !ar.id.startsWith('acad-0') && !ar.id.startsWith('demo-')) : [];
+        localStorage.setItem('uninest_academic_requests', JSON.stringify(filtered));
+        return filtered;
+      }
     } catch (e) {
       console.error(e);
     }
-    localStorage.setItem('uninest_academic_requests', JSON.stringify(INITIAL_ACADEMIC_REQUESTS));
-    return INITIAL_ACADEMIC_REQUESTS;
+    localStorage.setItem('uninest_academic_requests', JSON.stringify([]));
+    return [];
   });
 
   // 4. Marketplace Items & Escrows (Community & Student posted only - generated goods removed)
@@ -162,7 +172,7 @@ export const App: React.FC = () => {
       const saved = localStorage.getItem('uninest_marketplace_items');
       if (saved) {
         const parsed = JSON.parse(saved);
-        const filtered = Array.isArray(parsed) ? parsed.filter((m: any) => m && m.id && !m.id.startsWith('mkt-0')) : [];
+        const filtered = Array.isArray(parsed) ? parsed.filter((m: any) => m && m.id && !m.id.startsWith('mkt-') && !m.id.startsWith('demo-') && !m.id.startsWith('item-0')) : [];
         localStorage.setItem('uninest_marketplace_items', JSON.stringify(filtered));
         return filtered;
       }
@@ -176,12 +186,17 @@ export const App: React.FC = () => {
   const [escrows, setEscrows] = useState<EscrowTransaction[]>(() => {
     try {
       const saved = localStorage.getItem('uninest_escrows');
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        const filtered = Array.isArray(parsed) ? parsed.filter((e: any) => e && e.id && !e.id.startsWith('esc-') && !e.id.startsWith('demo-') && !e.id.startsWith('ESC-0')) : [];
+        localStorage.setItem('uninest_escrows', JSON.stringify(filtered));
+        return filtered;
+      }
     } catch (e) {
       console.error(e);
     }
-    localStorage.setItem('uninest_escrows', JSON.stringify(INITIAL_ESCROWS));
-    return INITIAL_ESCROWS;
+    localStorage.setItem('uninest_escrows', JSON.stringify([]));
+    return [];
   });
 
   // 5. Cheap Data Orders
@@ -415,7 +430,7 @@ export const App: React.FC = () => {
         if (email) {
           const emailLower = email.toLowerCase();
           const adminAccount = users.find(u => u.role === 'admin');
-          if (emailLower === 'admin@uninest.com' || (adminAccount && emailLower === adminAccount.email.toLowerCase())) {
+          if (emailLower === 'admin@uninest.com' || emailLower === 'amaechihellis@gmail.com' || (adminAccount && emailLower === adminAccount.email.toLowerCase())) {
             const adminFound = adminAccount || DEFAULT_ADMIN;
             setCurrentUser(adminFound);
             setCurrentView('admin');
@@ -459,7 +474,7 @@ export const App: React.FC = () => {
   // Logger helper
   const addAdminLog = (action: string, details?: string) => {
     const newLog: AdminLog = {
-      id: `log-${Date.now()}`,
+      id: `log-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
       action,
       email: currentUser?.email || 'admin@uninest.com',
       date: new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString(),
@@ -555,7 +570,7 @@ export const App: React.FC = () => {
 
   const handleLoginSuccess = (user: UniNestUser) => {
     setCurrentUser(user);
-    if (user.role === 'admin' || user.email === 'admin@uninest.com') {
+    if (user.role === 'admin' || user.email === 'admin@uninest.com' || user.email === 'amaechihellis@gmail.com') {
       setCurrentView('admin');
       addAdminLog('Admin Logged In', user.email);
     } else {
@@ -1305,8 +1320,8 @@ export const App: React.FC = () => {
       if (targetIndex === -1 && emailChanged) {
         targetIndex = prev.findIndex(u => u.email.toLowerCase() === newEmailLower);
       }
-      if (targetIndex === -1 && (updatedUser.role === 'admin' || oldEmailLower === 'admin@uninest.com')) {
-        targetIndex = prev.findIndex(u => u.role === 'admin' || u.email.toLowerCase() === 'admin@uninest.com');
+      if (targetIndex === -1 && (updatedUser.role === 'admin' || oldEmailLower === 'admin@uninest.com' || oldEmailLower === 'amaechihellis@gmail.com')) {
+        targetIndex = prev.findIndex(u => u.role === 'admin' || u.email.toLowerCase() === 'admin@uninest.com' || u.email.toLowerCase() === 'amaechihellis@gmail.com');
       }
 
       if (targetIndex >= 0) {
@@ -1332,7 +1347,7 @@ export const App: React.FC = () => {
 
     // Update remembered email if stored
     const remembered = localStorage.getItem('uninest_remembered');
-    if (remembered && (remembered.toLowerCase() === oldEmailLower || (currentUser?.role === 'admin' && remembered.toLowerCase() === 'admin@uninest.com'))) {
+    if (remembered && (remembered.toLowerCase() === oldEmailLower || (currentUser?.role === 'admin' && (remembered.toLowerCase() === 'admin@uninest.com' || remembered.toLowerCase() === 'amaechihellis@gmail.com')))) {
       localStorage.setItem('uninest_remembered', updatedUser.email);
     }
 
@@ -1415,17 +1430,17 @@ export const App: React.FC = () => {
         });
       } else {
         const targetAdmin = prev.find(u => u.role === 'admin');
-        if (targetAdmin && (targetEmailLower === 'admin@uninest.com' || targetEmailLower === 'admin')) {
+        if (targetAdmin && (targetEmailLower === 'admin@uninest.com' || targetEmailLower === 'amaechihellis@gmail.com' || targetEmailLower === 'admin')) {
           return prev.map(u => u.role === 'admin' ? { ...u, password: newPass } : u);
         }
-        if (targetEmailLower === 'admin@uninest.com') {
+        if (targetEmailLower === 'admin@uninest.com' || targetEmailLower === 'amaechihellis@gmail.com') {
           const newAdmin: UniNestUser = { ...DEFAULT_ADMIN, password: newPass };
           return [newAdmin, ...prev];
         }
       }
       return prev;
     });
-    if (currentUser && (currentUser.email.toLowerCase() === targetEmailLower || (currentUser.role === 'admin' && (targetEmailLower === 'admin@uninest.com' || targetEmailLower === 'admin')))) {
+    if (currentUser && (currentUser.email.toLowerCase() === targetEmailLower || (currentUser.role === 'admin' && (targetEmailLower === 'admin@uninest.com' || targetEmailLower === 'amaechihellis@gmail.com' || targetEmailLower === 'admin')))) {
       setCurrentUser(prev => prev ? { ...prev, password: newPass } : null);
     }
     addAdminLog('Admin Password Reset', `Administrator reset security password for user: ${userEmail}`);
@@ -1609,117 +1624,125 @@ export const App: React.FC = () => {
   ) || stsSavingsAccounts[0];
 
   return (
-    <div className="w-full max-w-full min-h-screen overflow-x-hidden bg-white">
-      {/* 1. AUTH SCREEN (Default or fallback if session is not active) */}
-      {(currentView === 'auth' || (!currentUser && currentView !== 'guest')) && (
-        <AuthCard
-          onLoginSuccess={handleLoginSuccess}
-          onContinueAsGuest={() => setCurrentView('guest')}
-          users={users}
-          onRegisterUser={handleRegisterUser}
-          onUpdateUserPassword={handleUpdatePassword}
-          stsAccounts={stsAccounts}
-          onCreateSTS={handleCreateSTS}
-          onSubscribeNewsletter={handleSubscribeNewsletter}
-          newsletterSubscribers={subscribers}
-        />
-      )}
+    <Router>
+      <Routes>
+        <Route path="/login" element={<Login onLoginSuccess={handleLoginSuccess} />} />
+        <Route path="/admin/login" element={<AdminLogin onAdminLoginSuccess={(adminUser) => { setCurrentUser(adminUser); setCurrentView('admin'); }} />} />
+        <Route path="*" element={
+          <div className="w-full max-w-full min-h-screen overflow-x-hidden bg-white">
+            {/* 1. AUTH SCREEN (Default or fallback if session is not active) */}
+            {(currentView === 'auth' || (!currentUser && currentView !== 'guest')) && (
+              <AuthCard
+                onLoginSuccess={handleLoginSuccess}
+                onContinueAsGuest={() => setCurrentView('guest')}
+                users={users}
+                onRegisterUser={handleRegisterUser}
+                onUpdateUserPassword={handleUpdatePassword}
+                stsAccounts={stsAccounts}
+                onCreateSTS={handleCreateSTS}
+                onSubscribeNewsletter={handleSubscribeNewsletter}
+                newsletterSubscribers={subscribers}
+              />
+            )}
 
-      {/* 2. STUDENT DASHBOARD (All 5 Services Integrated) */}
-      {currentView === 'student' && currentUser && (
-        <StudentDashboard
-          user={currentUser}
-          onUpdateUser={handleUpdateUser}
-          stsAccount={activeStudentSTS}
-          stsSavingsAccount={activeSTSSavings}
-          roommates={roommates}
-          accommodations={accommodations}
-          academicRequests={academicRequests}
-          marketplaceItems={marketplaceItems}
-          escrowTransactions={escrows}
-          dataOrders={dataOrders}
-          news={news}
-          verifiedBusinesses={verifiedBusinesses}
-          testimonials={testimonials}
-          phoneNotifications={phoneNotifications}
-          faqs={faqs}
-          onLogout={handleLogout}
-          onDepositSTS={handleDepositSTS}
-          onWithdrawSTS={handleWithdrawSTS}
-          onGiftStudent={handleGiftStudent}
-          onRequestSTSLoan={handleRequestSTSLoan}
-          onRepaySTSLoan={handleRepaySTSLoan}
-          onRequestRoommate={handleRequestRoommate}
-          onSubmitAcademicRequest={handleSubmitAcademicRequest}
-          onPostMarketplaceItem={handlePostMarketplaceItem}
-          onRelistMarketplaceItem={handleRelistMarketplaceItem}
-          onInitiateEscrow={handleInitiateEscrow}
-          onReleaseEscrow={handleReleaseEscrow}
-          onBuyData={handleBuyData}
-          onAddVerifiedBusiness={handleAddVerifiedBusiness}
-          onAddBusinessReview={handleAddBusinessReview}
-          onAddTestimonial={handleAddTestimonial}
-          onSendPhoneNotification={handleSendPhoneNotification}
-          onMarkPhoneNotificationAsRead={handleMarkPhoneNotificationAsRead}
-          subscribers={subscribers}
-          isSubscribedNewsletter={subscribers.includes(currentUser.email)}
-          onSubscribeNewsletter={handleSubscribeNewsletter}
-          studentQuestions={studentQuestions}
-          onAddQuestion={handleAddQuestion}
-          onAddAnswer={handleAddAnswer}
-          onUpvoteAnswer={handleUpvoteAnswer}
-          crowdfundingCampaigns={crowdfundingCampaigns}
-          onRequestCrowdfundingHelp={handleRequestCrowdfundingHelp}
-          onDonateToCampaign={handleDonateToCampaign}
-        />
-      )}
+            {/* 2. STUDENT DASHBOARD (All 5 Services Integrated) */}
+            {currentView === 'student' && currentUser && (
+              <StudentDashboard
+                user={currentUser}
+                onUpdateUser={handleUpdateUser}
+                stsAccount={activeStudentSTS}
+                stsSavingsAccount={activeSTSSavings}
+                roommates={roommates}
+                accommodations={accommodations}
+                academicRequests={academicRequests}
+                marketplaceItems={marketplaceItems}
+                escrowTransactions={escrows}
+                dataOrders={dataOrders}
+                news={news}
+                verifiedBusinesses={verifiedBusinesses}
+                testimonials={testimonials}
+                phoneNotifications={phoneNotifications}
+                faqs={faqs}
+                onLogout={handleLogout}
+                onDepositSTS={handleDepositSTS}
+                onWithdrawSTS={handleWithdrawSTS}
+                onGiftStudent={handleGiftStudent}
+                onRequestSTSLoan={handleRequestSTSLoan}
+                onRepaySTSLoan={handleRepaySTSLoan}
+                onRequestRoommate={handleRequestRoommate}
+                onSubmitAcademicRequest={handleSubmitAcademicRequest}
+                onPostMarketplaceItem={handlePostMarketplaceItem}
+                onRelistMarketplaceItem={handleRelistMarketplaceItem}
+                onInitiateEscrow={handleInitiateEscrow}
+                onReleaseEscrow={handleReleaseEscrow}
+                onBuyData={handleBuyData}
+                onAddVerifiedBusiness={handleAddVerifiedBusiness}
+                onAddBusinessReview={handleAddBusinessReview}
+                onAddTestimonial={handleAddTestimonial}
+                onSendPhoneNotification={handleSendPhoneNotification}
+                onMarkPhoneNotificationAsRead={handleMarkPhoneNotificationAsRead}
+                subscribers={subscribers}
+                isSubscribedNewsletter={subscribers.includes(currentUser.email)}
+                onSubscribeNewsletter={handleSubscribeNewsletter}
+                studentQuestions={studentQuestions}
+                onAddQuestion={handleAddQuestion}
+                onAddAnswer={handleAddAnswer}
+                onUpvoteAnswer={handleUpvoteAnswer}
+                crowdfundingCampaigns={crowdfundingCampaigns}
+                onRequestCrowdfundingHelp={handleRequestCrowdfundingHelp}
+                onDonateToCampaign={handleDonateToCampaign}
+              />
+            )}
 
-      {/* 3. ADMIN DASHBOARD */}
-      {currentView === 'admin' && currentUser && (
-        <AdminDashboard
-          adminUser={currentUser}
-          users={users}
-          stsAccounts={stsAccounts}
-          news={news}
-          subscribers={subscribers}
-          adminLogs={adminLogs}
-          crowdfundingCampaigns={crowdfundingCampaigns}
-          onApproveCampaign={handleApproveCrowdfundingCampaign}
-          onRejectCampaign={handleRejectCrowdfundingCampaign}
-          onMarkCampaignAsPaid={handleMarkCampaignAsPaid}
-          onLogout={handleLogout}
-          onAddNews={handleAddNews}
-          onDeleteNews={handleDeleteNews}
-          onToggleUserStatus={handleToggleUserStatus}
-          onAddLog={addAdminLog}
-          onUpdateUser={handleUpdateUser}
-          onResetPassword={handleAdminResetPassword}
-          escrows={escrows}
-          onReleaseEscrow={handleReleaseEscrow}
-          onRefundEscrow={handleRefundEscrow}
-          marketplaceItems={marketplaceItems}
-          onDeleteMarketplaceItem={handleDeleteMarketplaceItem}
-          accommodations={accommodations}
-          onToggleAccommodationAvailability={handleToggleAccommodationAvailability}
-          onDeleteAccommodation={handleDeleteAccommodation}
-          stsSavingsAccounts={stsSavingsAccounts}
-          onToggleUserVendorTicker={handleToggleUserVendorTicker}
-          onUpdateSTSSavingsAccount={handleUpdateSTSSavingsAccount}
-        />
-      )}
+            {/* 3. ADMIN DASHBOARD */}
+            {currentView === 'admin' && currentUser && (
+              <AdminDashboard
+                adminUser={currentUser}
+                users={users}
+                stsAccounts={stsAccounts}
+                news={news}
+                subscribers={subscribers}
+                adminLogs={adminLogs}
+                crowdfundingCampaigns={crowdfundingCampaigns}
+                onApproveCampaign={handleApproveCrowdfundingCampaign}
+                onRejectCampaign={handleRejectCrowdfundingCampaign}
+                onMarkCampaignAsPaid={handleMarkCampaignAsPaid}
+                onLogout={handleLogout}
+                onAddNews={handleAddNews}
+                onDeleteNews={handleDeleteNews}
+                onToggleUserStatus={handleToggleUserStatus}
+                onAddLog={addAdminLog}
+                onUpdateUser={handleUpdateUser}
+                onResetPassword={handleAdminResetPassword}
+                escrows={escrows}
+                onReleaseEscrow={handleReleaseEscrow}
+                onRefundEscrow={handleRefundEscrow}
+                marketplaceItems={marketplaceItems}
+                onDeleteMarketplaceItem={handleDeleteMarketplaceItem}
+                accommodations={accommodations}
+                onToggleAccommodationAvailability={handleToggleAccommodationAvailability}
+                onDeleteAccommodation={handleDeleteAccommodation}
+                stsSavingsAccounts={stsSavingsAccounts}
+                onToggleUserVendorTicker={handleToggleUserVendorTicker}
+                onUpdateSTSSavingsAccount={handleUpdateSTSSavingsAccount}
+              />
+            )}
 
-      {/* 4. GUEST DASHBOARD */}
-      {currentView === 'guest' && (
-        <GuestDashboard
-          news={news}
-          marketplaceItems={marketplaceItems}
-          onInitiateEscrow={handleInitiateEscrow}
-          onBackToAuth={() => setCurrentView('auth')}
-          onSubscribeNewsletter={handleSubscribeNewsletter}
-          isSubscribedNewsletter={false}
-        />
-      )}
-    </div>
+            {/* 4. GUEST DASHBOARD */}
+            {currentView === 'guest' && (
+              <GuestDashboard
+                news={news}
+                marketplaceItems={marketplaceItems}
+                onInitiateEscrow={handleInitiateEscrow}
+                onBackToAuth={() => setCurrentView('auth')}
+                onSubscribeNewsletter={handleSubscribeNewsletter}
+                isSubscribedNewsletter={false}
+              />
+            )}
+          </div>
+        } />
+      </Routes>
+    </Router>
   );
 };
 

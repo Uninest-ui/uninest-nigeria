@@ -54,7 +54,7 @@ export const InterUniversityQAHub: React.FC<InterUniversityQAHubProps> = ({
     name: 'Student',
     university: 'Niger Delta University (NDU)',
     department: 'Undergraduate',
-    avatarUrl: ''
+    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
   };
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -616,7 +616,7 @@ export const InterUniversityQAHub: React.FC<InterUniversityQAHubProps> = ({
                 </div>
 
                 {/* Picture Upload Format (Click to Zoom) */}
-                {q.questionPictureUrl && (
+                {q.questionPictureUrl && q.questionPictureUrl.trim() !== '' && (
                   <div className="pt-2">
                     <div className="inline-block relative rounded-2xl overflow-hidden border border-slate-200 group">
                       <img 
@@ -842,7 +842,7 @@ export const InterUniversityQAHub: React.FC<InterUniversityQAHubProps> = ({
                         )}
 
                         {/* Answer Photo/Diagram if present */}
-                        {ans.solutionPictureUrl && (
+                        {ans.solutionPictureUrl && ans.solutionPictureUrl.trim() !== '' && (
                           <div className="pt-1">
                             <img 
                               src={ans.solutionPictureUrl} 
@@ -1110,7 +1110,7 @@ export const InterUniversityQAHub: React.FC<InterUniversityQAHubProps> = ({
                   </div>
                 </div>
 
-                {newPictureUrl && (
+                {newPictureUrl && newPictureUrl.trim() !== '' && (
                   <div className="relative rounded-2xl overflow-hidden border border-slate-200 max-h-36">
                     <img src={newPictureUrl} alt="Attached Preview" className="w-full h-36 object-cover" />
                     <button
@@ -1203,7 +1203,7 @@ export const InterUniversityQAHub: React.FC<InterUniversityQAHubProps> = ({
       )}
 
       {/* ================= MODAL: LIGHTBOX ENLARGE IMAGE ================= */}
-      {lightboxImage && (
+      {lightboxImage && lightboxImage.trim() !== '' && (
         <div 
           className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4 cursor-pointer"
           onClick={() => setLightboxImage(null)}

@@ -49,7 +49,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
     phone: '',
     university: 'Bayelsa Medical University (BMU, Yenagoa)',
     department: 'Medicine & Surgery',
-    avatarUrl: ''
+    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
   };
 
   const [activeSubTab, setActiveSubTab] = useState<'profile' | 'security' | 'sts_records'>('profile');
@@ -181,7 +181,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
           <div className="flex items-center gap-4">
             <div className="relative group">
               <img
-                src={avatarUrl}
+                src={avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name || user.name || 'User')}`}
                 alt={name || user.name || 'User'}
                 className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover border-2 border-orange-500 shadow-md bg-white"
               />
@@ -306,7 +306,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
               {/* Photo Banner Control */}
               <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <img src={avatarUrl} alt="Avatar" className="w-10 h-10 rounded-full object-cover border border-slate-300" />
+                  <img src={avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name || user.name || 'User')}`} alt="Avatar" className="w-10 h-10 rounded-full object-cover border border-slate-300" />
                   <div>
                     <p className="text-xs font-bold text-slate-900">Student ID &amp; Avatar Photo</p>
                     <p className="text-[11px] text-slate-500">Visible on Roommate requests and Marketplace</p>

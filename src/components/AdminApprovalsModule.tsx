@@ -336,7 +336,7 @@ export const AdminApprovalsModule: React.FC<AdminApprovalsModuleProps> = ({
                       )}
 
                       {/* Payment Proof Receipt Slip Preview */}
-                      {item.proofImage ? (
+                      {item.proofImage && item.proofImage.trim() !== '' ? (
                         <div className="p-2.5 rounded-xl bg-slate-950/80 border border-emerald-500/30 flex items-center justify-between gap-3">
                           <div className="flex items-center gap-2.5 overflow-hidden">
                             <img
@@ -460,7 +460,7 @@ export const AdminApprovalsModule: React.FC<AdminApprovalsModuleProps> = ({
 
               {/* The Image Preview */}
               <div className="max-h-[60vh] overflow-auto rounded-2xl border border-slate-800 bg-slate-950 flex items-center justify-center p-2">
-                {previewProofModal.proofImage ? (
+                {previewProofModal.proofImage && previewProofModal.proofImage.trim() !== '' ? (
                   <img
                     src={previewProofModal.proofImage}
                     alt="Payment Proof Receipt"

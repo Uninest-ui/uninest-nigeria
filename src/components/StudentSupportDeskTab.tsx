@@ -363,7 +363,7 @@ export const StudentSupportDeskTab: React.FC<StudentSupportDeskTabProps> = ({
                   {/* Attachment Rendering (Image or File) */}
                   {m.attachmentUrl && (
                     <div className={`${m.text ? 'mt-3 pt-2.5 border-t border-slate-200/40 dark:border-slate-700/40' : ''}`}>
-                      {isImageFile(m.attachmentType, m.attachmentName) ? (
+                      {isImageFile(m.attachmentType, m.attachmentName) && m.attachmentUrl && m.attachmentUrl.trim() !== '' ? (
                         <div className="space-y-1.5">
                           <div 
                             onClick={() => setActiveImageModal(m.attachmentUrl!)}
@@ -493,7 +493,7 @@ export const StudentSupportDeskTab: React.FC<StudentSupportDeskTabProps> = ({
       {selectedAttachment && (
         <div className="p-3 px-4 bg-orange-50 dark:bg-slate-800 border-t border-orange-200 dark:border-slate-700 flex items-center justify-between gap-3 animate-fadeIn shrink-0">
           <div className="flex items-center gap-3 truncate">
-            {isImageFile(selectedAttachment.type, selectedAttachment.name) ? (
+            {isImageFile(selectedAttachment.type, selectedAttachment.name) && selectedAttachment.url && selectedAttachment.url.trim() !== '' ? (
               <img
                 src={selectedAttachment.url}
                 alt="Upload preview"
@@ -603,7 +603,7 @@ export const StudentSupportDeskTab: React.FC<StudentSupportDeskTabProps> = ({
       </form>
 
       {/* Image Full-Size Lightbox Modal */}
-      {activeImageModal && (
+      {activeImageModal && activeImageModal.trim() !== '' && (
         <div 
           onClick={() => setActiveImageModal(null)}
           className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn"

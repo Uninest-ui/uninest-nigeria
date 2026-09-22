@@ -762,7 +762,7 @@ export const MarketplaceEscrowTab: React.FC<MarketplaceEscrowTabProps> = ({
                       {/* Image Frame */}
                       <div className="relative h-48 bg-[#0A1931]/5 overflow-hidden">
                         <img
-                          src={item.image}
+                          src={item.image || 'https://images.unsplash.com/photo-1526738549149-8e07eca6c147?w=500&auto=format&fit=crop&q=80'}
                           alt={item.title}
                           className="w-full h-full object-cover"
                         />
@@ -1008,7 +1008,7 @@ export const MarketplaceEscrowTab: React.FC<MarketplaceEscrowTabProps> = ({
                   className="p-4 rounded-2xl bg-[#FFFFFF] border border-[#0A1931]/15 flex items-center justify-between gap-4 text-xs"
                 >
                   <div className="flex items-center gap-3">
-                    <img src={item.image} alt={item.title} className="w-12 h-12 rounded-xl object-cover" />
+                    <img src={item.image || 'https://images.unsplash.com/photo-1526738549149-8e07eca6c147?w=500&auto=format&fit=crop&q=80'} alt={item.title} className="w-12 h-12 rounded-xl object-cover" />
                     <div>
                       <h4 className="font-bold text-[#0A1931]">{item.title}</h4>
                       <p className="text-[#0A1931]/60">₦{(item.price || 0).toLocaleString()} • {item.campus}</p>
@@ -1091,7 +1091,7 @@ export const MarketplaceEscrowTab: React.FC<MarketplaceEscrowTabProps> = ({
                     className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex items-center gap-3"
                   >
                     <img
-                      src={item.image}
+                      src={item.image || 'https://images.unsplash.com/photo-1526738549149-8e07eca6c147?w=500&auto=format&fit=crop&q=80'}
                       alt={item.title}
                       className="w-14 h-14 rounded-xl object-cover shrink-0 border border-slate-200"
                     />
@@ -1328,7 +1328,7 @@ export const MarketplaceEscrowTab: React.FC<MarketplaceEscrowTabProps> = ({
                 />
 
                 {/* Loaded Picture Preview or Drag & Drop Zone */}
-                {itemImage ? (
+                {itemImage && itemImage.trim() !== '' ? (
                   <div className="space-y-2">
                     <div className="relative h-40 rounded-xl overflow-hidden border-2 border-[#FF6A00] bg-black/10">
                       <img

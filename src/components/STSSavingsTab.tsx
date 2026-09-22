@@ -68,7 +68,7 @@ export const STSSavingsTab: React.FC<STSSavingsTabProps> = ({
     name: 'Student',
     email: 'student@campus.ng',
     university: 'Nigerian University',
-    avatarUrl: ''
+    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
   };
 
   // 500 NGN charge for new user using STS
@@ -2726,7 +2726,7 @@ export const STSSavingsTab: React.FC<STSSavingsTabProps> = ({
 
               <form onSubmit={handleSignOutSubmit} className="space-y-3.5">
                 <div className="flex items-center gap-4 p-3 rounded-2xl bg-slate-50 border border-slate-200">
-                  <img src={signOutFacePhoto} alt="Graduation Face" className="w-16 h-16 rounded-2xl object-cover border border-slate-300" />
+                  <img src={signOutFacePhoto || safeUser.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80'} alt="Graduation Face" className="w-16 h-16 rounded-2xl object-cover border border-slate-300" />
                   <div className="space-y-1 text-xs">
                     <label className="font-bold text-slate-800 block">Clear Face Graduation Photo</label>
                     <input type="file" accept="image/*" onChange={handleSignOutPhotoUpload} className="text-[11px]" />

@@ -109,7 +109,7 @@ export async function fetchProfilesFromSupabase(): Promise<UniNestUser[]> {
       createdAt: row.created_at || new Date().toISOString(),
       university: row.university || row.institution || 'Niger Delta University',
       department: row.department || 'General Studies',
-      avatarUrl: row.avatar_url,
+      avatarUrl: row.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
       // Persist Supabase balance data
       walletBalance: typeof row.wallet_balance === 'number' ? row.wallet_balance : 33000,
       giftBalance: typeof row.gift_balance === 'number' ? row.gift_balance : 100000

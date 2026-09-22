@@ -474,26 +474,10 @@ export const AdminPaymentSettingsModule: React.FC<AdminPaymentSettingsModuleProp
               </p>
             </div>
             
-            {/* Live / Test Toggle */}
-            <div className="flex items-center gap-2 bg-slate-800 p-1.5 rounded-xl border border-slate-700">
-              <button
-                type="button"
-                onClick={() => setPaystackLiveMode(false)}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition ${
-                  !paystackLiveMode ? 'bg-amber-500 text-slate-950 font-black' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                Test Mode (Demo)
-              </button>
-              <button
-                type="button"
-                onClick={() => setPaystackLiveMode(true)}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition ${
-                  paystackLiveMode ? 'bg-emerald-500 text-slate-950 font-black' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                Live Production
-              </button>
+            {/* Production Status */}
+            <div className="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-700">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span className="text-[11px] font-bold text-emerald-400">Live Production Gateway</span>
             </div>
           </div>
 
@@ -563,7 +547,7 @@ export const AdminPaymentSettingsModule: React.FC<AdminPaymentSettingsModuleProp
               </p>
             </div>
             <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-              Live Mockup
+              Live Preview
             </span>
           </div>
 

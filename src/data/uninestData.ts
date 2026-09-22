@@ -21,7 +21,7 @@ import {
 } from '../types';
 
 export const DEFAULT_ADMIN: UniNestUser = {
-  email: 'admin@uninest.com',
+  email: 'amaechihellis@gmail.com',
   phone: '08000000000',
   password: 'Admin@123',
   role: 'admin',
@@ -287,24 +287,7 @@ export const INITIAL_ACADEMIC_ASSIST_REQUESTS: AcademicAssistRequest[] = [
 // 4. UniNest Marketplace & Escrow
 export const INITIAL_MARKETPLACE_ITEMS: MarketplaceItem[] = [];
 
-export const INITIAL_ESCROW_TRANSACTIONS: EscrowTransaction[] = [
-  {
-    id: 'esc-001',
-    buyerEmail: 'student@campus.edu',
-    sellerEmail: 'kem@otuoke.edu.ng',
-    itemTitle: 'HP EliteBook 840 G5 Core i5',
-    amount: 145000,
-    escrowFee: 7250,
-    totalAmount: 152250,
-    campus: 'FUOTUOKE / NDU Amassoma',
-    escrowAccountNumber: '2150445461',
-    autoReleaseDays: 3,
-    autoReleaseDate: '2026-09-04',
-    releasePolicy: 'Payment sent to Escrow Account (2150445461) - Released after confirmation or within 3 working days',
-    status: 'Fund Deposited to UniNest Escrow',
-    createdAt: '2026-09-01'
-  }
-];
+export const INITIAL_ESCROW_TRANSACTIONS: EscrowTransaction[] = [];
 
 export const INITIAL_ACCOMMODATIONS = INITIAL_BAYELSA_ACCOMMODATIONS;
 export const INITIAL_ACADEMIC_REQUESTS = INITIAL_ACADEMIC_ASSIST_REQUESTS;

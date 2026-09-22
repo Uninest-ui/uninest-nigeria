@@ -196,7 +196,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
     university: 'Bayelsa Medical University (BMU, Yenagoa)',
     department: 'Medicine & Surgery',
     phone: '08139045612',
-    avatarUrl: '',
+    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
     role: 'student',
     joinedDate: '2026-08-01',
     isVerified: true
