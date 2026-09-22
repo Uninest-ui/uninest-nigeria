@@ -66,17 +66,57 @@ export const App: React.FC = () => {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed)) {
-          // Ensure test users exist
-          const existingEmails = new Set(parsed.map((u: any) => (u.email || '').toLowerCase()));
-          const missing = INITIAL_USERS.filter(u => !existingEmails.has(u.email.toLowerCase()));
-          const combined = missing.length > 0 ? [...parsed, ...missing] : parsed;
+          const DEMO_EMAILS = new Set([
+            'student@campus.edu',
+            'vendor@campus.edu',
+            'gadgets.bayelsa@gmail.com',
+            'hostel.kitchen@yahoo.com',
+            'chinedu.student@gmail.com',
+            'amara.n@unilag.edu.ng',
+            'tariere.ebimobowei@ndu.edu.ng',
+            'kemegha.ayiba@fuotuoke.edu.ng',
+            'ebi.preye@bmu.edu.ng',
+            'chukwuma.eze@fuotuoke.edu.ng',
+            'tariere@uninest.ng',
+            'preye.bmu@uninest.ng',
+            'ayomide.balogun@uninest.ng',
+            'victor.okon@ndu.edu.ng',
+            'blessing.jumbo@ndu.edu.ng',
+            'samuel.tammy@ndu.edu.ng',
+            'chinelo.eze@ndu.edu.ng',
+            'david.timi@ndu.edu.ng',
+            'kemi.adeleke@bmu.edu.ng'
+          ]);
+
+          // Strip out all demo users
+          const realUsers = parsed.filter((u: any) => {
+            const email = (u.email || '').toLowerCase().trim();
+            if (DEMO_EMAILS.has(email)) return false;
+            if (u.id && (u.id.startsWith('demo-') || u.id.startsWith('mock-'))) return false;
+            return true;
+          });
+
+          // Ensure admin user is always present
+          const hasAdmin = realUsers.some((u: any) => 
+            u.role === 'admin' || 
+            (u.email && (u.email.toLowerCase() === 'admin@uninest.com' || u.email.toLowerCase() === 'amaechihellis@gmail.com'))
+          );
+          const combined = hasAdmin ? realUsers : [DEFAULT_ADMIN, ...realUsers];
           
-          // Ensure admin user is always healthy with Admin@123 password
+          // Ensure admin user is healthy and all users have spendable gifting balance reset to welcome 500 NGN
           const normalized = combined.map(u => {
             if (u.role === 'admin' || (u.email && (u.email.toLowerCase() === 'admin@uninest.com' || u.email.toLowerCase() === 'amaechihellis@gmail.com'))) {
               return { ...DEFAULT_ADMIN, ...u, role: 'admin' as const, password: u.password || 'Admin@123' };
             }
-            return u;
+            const rawGift = (u as any).giftBalance;
+            const cleanGift = (rawGift === 100000 || rawGift === 15000 || rawGift === undefined) ? 500 : rawGift;
+            const rawWallet = (u as any).walletBalance;
+            const cleanWallet = (rawWallet === 33000 || rawWallet === undefined) ? 500 : rawWallet;
+            return {
+              ...u,
+              giftBalance: cleanGift,
+              walletBalance: cleanWallet
+            };
           });
 
           localStorage.setItem('uninest_users', JSON.stringify(normalized));
@@ -422,6 +462,21 @@ export const App: React.FC = () => {
   }, [crowdfundingCampaigns]);
 
   // Check saved session on mount
+  const sanitizeUserBalance = (u: UniNestUser): UniNestUser => {
+    if (u.role === 'admin' || (u.email && (u.email.toLowerCase() === 'admin@uninest.com' || u.email.toLowerCase() === 'amaechihellis@gmail.com'))) {
+      return u;
+    }
+    const rawGift = u.giftBalance;
+    const cleanGift = (rawGift === 100000 || rawGift === 15000 || rawGift === undefined) ? 500 : rawGift;
+    const rawWallet = u.walletBalance;
+    const cleanWallet = (rawWallet === 33000 || rawWallet === undefined) ? 500 : rawWallet;
+    return {
+      ...u,
+      giftBalance: cleanGift,
+      walletBalance: cleanWallet
+    };
+  };
+
   useEffect(() => {
     try {
       const savedSession = localStorage.getItem('uninest_current_user');
@@ -437,8 +492,9 @@ export const App: React.FC = () => {
           } else {
             const found = users.find(u => u.email.toLowerCase() === emailLower);
             if (found) {
-              setCurrentUser(found);
-              setCurrentView(found.role === 'admin' ? 'admin' : 'student');
+              const cleanFound = sanitizeUserBalance(found);
+              setCurrentUser(cleanFound);
+              setCurrentView(cleanFound.role === 'admin' ? 'admin' : 'student');
             }
           }
         }
@@ -452,15 +508,39 @@ export const App: React.FC = () => {
   useEffect(() => {
     fetchProfilesFromSupabase().then(supabaseUsers => {
       if (supabaseUsers && supabaseUsers.length > 0) {
+        const DEMO_EMAILS = new Set([
+          'student@campus.edu',
+          'vendor@campus.edu',
+          'gadgets.bayelsa@gmail.com',
+          'hostel.kitchen@yahoo.com',
+          'chinedu.student@gmail.com',
+          'amara.n@unilag.edu.ng',
+          'tariere.ebimobowei@ndu.edu.ng',
+          'kemegha.ayiba@fuotuoke.edu.ng',
+          'ebi.preye@bmu.edu.ng',
+          'chukwuma.eze@fuotuoke.edu.ng',
+          'tariere@uninest.ng',
+          'preye.bmu@uninest.ng',
+          'ayomide.balogun@uninest.ng',
+          'victor.okon@ndu.edu.ng',
+          'blessing.jumbo@ndu.edu.ng',
+          'samuel.tammy@ndu.edu.ng',
+          'chinelo.eze@ndu.edu.ng',
+          'david.timi@ndu.edu.ng',
+          'kemi.adeleke@bmu.edu.ng'
+        ]);
+
         setUsers(prev => {
           const map = new Map<string, UniNestUser>();
           prev.forEach(u => map.set(u.email.toLowerCase(), u));
           supabaseUsers.forEach(su => {
-            const existing = map.get(su.email.toLowerCase());
+            if (DEMO_EMAILS.has(su.email.toLowerCase())) return;
+            const cleaned = sanitizeUserBalance(su);
+            const existing = map.get(cleaned.email.toLowerCase());
             if (existing) {
-              map.set(su.email.toLowerCase(), { ...existing, ...su });
+              map.set(cleaned.email.toLowerCase(), { ...existing, ...cleaned });
             } else {
-              map.set(su.email.toLowerCase(), su);
+              map.set(cleaned.email.toLowerCase(), cleaned);
             }
           });
           return Array.from(map.values());
@@ -569,13 +649,14 @@ export const App: React.FC = () => {
   };
 
   const handleLoginSuccess = (user: UniNestUser) => {
-    setCurrentUser(user);
-    if (user.role === 'admin' || user.email === 'admin@uninest.com' || user.email === 'amaechihellis@gmail.com') {
+    const cleanUser = sanitizeUserBalance(user);
+    setCurrentUser(cleanUser);
+    if (cleanUser.role === 'admin' || cleanUser.email === 'admin@uninest.com' || cleanUser.email === 'amaechihellis@gmail.com') {
       setCurrentView('admin');
-      addAdminLog('Admin Logged In', user.email);
+      addAdminLog('Admin Logged In', cleanUser.email);
     } else {
       setCurrentView('student');
-      addAdminLog('Student Logged In', user.email);
+      addAdminLog('Student Logged In', cleanUser.email);
     }
   };
 

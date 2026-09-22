@@ -11,53 +11,7 @@ export interface StudentWalletDirectoryEntry {
 }
 
 // Known student directory entries for instant gifting resolution
-export const KNOWN_STS_STUDENTS: StudentWalletDirectoryEntry[] = [
-  {
-    stsWalletNumber: 'STS-9034-4429',
-    name: 'Tariere Keme',
-    email: 'tariere@ndu.edu.ng',
-    phone: '08139045612',
-    university: 'Niger Delta University (NDU Amassoma)',
-    department: 'Medical Laboratory Science',
-    level: '300L'
-  },
-  {
-    stsWalletNumber: 'STS-8812-9014',
-    name: 'Ebiere Preye',
-    email: 'ebiere@otuoke.edu.ng',
-    phone: '08098765432',
-    university: 'Federal University Otuoke (FUOTUOKE)',
-    department: 'Computer Science',
-    level: '200L'
-  },
-  {
-    stsWalletNumber: 'STS-7731-5502',
-    name: 'Chukwuma Eze',
-    email: 'chuks@uniport.edu.ng',
-    phone: '08123456789',
-    university: 'University of Port Harcourt (UNIPORT Choba)',
-    department: 'Petroleum & Gas Engineering',
-    level: '400L'
-  },
-  {
-    stsWalletNumber: 'STS-6640-1193',
-    name: 'Blessing Oghenero',
-    email: 'blessing@delsu.edu.ng',
-    phone: '08034567890',
-    university: 'Delta State University (DELSU Abraka)',
-    department: 'Pharmacy',
-    level: '300L'
-  },
-  {
-    stsWalletNumber: 'STS-5529-7801',
-    name: 'Kemisola Alabi',
-    email: 'kemi@unilag.edu.ng',
-    phone: '08023456781',
-    university: 'University of Lagos (UNILAG Akoka)',
-    department: 'Accounting & Finance',
-    level: '400L'
-  }
-];
+export const KNOWN_STS_STUDENTS: StudentWalletDirectoryEntry[] = [];
 
 /**
  * Returns a consistent 10-character STS Wallet Account Number for any student email

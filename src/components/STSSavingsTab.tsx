@@ -213,52 +213,21 @@ export const STSSavingsTab: React.FC<STSSavingsTabProps> = ({
   }, [initialAction, onClearInitialAction]);
 
   // Gifting Account & Incoming Payments (Buyer payments, student gifts, sponsor support - all pending until admin confirmed)
-  const [incomingPayments, setIncomingPayments] = useState([
-    {
-      id: 'inc-01',
-      sourceType: 'buyer_payment',
-      title: 'Payment from Buyer: FX-991EX Scientific Calculator',
-      senderName: 'David Kalu (Buyer)',
-      senderDetails: 'Marketplace Cart Order #ORD-8821',
-      amount: 8500,
-      date: 'Today, 2:15 PM',
-      status: 'pending' as 'pending' | 'confirmed'
-    },
-    {
-      id: 'inc-02',
-      sourceType: 'student_gift',
-      title: 'Student Gift: Semester Handouts Support',
-      senderName: 'Emeka Okoro',
-      senderDetails: 'STS-8023-4412 (NDU)',
-      amount: 3000,
-      date: 'Yesterday, 6:40 PM',
-      status: 'pending' as 'pending' | 'confirmed'
-    },
-    {
-      id: 'inc-03',
-      sourceType: 'buyer_payment',
-      title: 'Payment from Buyer: Rechargeable Standing Fan',
-      senderName: 'Tariere Ebimobowei (Buyer)',
-      senderDetails: 'Marketplace Cart Order #ORD-8794',
-      amount: 16000,
-      date: 'Sep 08, 2026',
-      status: 'confirmed' as 'pending' | 'confirmed'
-    },
-    {
-      id: 'inc-04',
-      sourceType: 'student_gift',
-      title: 'Student Gift: Sign-Out Love & Congratulations',
-      senderName: 'Blessing Ebi',
-      senderDetails: 'STS-9034-4429 (FUOTUOKE)',
-      amount: 5000,
-      date: 'Sep 06, 2026',
-      status: 'confirmed' as 'pending' | 'confirmed'
-    }
-  ]);
+  const [incomingPayments, setIncomingPayments] = useState<Array<{
+    id: string;
+    sourceType: string;
+    title: string;
+    senderName: string;
+    senderDetails: string;
+    amount: number;
+    date: string;
+    status: 'pending' | 'confirmed';
+  }>>([]);
   const [adminConfirmNotice, setAdminConfirmNotice] = useState<string | null>(null);
 
   const [availableGiftBalance, setAvailableGiftBalance] = useState(() => {
-    return account?.giftAccountBalance ?? account?.giftBalance ?? 15000;
+    const raw = account?.giftAccountBalance ?? account?.giftBalance ?? 500;
+    return (raw === 100000 || raw === 15000) ? 500 : raw;
   });
 
   const pendingIncomingAmount = useMemo(() => {

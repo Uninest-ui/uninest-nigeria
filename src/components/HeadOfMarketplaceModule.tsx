@@ -32,44 +32,7 @@ interface VendorVerificationRequest {
   verifiedBy?: string;
 }
 
-const INITIAL_VENDOR_REQUESTS: VendorVerificationRequest[] = [
-  {
-    id: 'vnd-req-01',
-    userEmail: 'vendor@campus.edu',
-    userName: 'Campus Bookshop Direct',
-    userPhone: '08022114433',
-    university: 'All Bayelsa Campuses (NDU / FUOTUOKE)',
-    businessName: 'Campus Bookshop Direct Ltd',
-    vendorCategory: 'Textbooks & Engineering Equipment',
-    submittedAt: '2026-08-26',
-    status: 'verified_by_head',
-    stsVendorAccountNumber: 'STS-VND-902148',
-    verifiedAt: '2026-08-27',
-    verifiedBy: 'Head of Marketplace'
-  },
-  {
-    id: 'vnd-req-02',
-    userEmail: 'gadgets.bayelsa@gmail.com',
-    userName: 'Preye Tech Solutions',
-    userPhone: '08033221100',
-    university: 'Niger Delta University (NDU Amassoma)',
-    businessName: 'Preye Campus Gadgets & Laptops',
-    vendorCategory: 'Laptops & Mobile Tech',
-    submittedAt: '2026-09-01',
-    status: 'pending'
-  },
-  {
-    id: 'vnd-req-03',
-    userEmail: 'hostel.kitchen@yahoo.com',
-    userName: 'Ebiere Cookware & Gas',
-    userPhone: '08169988776',
-    university: 'Federal University Otuoke (FUOTUOKE)',
-    businessName: 'Campus Food & Gas Hub',
-    vendorCategory: 'Cooking & Hostel Appliances',
-    submittedAt: '2026-09-02',
-    status: 'pending'
-  }
-];
+const INITIAL_VENDOR_REQUESTS: VendorVerificationRequest[] = [];
 
 interface HeadOfMarketplaceModuleProps {
   adminEmail: string;

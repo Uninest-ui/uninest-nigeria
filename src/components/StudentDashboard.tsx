@@ -96,6 +96,7 @@ import { StudentWalletTab } from './StudentWalletTab';
 import { CrossCampusMapTab } from './CrossCampusMapTab';
 import { DarkModeToggle } from './DarkModeToggle';
 import { StudentSupportDeskTab } from './StudentSupportDeskTab';
+import { getStudentSTSWalletNumber } from '../utils/walletUtils';
 import happyNigerianStudentImg from '../assets/images/uninest_brand_rep_1789411622796.jpg';
 
 interface StudentDashboardProps {
@@ -213,10 +214,11 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
   const [isBalanceHidden, setIsBalanceHidden] = useState(false);
   const [copiedStsAccount, setCopiedStsAccount] = useState(false);
 
-  const stsLockedBalance = stsSavingsAccount?.currentBalance ?? 75000;
-  const stsGiftBalance = stsSavingsAccount?.giftAccountBalance ?? stsSavingsAccount?.giftBalance ?? 15000;
+  const stsLockedBalance = stsSavingsAccount?.currentBalance ?? 0;
+  const rawStsGift = stsSavingsAccount?.giftAccountBalance ?? stsSavingsAccount?.giftBalance ?? 500;
+  const stsGiftBalance = (rawStsGift === 100000 || rawStsGift === 15000) ? 500 : rawStsGift;
   const stsTotalBalance = stsLockedBalance + stsGiftBalance;
-  const stsAccountNo = stsSavingsAccount?.stsAccountNumber || 'STS-9034-4429';
+  const stsAccountNo = stsSavingsAccount?.stsAccountNumber || getStudentSTSWalletNumber(safeUser.email, safeUser.phone);
 
   const handleCopyStsAccount = (e?: React.MouseEvent) => {
     if (e) e.stopPropagation();

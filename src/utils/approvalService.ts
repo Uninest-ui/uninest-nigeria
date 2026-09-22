@@ -2,72 +2,7 @@ import { DepositWithdrawalApproval } from '../types';
 
 const APPROVALS_KEY = 'uninest_finance_approvals';
 
-const INITIAL_APPROVALS: DepositWithdrawalApproval[] = [
-  {
-    id: 'req-dep-01',
-    type: 'deposit',
-    userEmail: 'student@campus.edu',
-    userName: 'Tariere Ebimobowei',
-    userPhone: '08123456789',
-    university: 'Niger Delta University (NDU)',
-    amount: 15000,
-    date: 'Today, 11:30 AM',
-    status: 'pending',
-    method: 'Bank Transfer (Wema UniNest Dedicated Acct)',
-    reference: 'DEP-NDU-90234',
-    reason: 'Monthly STS Savings Contribution'
-  },
-  {
-    id: 'req-wth-01',
-    type: 'withdrawal',
-    userEmail: 'student@campus.edu',
-    userName: 'Tariere Ebimobowei',
-    userPhone: '08123456789',
-    university: 'Niger Delta University (NDU)',
-    amount: 5000,
-    date: 'Today, 12:45 PM',
-    status: 'pending',
-    bankName: 'GTBank',
-    accountNumber: '0123456789',
-    accountName: 'Tariere Ebimobowei',
-    reference: 'WTH-NDU-88219',
-    reason: 'Urgent departmental book photocopy & feeding'
-  },
-  {
-    id: 'req-dep-02',
-    type: 'deposit',
-    userEmail: 'ebi.preye@bmu.edu.ng',
-    userName: 'Ebiere Preye',
-    userPhone: '08098765432',
-    university: 'Bayelsa Medical University (BMU)',
-    amount: 25000,
-    date: 'Yesterday, 4:20 PM',
-    status: 'approved',
-    method: 'Paystack Automated Checkout',
-    reference: 'DEP-BMU-33120',
-    reason: 'Semester savings lock vault',
-    reviewedBy: 'admin@uninest.com',
-    reviewedAt: 'Yesterday, 4:35 PM'
-  },
-  {
-    id: 'req-wth-02',
-    type: 'withdrawal',
-    userEmail: 'chukwuma.eze@fuotuoke.edu.ng',
-    userName: 'Chukwuma Eze',
-    userPhone: '08144556677',
-    university: 'Federal University Otuoke (FUOTUOKE)',
-    amount: 10000,
-    date: 'Yesterday, 2:10 PM',
-    status: 'approved',
-    bankName: 'Access Bank',
-    accountNumber: '0987654321',
-    accountName: 'Chukwuma Eze',
-    reference: 'WTH-FUO-11928',
-    reason: 'Lodge water pumping bill contribution',
-    reviewedBy: 'admin@uninest.com',
-    reviewedAt: 'Yesterday, 2:30 PM'
-  }
-];
+const INITIAL_APPROVALS: DepositWithdrawalApproval[] = [];
 
 const safeDispatchFinanceUpdate = () => {
   try {
@@ -83,12 +18,17 @@ export const approvalService = {
   getApprovals: (): DepositWithdrawalApproval[] => {
     try {
       const saved = localStorage.getItem(APPROVALS_KEY);
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          const demoEmails = ['student@campus.edu', 'ebi.preye@bmu.edu.ng', 'chukwuma.eze@fuotuoke.edu.ng'];
+          return parsed.filter((item: any) => !demoEmails.includes(item.userEmail?.toLowerCase()));
+        }
+      }
     } catch (e) {
       console.error(e);
     }
-    localStorage.setItem(APPROVALS_KEY, JSON.stringify(INITIAL_APPROVALS));
-    return INITIAL_APPROVALS;
+    return [];
   },
 
   submitDepositRequest: (request: Omit<DepositWithdrawalApproval, 'id' | 'type' | 'status' | 'date' | 'reference'>): DepositWithdrawalApproval => {

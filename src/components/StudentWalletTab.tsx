@@ -115,68 +115,27 @@ export const StudentWalletTab: React.FC<StudentWalletTabProps> = ({
     if (account?.transactions && account.transactions.length > 0) {
       return account.transactions;
     }
-    // Default seed transactions
+    // Welcome initial transaction
     return [
       {
-        id: 'tx-1',
+        id: 'tx-welcome-500',
         type: 'deposit' as const,
-        amount: 15000,
-        date: 'Aug 15, 2026',
-        description: 'First semester initial sign-out seed deposit',
-        balanceAfter: 15000
-      },
-      {
-        id: 'tx-2',
-        type: 'deposit' as const,
-        amount: 30000,
-        date: 'Aug 20, 2026',
-        description: 'Monthly student allowance deposit',
-        balanceAfter: 45000
-      },
-      {
-        id: 'tx-gift-1',
-        type: 'gift_sent' as const,
-        amount: 5000,
-        date: 'Aug 26, 2026',
-        description: 'Student Gift Sent to Ebiere Tonye (Exam Handouts)',
-        recipientOrSender: 'Ebiere Tonye (FUOTUOKE)',
-        balanceAfter: 40000
-      },
-      {
-        id: 'tx-gift-2',
-        type: 'gift_received' as const,
-        amount: 10000,
-        date: 'Aug 28, 2026',
-        description: 'Student Gift Received from Engr. Preye (NDU Alumni)',
-        recipientOrSender: 'Engr. Preye',
-        balanceAfter: 50000
-      },
-      {
-        id: 'tx-3',
-        type: 'deposit' as const,
-        amount: 20000,
-        date: 'Aug 29, 2026',
-        description: 'Side hustle project savings',
-        balanceAfter: 70000
-      },
-      {
-        id: 'tx-4',
-        type: 'interest' as const,
         amount: 500,
-        date: 'Sep 01, 2026',
-        description: 'UniNest Save-Till-Sign-out monthly compound reward',
-        balanceAfter: 70500
+        date: 'Today',
+        description: 'UniNest Welcome Gifting Bonus',
+        balanceAfter: 500
       }
     ];
   }, [account]);
 
-  const currentBalance = account?.currentBalance || 70500;
-  const giftWithdrawableBalance = account?.giftAccountBalance ?? account?.giftBalance ?? 15000;
+  const currentBalance = account?.currentBalance || 0;
+  const rawGift = account?.giftAccountBalance ?? account?.giftBalance ?? 500;
+  const giftWithdrawableBalance = (rawGift === 100000 || rawGift === 15000) ? 500 : rawGift;
   // Master wallet balance carrying total amount (locked STS savings + spendable gift account)
-  const totalWalletAmount = account?.walletBalance ?? (currentBalance + giftWithdrawableBalance);
+  const totalWalletAmount = currentBalance + giftWithdrawableBalance;
   const withdrawalDate = account?.withdrawalDate || 'Nov 30, 2026';
   const minSavingsLimit = 200;
-  const targetGoalAmount = account?.targetAmount || 250000;
+  const targetGoalAmount = account?.targetAmount || 100000;
   const progressPercent = Math.min(100, Math.round((currentBalance / (targetGoalAmount || 1)) * 100));
 
   // Compute stats

@@ -525,13 +525,13 @@ export const AuthCard: React.FC<AuthCardProps> = ({
       const verifiedUser: UniNestUser = {
         ...pendingSignupUser,
         verified: true,
-        walletBalance: 33000,
-        giftBalance: 100000
+        walletBalance: 500,
+        giftBalance: 500
       };
 
       onRegisterUser(verifiedUser);
 
-      // On signup, insert into profiles table: wallet_balance 33000, gift_balance 100000
+      // On signup, insert into profiles table with welcome 500 bonus
       signUpWithSupabase(
         verifiedUser.email,
         verifiedUser.password || 'UniNest@123',

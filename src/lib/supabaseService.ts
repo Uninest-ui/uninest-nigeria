@@ -23,7 +23,7 @@ export interface SupabaseProfile {
   updated_at?: string;
 }
 
-// 1. On signup, insert into profiles table: wallet_balance 33000, gift_balance 100000
+// 1. On signup, insert into profiles table: wallet_balance 500, gift_balance 500 (welcome bonus)
 export async function insertSignupProfileToSupabase(
   user: UniNestUser,
   authUid?: string
@@ -38,8 +38,8 @@ export async function insertSignupProfileToSupabase(
     full_name: user.name || 'UniNest Student',
     phone: user.phone || '',
     role: user.role || 'student',
-    wallet_balance: 33000,
-    gift_balance: 100000,
+    wallet_balance: 500,
+    gift_balance: 500,
     university: user.university || 'Niger Delta University',
     institution: user.university || 'Niger Delta University',
     department: user.department || 'General Studies',
@@ -60,8 +60,8 @@ export async function insertSignupProfileToSupabase(
       const minimalPayload: Record<string, any> = {
         id: profileId,
         email: email,
-        wallet_balance: 33000,
-        gift_balance: 100000
+        wallet_balance: 500,
+        gift_balance: 500
       };
       if (user.name) minimalPayload.full_name = user.name;
       const { data: retryData, error: retryError } = await supabase
@@ -72,7 +72,7 @@ export async function insertSignupProfileToSupabase(
       if (retryError) {
         console.error('Supabase profile minimal insert error:', retryError.message);
       } else {
-        console.log('✅ Supabase profile saved with wallet_balance 33000, gift_balance 100000:', retryData);
+        console.log('✅ Supabase profile saved with welcome bonus 500:', retryData);
         return retryData;
       }
     } else {
@@ -110,9 +110,9 @@ export async function fetchProfilesFromSupabase(): Promise<UniNestUser[]> {
       university: row.university || row.institution || 'Niger Delta University',
       department: row.department || 'General Studies',
       avatarUrl: row.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-      // Persist Supabase balance data
-      walletBalance: typeof row.wallet_balance === 'number' ? row.wallet_balance : 33000,
-      giftBalance: typeof row.gift_balance === 'number' ? row.gift_balance : 100000
+      // Persist Supabase balance data (sanitize demo 100000/15000 to welcome 500)
+      walletBalance: typeof row.wallet_balance === 'number' && row.wallet_balance !== 33000 ? row.wallet_balance : 500,
+      giftBalance: typeof row.gift_balance === 'number' && row.gift_balance !== 100000 && row.gift_balance !== 15000 ? row.gift_balance : 500
     }));
   } catch (err) {
     console.error('Error fetching profiles from Supabase:', err);
