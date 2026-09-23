@@ -51,53 +51,7 @@ export interface RoommateMatchNotification {
   isRead: boolean;
 }
 
-const INITIAL_ROOMMATE_NOTIFICATIONS: RoommateMatchNotification[] = [
-  {
-    id: 'rm-notif-1',
-    candidateName: 'Tariere Keme',
-    matchScore: 98,
-    institution: 'Niger Delta University (NDU)',
-    department: 'Medical Lab Science',
-    level: '300L',
-    roomType: 'Self-Contain Shared (1 Roommate)',
-    budget: '₦70,000 - ₦90,000',
-    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80',
-    matchedHabits: ['Quiet / Serious Study', 'Cook Daily', 'Very Strict & Tidy'],
-    phone: '08039847154',
-    timestamp: '15 mins ago',
-    isRead: false
-  },
-  {
-    id: 'rm-notif-2',
-    candidateName: 'Ebiere Preye',
-    matchScore: 94,
-    institution: 'Federal University Otuoke (FUOTUOKE)',
-    department: 'Computer Science',
-    level: '200L',
-    roomType: '1-Bedroom Flat Share',
-    budget: '₦60,000 - ₦80,000',
-    avatarUrl: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=500&auto=format&fit=crop&q=80',
-    matchedHabits: ['Night Owl Coder', 'Respects Privacy', 'Weekend Guests Only'],
-    phone: '08123456789',
-    timestamp: '2 hours ago',
-    isRead: false
-  },
-  {
-    id: 'rm-notif-3',
-    candidateName: 'Chukwuma Eze',
-    matchScore: 91,
-    institution: 'University of Port Harcourt (UNIPORT)',
-    department: 'Mechanical Engineering',
-    level: '400L',
-    roomType: 'Shared Lodge Room',
-    budget: '₦90,000 - ₦110,000',
-    avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&auto=format&fit=crop&q=80',
-    matchedHabits: ['Early Bird', 'Serious Academic', 'Clean Environment'],
-    phone: '08098765432',
-    timestamp: 'Yesterday',
-    isRead: true
-  }
-];
+const INITIAL_ROOMMATE_NOTIFICATIONS: RoommateMatchNotification[] = [];
 
 interface BayelsaHousingTabProps {
   user: UniNestUser;
@@ -118,7 +72,15 @@ export const BayelsaHousingTab: React.FC<BayelsaHousingTabProps> = ({
   const [notifications, setNotifications] = useState<RoommateMatchNotification[]>(() => {
     try {
       const saved = localStorage.getItem('uninest_roommate_notifs');
-      return saved ? JSON.parse(saved) : INITIAL_ROOMMATE_NOTIFICATIONS;
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          // Filter out demo notifications (rm-notif-1, rm-notif-2, rm-notif-3)
+          const filtered = parsed.filter((n: RoommateMatchNotification) => !['rm-notif-1', 'rm-notif-2', 'rm-notif-3'].includes(n.id));
+          return filtered;
+        }
+      }
+      return INITIAL_ROOMMATE_NOTIFICATIONS;
     } catch {
       return INITIAL_ROOMMATE_NOTIFICATIONS;
     }
