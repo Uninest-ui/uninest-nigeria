@@ -525,8 +525,8 @@ export const AuthCard: React.FC<AuthCardProps> = ({
       const verifiedUser: UniNestUser = {
         ...pendingSignupUser,
         verified: true,
-        walletBalance: 500,
-        giftBalance: 500
+        walletBalance: 0,
+        giftBalance: 0
       };
 
       onRegisterUser(verifiedUser);

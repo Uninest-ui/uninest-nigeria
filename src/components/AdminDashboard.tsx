@@ -35,11 +35,12 @@ import {
   Award,
   MessageSquare,
   Key,
-  Camera
+  Camera,
+  Bell
 } from 'lucide-react';
 import { UniNestUser, STSAccount, NewsItem, AdminLog, CrowdfundingCampaign, DepositWithdrawalApproval, LiveSupportConversation, LiveSupportMessage } from '../types';
 import { UniNestLogo } from './UniNestLogo';
-import { sendNewsletterBroadcast } from '../services/emailService';
+import { sendNewsletterBroadcast, sendNewUserSignupAdminAlert } from '../services/emailService';
 import { NIGERIAN_UNIVERSITIES } from '../data/uninestData';
 import { AdminCrowdfundingModule } from './AdminCrowdfundingModule';
 import { AdminApprovalsModule } from './AdminApprovalsModule';
@@ -197,6 +198,36 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setBroadcastSubject('');
     setBroadcastMessage('');
     setTimeout(() => setBroadcastResult(null), 6000);
+  };
+
+  // Test New User Signup Email Alert to Admin
+  const [testSignupEmailLoading, setTestSignupEmailLoading] = useState(false);
+  const [testSignupEmailResult, setTestSignupEmailResult] = useState<string | null>(null);
+
+  const handleSendTestSignupAlert = async () => {
+    setTestSignupEmailLoading(true);
+    setTestSignupEmailResult(null);
+    const targetEmail = adminUser?.email || 'amaechihellis@gmail.com';
+    const sampleUser = {
+      name: 'Sample Nigerian Student (Test)',
+      email: 'student.sample@ndu.edu.ng',
+      phone: '08123456789',
+      university: 'Niger Delta University (NDU)',
+      department: 'Computer Science (200L)',
+      role: 'student',
+      createdAt: new Date().toLocaleString()
+    };
+
+    try {
+      const res = await sendNewUserSignupAdminAlert(sampleUser, [targetEmail, 'admin@uninest.com']);
+      setTestSignupEmailResult(`✅ Test Email Alert successfully dispatched to ${targetEmail} and admin mailbox!`);
+      onAddLog('Tested Signup Email Alert', `Dispatched test registration alert to ${targetEmail}`);
+    } catch (err: any) {
+      setTestSignupEmailResult(`⚠️ Alert test triggered: ${err?.message || 'Check EmailJS console'}`);
+    } finally {
+      setTestSignupEmailLoading(false);
+      setTimeout(() => setTestSignupEmailResult(null), 8000);
+    }
   };
 
   const filteredUsers = users.filter(u => {
@@ -675,6 +706,51 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <span>{broadcastLoading ? 'Broadcasting via EmailJS...' : `Broadcast to ${subscribers.length} Subscribers`}</span>
                   </button>
                 </form>
+              </div>
+
+              {/* Real-Time Admin Email Alerts for New User Sign-Ups */}
+              <div className="p-6 rounded-3xl bg-slate-800/60 border border-amber-500/30 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-base font-bold text-white flex items-center gap-2">
+                    <Bell className="w-4 h-4 text-amber-400" />
+                    <span>New User Sign-Up Email Alerts</span>
+                  </h3>
+                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                    ACTIVE
+                  </span>
+                </div>
+
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  The system automatically delivers instant email alerts to the Admin whenever any new student or user completes registration on UniNest.
+                </p>
+
+                <div className="p-3 rounded-2xl bg-slate-950/70 border border-slate-700/80 space-y-1.5 text-xs">
+                  <div className="flex items-center justify-between text-slate-400 text-[11px]">
+                    <span>Notification Mailboxes:</span>
+                    <span className="text-amber-400 font-mono font-bold">2 Addresses Configured</span>
+                  </div>
+                  <div className="font-mono text-[11px] text-slate-200 space-y-0.5">
+                    <div>1. <strong>{adminUser?.email || 'amaechihellis@gmail.com'}</strong> (Primary Admin)</div>
+                    <div>2. <strong>admin@uninest.com</strong> (Institutional HQ)</div>
+                  </div>
+                </div>
+
+                {testSignupEmailResult && (
+                  <div className="p-2.5 rounded-xl bg-emerald-500/20 text-emerald-300 text-xs font-semibold border border-emerald-500/30">
+                    {testSignupEmailResult}
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={handleSendTestSignupAlert}
+                  disabled={testSignupEmailLoading}
+                  className="w-full h-10 rounded-xl bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-slate-950 font-black text-xs transition flex items-center justify-center gap-2 cursor-pointer shadow-md"
+                >
+                  <Send className="w-3.5 h-3.5 text-slate-950" />
+                  <span>{testSignupEmailLoading ? 'Sending Test Alert via EmailJS...' : 'Send Test Sign-Up Alert to Admin Email'}</span>
+                </button>
               </div>
             </div>
 

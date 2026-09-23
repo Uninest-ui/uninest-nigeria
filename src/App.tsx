@@ -50,7 +50,7 @@ import { AuthCard } from './components/AuthCard';
 import { StudentDashboard } from './components/StudentDashboard';
 import { AdminDashboard } from './components/AdminDashboard';
 import { GuestDashboard } from './components/GuestDashboard';
-import { sendStudentGiftEmail, sendCampusNewsNotificationEmail } from './services/emailService';
+import { sendStudentGiftEmail, sendNewUserSignupAdminAlert } from './services/emailService';
 import { supabase, insertSignupProfileToSupabase, fetchProfilesFromSupabase, updateProfileInSupabase } from './lib/supabaseService';
 import { approvalService } from './utils/approvalService';
 
@@ -650,6 +650,29 @@ export const App: React.FC = () => {
     };
     setStsSavingsAccounts(prev => [...prev, newStsSavings]);
     addAdminLog('New Student Sign Up & STS Account Bootstrapped (₦500 in STS Vault)', userWithBalances.email);
+
+    // Send Email Alert to Admin notifying them of the new user sign up
+    const adminRecipients: string[] = ['amaechihellis@gmail.com', 'admin@uninest.com'];
+    if (adminAccount?.email && !adminRecipients.includes(adminAccount.email)) {
+      adminRecipients.push(adminAccount.email);
+    }
+    sendNewUserSignupAdminAlert(
+      {
+        name: userWithBalances.name,
+        email: userWithBalances.email,
+        phone: userWithBalances.phone,
+        university: userWithBalances.university,
+        department: userWithBalances.department,
+        role: userWithBalances.role,
+        createdAt: userWithBalances.createdAt
+      },
+      adminRecipients
+    ).then(res => {
+      console.log('Admin signup alert notification sent:', res);
+      addAdminLog('Email Alert Dispatched to Admin', `New user registered: ${userWithBalances.email} (${userWithBalances.name || 'Student'})`);
+    }).catch(err => {
+      console.warn('Admin signup alert delivery notice:', err);
+    });
   };
 
   const handleUpdatePassword = (emailOrPhone: string, newPass: string) => {
