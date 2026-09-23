@@ -214,9 +214,9 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
   const [isBalanceHidden, setIsBalanceHidden] = useState(false);
   const [copiedStsAccount, setCopiedStsAccount] = useState(false);
 
-  const stsLockedBalance = stsSavingsAccount?.currentBalance ?? 0;
-  const rawStsGift = stsSavingsAccount?.giftAccountBalance ?? stsSavingsAccount?.giftBalance ?? 500;
-  const stsGiftBalance = (rawStsGift === 100000 || rawStsGift === 15000) ? 500 : rawStsGift;
+  const stsLockedBalance = stsSavingsAccount?.currentBalance ?? 500;
+  const rawStsGift = stsSavingsAccount?.giftAccountBalance ?? stsSavingsAccount?.giftBalance ?? 0;
+  const stsGiftBalance = (rawStsGift === 100000 || rawStsGift === 15000 || rawStsGift === 500) ? 0 : rawStsGift;
   const stsTotalBalance = stsLockedBalance + stsGiftBalance;
   const stsAccountNo = stsSavingsAccount?.stsAccountNumber || getStudentSTSWalletNumber(safeUser.email, safeUser.phone);
 

@@ -103,15 +103,15 @@ export const App: React.FC = () => {
           );
           const combined = hasAdmin ? realUsers : [DEFAULT_ADMIN, ...realUsers];
           
-          // Ensure admin user is healthy and all users have spendable gifting balance reset to welcome 500 NGN
+          // Ensure admin user is healthy and all users have spendable wallet & gifting balances reset to ₦0 (welcome ₦500 is in their locked STS vault)
           const normalized = combined.map(u => {
             if (u.role === 'admin' || (u.email && (u.email.toLowerCase() === 'admin@uninest.com' || u.email.toLowerCase() === 'amaechihellis@gmail.com'))) {
               return { ...DEFAULT_ADMIN, ...u, role: 'admin' as const, password: u.password || 'Admin@123' };
             }
             const rawGift = (u as any).giftBalance;
-            const cleanGift = (rawGift === 100000 || rawGift === 15000 || rawGift === undefined) ? 500 : rawGift;
+            const cleanGift = (rawGift === 100000 || rawGift === 15000 || rawGift === 500 || rawGift === undefined) ? 0 : rawGift;
             const rawWallet = (u as any).walletBalance;
-            const cleanWallet = (rawWallet === 33000 || rawWallet === undefined) ? 500 : rawWallet;
+            const cleanWallet = (rawWallet === 33000 || rawWallet === 500 || rawWallet === undefined) ? 0 : rawWallet;
             return {
               ...u,
               giftBalance: cleanGift,
@@ -145,7 +145,25 @@ export const App: React.FC = () => {
   const [stsSavingsAccounts, setStsSavingsAccounts] = useState<STSSavingsAccount[]>(() => {
     try {
       const saved = localStorage.getItem('sts_savings_accounts');
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          const sanitized = parsed.map((acc: any) => {
+            const curBal = typeof acc.currentBalance === 'number' && acc.currentBalance !== 33000 ? acc.currentBalance : 500;
+            const rawGift = acc.giftAccountBalance ?? acc.giftBalance ?? 0;
+            const cleanGift = (rawGift === 100000 || rawGift === 15000 || rawGift === 500) ? 0 : rawGift;
+            return {
+              ...acc,
+              currentBalance: curBal, // Welcome 500 is in STS lock vault
+              giftAccountBalance: cleanGift, // 0 for initial gifting account
+              giftBalance: cleanGift,
+              walletBalance: curBal + cleanGift
+            };
+          });
+          localStorage.setItem('sts_savings_accounts', JSON.stringify(sanitized));
+          return sanitized;
+        }
+      }
     } catch (e) {
       console.error(e);
     }
@@ -349,16 +367,35 @@ export const App: React.FC = () => {
     return INITIAL_FAQS;
   });
 
-  // Cross-Campus Student Questions
+  // Cross-Campus Student Questions (Demo accounts & questions removed)
   const [studentQuestions, setStudentQuestions] = useState<StudentQuestion[]>(() => {
     try {
       const saved = localStorage.getItem('uninest_student_questions');
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          const demoIds = ['q-001', 'q-002', 'q-003'];
+          const demoEmails = [
+            'ebi.tonye@fuotuoke.edu.ng',
+            'precious.alagoa@ndu.edu.ng',
+            'oghene.k@delsu.edu.ng',
+            'student@campus.edu',
+            'tariere.preye@bmu.edu.ng'
+          ];
+          const filtered = parsed.filter(
+            (q: any) =>
+              !demoIds.includes(q.id) &&
+              !demoEmails.includes(q.authorEmail?.toLowerCase())
+          );
+          localStorage.setItem('uninest_student_questions', JSON.stringify(filtered));
+          return filtered;
+        }
+      }
     } catch (e) {
       console.error(e);
     }
-    localStorage.setItem('uninest_student_questions', JSON.stringify(INITIAL_STUDENT_QUESTIONS));
-    return INITIAL_STUDENT_QUESTIONS;
+    localStorage.setItem('uninest_student_questions', JSON.stringify([]));
+    return [];
   });
 
   // Crowdfunding Campaigns & Paystack Escrow
@@ -467,9 +504,9 @@ export const App: React.FC = () => {
       return u;
     }
     const rawGift = u.giftBalance;
-    const cleanGift = (rawGift === 100000 || rawGift === 15000 || rawGift === undefined) ? 500 : rawGift;
+    const cleanGift = (rawGift === 100000 || rawGift === 15000 || rawGift === 500 || rawGift === undefined) ? 0 : rawGift;
     const rawWallet = u.walletBalance;
-    const cleanWallet = (rawWallet === 33000 || rawWallet === undefined) ? 500 : rawWallet;
+    const cleanWallet = (rawWallet === 33000 || rawWallet === 500 || rawWallet === undefined) ? 0 : rawWallet;
     return {
       ...u,
       giftBalance: cleanGift,
@@ -565,19 +602,21 @@ export const App: React.FC = () => {
 
   // User Actions
   const handleRegisterUser = (newUser: UniNestUser) => {
+    // New students receive ₦0 in spendable wallet and ₦0 in gift account.
+    // The welcome bonus of ₦500 is locked strictly in their STS Vault.
     const userWithBalances: UniNestUser = {
       ...newUser,
-      walletBalance: typeof (newUser as any).walletBalance === 'number' ? (newUser as any).walletBalance : 33000,
-      giftBalance: typeof (newUser as any).giftBalance === 'number' ? (newUser as any).giftBalance : 100000
+      walletBalance: typeof (newUser as any).walletBalance === 'number' && (newUser as any).walletBalance !== 33000 ? (newUser as any).walletBalance : 0,
+      giftBalance: typeof (newUser as any).giftBalance === 'number' && (newUser as any).giftBalance !== 100000 && (newUser as any).giftBalance !== 15000 ? (newUser as any).giftBalance : 0
     };
     setUsers(prev => [...prev, userWithBalances]);
 
-    // On signup, insert into profiles table: wallet_balance 33000, gift_balance 100000
+    // On signup, insert into profiles table with 0 spendable balance
     insertSignupProfileToSupabase(userWithBalances).catch(err => {
       console.error('Failed to save new user to Supabase profiles:', err);
     });
 
-    // Create default STS savings account for new user with initialized balances
+    // Create STS savings account for new user: ₦500 welcome bonus is in their STS Lock Vault (not in gifting spendable account)
     const newStsSavings: STSSavingsAccount = {
       id: `sts-sav-${Date.now()}`,
       userEmail: userWithBalances.email,
@@ -587,14 +626,16 @@ export const App: React.FC = () => {
       currentLevel: '100L',
       expectedSignOutYear: '2028',
       targetAmount: 300000,
-      currentBalance: 500,
-      giftAccountBalance: 100000,
-      giftBalance: 100000,
-      walletBalance: 33000,
+      currentBalance: 500, // Welcome bonus of 500 is in their STS Lock vault
+      giftAccountBalance: 0, // Distinct gifting account (starts at 0)
+      giftBalance: 0,
+      walletBalance: 500, // Total net (500 locked vault + 0 spendable gift)
       monthlyContribution: 10000,
       savingsFrequency: 'monthly',
       startDate: new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
       status: 'active',
+      isActivated: false, // New user must pay 500 first to open form and start using STS vault (confirmed by admin)
+      activationFeePaid: false,
       activeLoan: null,
       transactions: [
         {
@@ -602,13 +643,13 @@ export const App: React.FC = () => {
           type: 'deposit',
           amount: 500,
           date: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
-          description: 'Welcome Sign-up Bonus Deposit (₦500)',
+          description: 'Welcome Sign-up Bonus (₦500 Locked in STS Vault)',
           balanceAfter: 500
         }
       ]
     };
     setStsSavingsAccounts(prev => [...prev, newStsSavings]);
-    addAdminLog('New Student Sign Up & STS Account Bootstrapped', userWithBalances.email);
+    addAdminLog('New Student Sign Up & STS Account Bootstrapped (₦500 in STS Vault)', userWithBalances.email);
   };
 
   const handleUpdatePassword = (emailOrPhone: string, newPass: string) => {

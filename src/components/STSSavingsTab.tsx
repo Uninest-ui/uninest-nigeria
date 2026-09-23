@@ -78,6 +78,62 @@ export const STSSavingsTab: React.FC<STSSavingsTabProps> = ({
     return stored === 'true';
   });
   const [activationSuccess, setActivationSuccess] = useState<string | null>(null);
+  const [showActivationModal, setShowActivationModal] = useState<boolean>(false);
+  const [isActivationPending, setIsActivationPending] = useState<boolean>(() => {
+    try {
+      const rawApprovals = localStorage.getItem('uninest_finance_approvals');
+      if (rawApprovals) {
+        const parsed = JSON.parse(rawApprovals);
+        if (Array.isArray(parsed)) {
+          return parsed.some(
+            (a: any) =>
+              a.status === 'pending' &&
+              a.userEmail?.toLowerCase() === safeUser.email.toLowerCase() &&
+              (a.paymentCategory === 'sts_activation' || (a.amount === 500 && a.reason?.toLowerCase().includes('activation')))
+          );
+        }
+      }
+    } catch {
+      // fallback
+    }
+    return false;
+  });
+
+  // Listen for admin approvals and finance changes to automatically unlock vault upon admin approval
+  useEffect(() => {
+    const handleFinanceSync = () => {
+      const stored = localStorage.getItem(`uninest_sts_activated_${safeUser.email}`);
+      if (stored === 'true' || account?.isActivated || account?.activationFeePaid) {
+        setIsStsActivated(true);
+        setIsActivationPending(false);
+      } else {
+        try {
+          const rawApprovals = localStorage.getItem('uninest_finance_approvals');
+          if (rawApprovals) {
+            const parsed = JSON.parse(rawApprovals);
+            if (Array.isArray(parsed)) {
+              const pending = parsed.some(
+                (a: any) =>
+                  a.status === 'pending' &&
+                  a.userEmail?.toLowerCase() === safeUser.email.toLowerCase() &&
+                  (a.paymentCategory === 'sts_activation' || (a.amount === 500 && a.reason?.toLowerCase().includes('activation')))
+              );
+              setIsActivationPending(pending);
+            }
+          }
+        } catch {
+          // ignore
+        }
+      }
+    };
+
+    window.addEventListener('uninest-finance-update', handleFinanceSync);
+    window.addEventListener('storage', handleFinanceSync);
+    return () => {
+      window.removeEventListener('uninest-finance-update', handleFinanceSync);
+      window.removeEventListener('storage', handleFinanceSync);
+    };
+  }, [safeUser.email, account]);
 
   // Gifting Modal State
   const [showGiftModal, setShowGiftModal] = useState(false);
@@ -200,8 +256,12 @@ export const STSSavingsTab: React.FC<STSSavingsTabProps> = ({
   // Trigger modal immediately when user arrives via quick action (Home Page Save in STS or Send Gift)
   useEffect(() => {
     if (initialAction === 'save') {
-      setShowSaveModal(true);
-      setShowStsDepositCard(true);
+      if (!isStsActivated) {
+        setShowActivationModal(true);
+      } else {
+        setShowSaveModal(true);
+        setShowStsDepositCard(true);
+      }
       onClearInitialAction?.();
     } else if (initialAction === 'gift') {
       setShowGiftModal(true);
@@ -210,7 +270,7 @@ export const STSSavingsTab: React.FC<STSSavingsTabProps> = ({
       setShowSignOutModal(true);
       onClearInitialAction?.();
     }
-  }, [initialAction, onClearInitialAction]);
+  }, [initialAction, isStsActivated, onClearInitialAction]);
 
   // Gifting Account & Incoming Payments (Buyer payments, student gifts, sponsor support - all pending until admin confirmed)
   const [incomingPayments, setIncomingPayments] = useState<Array<{
@@ -226,8 +286,8 @@ export const STSSavingsTab: React.FC<STSSavingsTabProps> = ({
   const [adminConfirmNotice, setAdminConfirmNotice] = useState<string | null>(null);
 
   const [availableGiftBalance, setAvailableGiftBalance] = useState(() => {
-    const raw = account?.giftAccountBalance ?? account?.giftBalance ?? 500;
-    return (raw === 100000 || raw === 15000) ? 500 : raw;
+    const raw = account?.giftAccountBalance ?? account?.giftBalance ?? 0;
+    return (raw === 100000 || raw === 15000 || raw === 500) ? 0 : raw;
   });
 
   const pendingIncomingAmount = useMemo(() => {
@@ -313,34 +373,8 @@ export const STSSavingsTab: React.FC<STSSavingsTabProps> = ({
     setTimeout(() => setTokenClaimSuccess(null), 9000);
   };
 
-  const giftsSent = account?.giftsSent || [
-    {
-      id: 'gift-01',
-      senderEmail: safeUser.email,
-      senderName: safeUser.name || 'Tariere Ebimobowei',
-      recipientEmail: 'ebi.tonye@fuotuoke.edu.ng',
-      recipientName: 'Ebiere Tonye',
-      recipientSchool: 'FUOTUOKE',
-      amount: 5000,
-      occasion: 'Exam Handouts & Photocopy 📚',
-      message: 'Best of luck in your semester exams! Grab the handouts on me.',
-      date: 'Aug 26, 2026'
-    }
-  ];
-
-  const giftsReceived = account?.giftsReceived || [
-    {
-      id: 'gift-02',
-      senderEmail: 'alumni.preye@alumni.ndu.edu.ng',
-      senderName: 'Engr. Preye (NDU Alumni)',
-      recipientEmail: safeUser.email,
-      recipientName: safeUser.name || 'Tariere Ebimobowei',
-      amount: 10000,
-      occasion: 'Engineering Lab Project Support 💡',
-      message: 'Keep making the Faculty proud. Stay focused!',
-      date: 'Aug 28, 2026'
-    }
-  ];
+  const giftsSent = account?.giftsSent || [];
+  const giftsReceived = account?.giftsReceived || [];
 
   const totalGiftsSent = giftsSent.reduce((acc, g) => acc + g.amount, 0);
   const totalGiftsReceived = giftsReceived.reduce((acc, g) => acc + g.amount, 0);
@@ -1039,7 +1073,13 @@ export const STSSavingsTab: React.FC<STSSavingsTabProps> = ({
           <div className="flex flex-wrap items-center gap-2 self-start sm:self-center">
             <button
               type="button"
-              onClick={() => setShowSaveModal(true)}
+              onClick={() => {
+                if (!isStsActivated) {
+                  setShowActivationModal(true);
+                } else {
+                  setShowSaveModal(true);
+                }
+              }}
               className="px-4 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
             >
               <PlusCircle className="w-4 h-4" />
@@ -1047,7 +1087,13 @@ export const STSSavingsTab: React.FC<STSSavingsTabProps> = ({
             </button>
             <button
               type="button"
-              onClick={() => setShowStsDepositCard(!showStsDepositCard)}
+              onClick={() => {
+                if (!isStsActivated) {
+                  setShowActivationModal(true);
+                } else {
+                  setShowStsDepositCard(!showStsDepositCard);
+                }
+              }}
               className="px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <span>{showStsDepositCard ? 'Hide Details' : 'View Account Details'}</span>
@@ -1138,20 +1184,38 @@ export const STSSavingsTab: React.FC<STSSavingsTabProps> = ({
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>New STS User Enrollment Fee (₦500)</span>
               </div>
-              <h3 className="text-lg font-black text-slate-900">
+              <h3 className="text-lg font-black text-slate-900 dark:text-white">
                 Activate Your Graduation Lock Vault Ledger
               </h3>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                UniNest charges a nominal one-time <strong>₦500 activation fee</strong> for all students using the Save Till Sign-Out (STS) service. This establishes your official verified graduation ledger, reserves your convocation sign-out clearance certificate, and generates your personal STS Wallet Number for peer gifts.
+              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                UniNest charges a nominal one-time <strong>₦500 activation fee</strong> for all students using the Save Till Sign-Out (STS) service. This establishes your official verified graduation ledger, reserves your convocation sign-out clearance certificate, unlocks the STS Deposit form, and generates your personal STS Wallet Number.
               </p>
+              {isActivationPending && (
+                <div className="p-3 rounded-2xl bg-amber-100/80 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-700 text-xs font-bold text-amber-900 dark:text-amber-200 flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 animate-spin" />
+                  <span>Your ₦500 activation payment proof is currently under review by Admin. Vault access and deposit forms will unlock immediately upon confirmation.</span>
+                </div>
+              )}
             </div>
-            <button
-              onClick={handleActivateSTS}
-              className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-950 font-black text-xs shadow-lg transition flex items-center justify-center gap-2 cursor-pointer shrink-0"
-            >
-              <Sparkles className="w-4 h-4 text-slate-950" />
-              <span>Activate STS Vault (₦500)</span>
-            </button>
+            {isActivationPending ? (
+              <button
+                type="button"
+                onClick={() => setShowActivationModal(true)}
+                className="px-5 py-3.5 rounded-2xl bg-amber-100 hover:bg-amber-200 text-amber-900 font-black text-xs border border-amber-300 shadow-sm transition flex items-center justify-center gap-2 cursor-pointer shrink-0"
+              >
+                <Clock className="w-4 h-4 text-amber-700" />
+                <span>Pending Admin Confirmation (View)</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowActivationModal(true)}
+                className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-950 font-black text-xs shadow-lg transition flex items-center justify-center gap-2 cursor-pointer shrink-0"
+              >
+                <Sparkles className="w-4 h-4 text-slate-950" />
+                <span>Pay ₦500 to Activate Vault Form</span>
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -2735,6 +2799,93 @@ export const STSSavingsTab: React.FC<STSSavingsTabProps> = ({
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* ₦500 STS Form Activation Fee Modal (Gated for First Time STS Users) */}
+      {showActivationModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-xs overflow-y-auto"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowActivationModal(false);
+          }}
+        >
+          <div
+            className="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col max-h-[92vh] my-auto animate-in fade-in zoom-in duration-200 overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 p-4 bg-white dark:bg-slate-900 shrink-0 sticky top-0 z-10">
+              <button
+                type="button"
+                onClick={() => setShowActivationModal(false)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-black transition cursor-pointer border border-slate-200 dark:border-slate-700 shadow-2xs"
+              >
+                <ArrowLeft className="w-4 h-4 text-[#FF6A00]" />
+                <span>Return to STS</span>
+              </button>
+
+              <div className="text-center">
+                <span className="text-xs font-black text-amber-600 dark:text-amber-400 block">STS Vault Activation</span>
+                <span className="text-[10px] text-slate-400">One-Time ₦500 Enrollment Gate</span>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowActivationModal(false)}
+                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition"
+                title="Close"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="overflow-y-auto p-4 sm:p-5 space-y-4 flex-1">
+              <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-xs text-amber-950 dark:text-amber-200 space-y-2">
+                <div className="flex items-center gap-2 font-black text-amber-800 dark:text-amber-300">
+                  <Sparkles className="w-4 h-4" />
+                  <span>Mandatory First-Time STS Enrollment (₦500)</span>
+                </div>
+                <p className="text-[11px] leading-relaxed text-amber-900/90 dark:text-amber-300/90">
+                  Any new student who wants to save money in the STS Vault must pay <strong>₦500</strong> to open the form and activate the ledger. All payments are submitted to the official bank account and must be confirmed by the admin in the dashboard.
+                </p>
+                <div className="text-[11px] font-semibold text-amber-800 dark:text-amber-400 bg-white/70 dark:bg-slate-900/60 p-2.5 rounded-xl border border-amber-200/60 dark:border-amber-800/40">
+                  💡 <em>Note:</em> Your ₦500 welcome bonus is safely stored in your locked STS Vault (not the spendable gifting account).
+                </div>
+              </div>
+
+              {isActivationPending && (
+                <div className="p-4 rounded-2xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 text-xs text-blue-950 dark:text-blue-200 space-y-1">
+                  <div className="flex items-center gap-2 font-black text-blue-800 dark:text-blue-300">
+                    <Clock className="w-4 h-4 animate-spin text-blue-600" />
+                    <span>Activation Payment Under Review</span>
+                  </div>
+                  <p className="text-[11px] leading-relaxed text-blue-900/90 dark:text-blue-300/90">
+                    Your proof of payment has already been sent to the Admin Dashboard for confirmation. Once confirmed by the administrator, your STS form will unlock automatically!
+                  </p>
+                </div>
+              )}
+
+              <OfficialBankPaymentCard
+                amount={500}
+                purpose={`STS Save Till Sign-Out Vault Activation Form Fee - ${safeUser.university || 'Campus'}`}
+                studentName={safeUser.name}
+                studentEmail={safeUser.email}
+                studentPhone={safeUser.phone}
+                university={safeUser.university}
+                paymentCategory="sts_activation"
+                onCancel={() => setShowActivationModal(false)}
+                cancelButtonLabel="Close & Return to STS Vault"
+                onPaymentSubmitted={() => {
+                  setIsActivationPending(true);
+                  setActivationSuccess('✅ Proof of ₦500 activation payment submitted to Admin! As soon as the admin confirms it in the dashboard, your STS savings vault form will be fully unlocked.');
+                  setTimeout(() => {
+                    setShowActivationModal(false);
+                    setActivationSuccess(null);
+                  }, 4000);
+                }}
+              />
             </div>
           </div>
         </div>

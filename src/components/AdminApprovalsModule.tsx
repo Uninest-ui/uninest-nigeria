@@ -20,7 +20,8 @@ import {
   Image as ImageIcon,
   Download,
   PiggyBank,
-  Plus
+  Plus,
+  Sparkles
 } from 'lucide-react';
 import { DepositWithdrawalApproval } from '../types';
 import { approvalService } from '../utils/approvalService';
@@ -278,6 +279,13 @@ export const AdminApprovalsModule: React.FC<AdminApprovalsModuleProps> = ({
                         {isDeposit ? <ArrowDownLeft className="w-3 h-3" /> : <ArrowUpRight className="w-3 h-3" />}
                         {item.type.toUpperCase()}
                       </span>
+
+                      {item.paymentCategory === 'sts_activation' && (
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/50 flex items-center gap-1">
+                          <Sparkles className="w-3 h-3 text-amber-400" />
+                          STS Form Activation (₦500)
+                        </span>
+                      )}
 
                       <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
                         item.status === 'pending'

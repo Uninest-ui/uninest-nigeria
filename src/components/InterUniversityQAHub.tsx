@@ -112,7 +112,7 @@ export const InterUniversityQAHub: React.FC<InterUniversityQAHubProps> = ({
 
   const [moderationNotice, setModerationNotice] = useState<string | null>(null);
 
-  // Discussion state per question (Strictly sanitized to remove any links or nude pictures)
+  // Discussion state per question (Strictly sanitized to remove any links or nude pictures - Demo comments cleared)
   const [commentsByQuestion, setCommentsByQuestion] = useState<Record<string, QuestionDiscussionComment[]>>(() => {
     try {
       const saved = localStorage.getItem('uninest_qa_comments');
@@ -120,35 +120,16 @@ export const InterUniversityQAHub: React.FC<InterUniversityQAHubProps> = ({
         const parsed = JSON.parse(saved);
         const cleaned: Record<string, QuestionDiscussionComment[]> = {};
         for (const [qid, comms] of Object.entries(parsed)) {
-          cleaned[qid] = sanitizeComments(comms as QuestionDiscussionComment[]);
+          if (qid !== 'q-001' && qid !== 'q-002' && qid !== 'q-003') {
+            cleaned[qid] = sanitizeComments(comms as QuestionDiscussionComment[]);
+          }
         }
         return cleaned;
       }
     } catch (e) {
       console.error(e);
     }
-    return {
-      'q-001': [
-        {
-          id: 'comm-1',
-          questionId: 'q-001',
-          authorEmail: 'preye.eng@ndu.edu.ng',
-          authorName: 'Preye Alabo',
-          authorUniversity: 'Niger Delta University (NDU)',
-          text: 'Notice that in step 3, the integration by parts rule requires u = x and dv = e^(2x) dx. Do not confuse the coefficients!',
-          createdAt: '2 hours ago'
-        },
-        {
-          id: 'comm-2',
-          questionId: 'q-001',
-          authorEmail: 'kemi.math@bmu.edu.ng',
-          authorName: 'Kemi Sanni',
-          authorUniversity: 'Bayelsa Medical University (BMU)',
-          text: 'This exact question appeared in our 2024 first semester GST exam at BMU. The answer given in Solution 1 is 100% correct.',
-          createdAt: '1 hour ago'
-        }
-      ]
-    };
+    return {};
   });
 
   const [newCommentInput, setNewCommentInput] = useState<Record<string, string>>({});
@@ -176,19 +157,16 @@ export const InterUniversityQAHub: React.FC<InterUniversityQAHubProps> = ({
   }>>(() => {
     try {
       const saved = localStorage.getItem('uninest_qa_reply_gifts');
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        delete parsed['ans-01'];
+        delete parsed['ans-02'];
+        return parsed;
+      }
     } catch (e) {
       console.error(e);
     }
-    return {
-      'ans-01': {
-        amount: 1000,
-        fee: 20, // 2%
-        netAmount: 980,
-        senderName: 'Tariere Ebimobowei',
-        date: 'Today'
-      }
-    };
+    return {};
   });
 
   const handleAddComment = (questionId: string) => {

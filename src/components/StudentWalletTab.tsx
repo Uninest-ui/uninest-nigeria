@@ -115,22 +115,22 @@ export const StudentWalletTab: React.FC<StudentWalletTabProps> = ({
     if (account?.transactions && account.transactions.length > 0) {
       return account.transactions;
     }
-    // Welcome initial transaction
+    // Welcome initial transaction (₦500 welcome bonus in STS Lock Vault)
     return [
       {
         id: 'tx-welcome-500',
         type: 'deposit' as const,
         amount: 500,
         date: 'Today',
-        description: 'UniNest Welcome Gifting Bonus',
+        description: 'UniNest Welcome Bonus (Locked in STS Vault)',
         balanceAfter: 500
       }
     ];
   }, [account]);
 
   const currentBalance = account?.currentBalance || 0;
-  const rawGift = account?.giftAccountBalance ?? account?.giftBalance ?? 500;
-  const giftWithdrawableBalance = (rawGift === 100000 || rawGift === 15000) ? 500 : rawGift;
+  const rawGift = account?.giftAccountBalance ?? account?.giftBalance ?? 0;
+  const giftWithdrawableBalance = (rawGift === 100000 || rawGift === 15000 || rawGift === 500) ? 0 : rawGift;
   // Master wallet balance carrying total amount (locked STS savings + spendable gift account)
   const totalWalletAmount = currentBalance + giftWithdrawableBalance;
   const withdrawalDate = account?.withdrawalDate || 'Nov 30, 2026';

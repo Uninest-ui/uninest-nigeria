@@ -84,7 +84,7 @@ export const approvalService = {
 
     localStorage.setItem(APPROVALS_KEY, JSON.stringify(updated));
 
-    // When an admin approves a manual deposit, automatically credit the student's STS savings account
+    // When an admin approves a manual deposit or STS activation fee, automatically credit the student's STS savings account / activate vault
     if (approvedItem && (approvedItem as DepositWithdrawalApproval).type === 'deposit') {
       try {
         const dep = approvedItem as DepositWithdrawalApproval;
@@ -111,18 +111,27 @@ export const approvalService = {
             startDate: formattedDate,
             targetGoalName: 'Final Year Project + Clearance + Convocation',
             targetAmount: 250000,
-            currentBalance: 0,
+            currentBalance: 500, // ₦500 welcome bonus in STS Vault
             giftAccountBalance: 0,
-            walletBalance: 0,
+            walletBalance: 500,
             status: 'active',
-            isActivated: true,
-            activationFeePaid: true,
+            isActivated: dep.paymentCategory === 'sts_activation' || dep.amount === 500,
+            activationFeePaid: dep.paymentCategory === 'sts_activation' || dep.amount === 500,
             transactions: []
           };
           accounts.push(target);
         }
 
-        target.currentBalance = (target.currentBalance || 0) + creditAmount;
+        const isActivationFee = dep.paymentCategory === 'sts_activation' || (dep.reason && dep.reason.toLowerCase().includes('activation'));
+
+        if (isActivationFee) {
+          target.isActivated = true;
+          target.activationFeePaid = true;
+          localStorage.setItem(`uninest_sts_activated_${cleanEmail}`, 'true');
+        } else {
+          target.currentBalance = (target.currentBalance || 0) + creditAmount;
+        }
+
         const giftBal = target.giftAccountBalance ?? target.giftBalance ?? 0;
         target.walletBalance = target.currentBalance + giftBal;
 
@@ -134,7 +143,9 @@ export const approvalService = {
           (t: any) => t.id === dep.id || (t.description && t.description.includes(dep.reference))
         );
 
-        const approvedDescription = `Deposit Confirmed & Approved by Admin [${dep.method || 'Bank Transfer'}] - Ref: ${dep.reference}`;
+        const approvedDescription = isActivationFee
+          ? `STS Vault Activation Fee (₦500) Confirmed & Activated by Admin - Ref: ${dep.reference}`
+          : `Deposit Confirmed & Approved by Admin [${dep.method || 'Bank Transfer'}] - Ref: ${dep.reference}`;
 
         if (pendingIndex !== -1) {
           target.transactions[pendingIndex] = {
