@@ -310,7 +310,7 @@ export const CrowdfundingTab: React.FC<CrowdfundingTabProps> = ({
               <span>UniNest Student Crowdfunding &amp; Mutual Aid</span>
               <span className="text-white/40">•</span>
               <span className="text-emerald-400 font-semibold flex items-center gap-1">
-                <Lock className="w-3 h-3" /> Paystack Escrow Protected
+                <Lock className="w-3 h-3" /> Official Bank Escrow Protected
               </span>
             </div>
 
@@ -319,7 +319,7 @@ export const CrowdfundingTab: React.FC<CrowdfundingTabProps> = ({
             </h1>
 
             <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
-              Every campaign is rigorously audited by UniNest Administration with uploaded proof documents and STS savings commitment. All donations are held in UniNest&apos;s dedicated Paystack Escrow vault and only disbursed upon verified milestone clearance.
+              Every campaign is rigorously audited by UniNest Administration with uploaded proof documents and STS savings commitment. All donations are held in UniNest&apos;s designated institutional bank escrow vault and only disbursed upon verified milestone clearance.
             </p>
           </div>
 
@@ -358,8 +358,8 @@ export const CrowdfundingTab: React.FC<CrowdfundingTabProps> = ({
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400 font-bold shrink-0">3</div>
             <div>
-              <p className="font-bold text-white text-[11px]">Paystack Escrow</p>
-              <p className="text-[10px] text-slate-400">Locked in escrow vault</p>
+              <p className="font-bold text-white text-[11px]">Official Escrow</p>
+              <p className="text-[10px] text-slate-400">Locked in bank vault</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -655,7 +655,7 @@ export const CrowdfundingTab: React.FC<CrowdfundingTabProps> = ({
                             className="flex-1 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-500 text-white font-bold text-xs shadow-md shadow-orange-600/20 transition flex items-center justify-center gap-1.5 cursor-pointer transform hover:-translate-y-0.5"
                           >
                             <HeartHandshake className="w-3.5 h-3.5" />
-                            <span>Donate via Paystack</span>
+                            <span>Donate via Official Escrow</span>
                           </button>
                         )}
 
@@ -1196,12 +1196,12 @@ export const CrowdfundingTab: React.FC<CrowdfundingTabProps> = ({
           <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-5 animate-in zoom-in-95">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-bold">
+                <div className="w-8 h-8 rounded-xl bg-orange-500 text-white flex items-center justify-center font-bold">
                   ₦
                 </div>
                 <div>
-                  <h3 className="font-extrabold text-slate-900 text-sm">Paystack Escrow Donation</h3>
-                  <p className="text-[10px] text-slate-500">Secured via UniNest Institutional Escrow</p>
+                  <h3 className="font-extrabold text-slate-900 text-sm">UniNest Escrow Donation</h3>
+                  <p className="text-[10px] text-slate-500">Secured via UniNest Institutional Bank Escrow</p>
                 </div>
               </div>
               <button
@@ -1293,98 +1293,40 @@ export const CrowdfundingTab: React.FC<CrowdfundingTabProps> = ({
                   />
                 </div>
 
-                {/* Payment Channel Selector */}
-                <div className="space-y-2">
-                  <label className="block font-bold text-slate-700 text-xs">
-                    Choose Donation Payment Channel
-                  </label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setDonationPaymentChannel('bank')}
-                      className={`p-2.5 rounded-xl text-xs font-bold border transition text-left cursor-pointer ${
-                        donationPaymentChannel === 'bank'
-                          ? 'bg-orange-50 border-orange-500 text-orange-950 shadow-xs'
-                          : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
-                      }`}
-                    >
-                      <div className="font-extrabold text-[12px]">Direct Bank (UBA)</div>
-                      <div className="text-[10px] text-slate-500">Manual transfer + WhatsApp verification</div>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setDonationPaymentChannel('paystack')}
-                      className={`p-2.5 rounded-xl text-xs font-bold border transition text-left cursor-pointer ${
-                        donationPaymentChannel === 'paystack'
-                          ? 'bg-emerald-50 border-emerald-500 text-emerald-950 shadow-xs'
-                          : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
-                      }`}
-                    >
-                      <div className="font-extrabold text-[12px]">Paystack Gateway</div>
-                      <div className="text-[10px] text-slate-500">Debit card / USSD checkout</div>
-                    </button>
-                  </div>
+                {/* Payment via Official Bank Escrow */}
+                <div className="pt-1">
+                  <OfficialBankPaymentCard
+                    amount={customAmount ? Number(customAmount) : donationAmount}
+                    purpose={`Emergency Crowdfunding Donation: ${selectedCampaignForDonation.title} (Beneficiary: ${selectedCampaignForDonation.studentName})`}
+                    studentName={isAnonymous ? 'Anonymous Donor' : (donorName || effectiveUser.name)}
+                    studentEmail={donorEmail || effectiveUser.email}
+                    studentPhone={effectiveUser.phone}
+                    university={selectedCampaignForDonation.institution}
+                    showCardTitle={false}
+                    onPaymentSubmitted={() => {
+                      const finalAmt = customAmount ? Number(customAmount) : donationAmount;
+                      if (onDonate) {
+                        onDonate(
+                          selectedCampaignForDonation.id,
+                          finalAmt,
+                          isAnonymous ? 'Anonymous Donor' : donorName,
+                          donorEmail,
+                          donorMessage,
+                          isAnonymous
+                        );
+                      } else if (onDonateToCampaign) {
+                        onDonateToCampaign(selectedCampaignForDonation.id, {
+                          amount: finalAmt,
+                          donorName: isAnonymous ? 'Anonymous Donor' : donorName,
+                          donorEmail,
+                          message: donorMessage,
+                          isAnonymous
+                        });
+                      }
+                      setPaystackStep('success');
+                    }}
+                  />
                 </div>
-
-                {donationPaymentChannel === 'bank' ? (
-                  <div className="pt-1">
-                    <OfficialBankPaymentCard
-                      amount={customAmount ? Number(customAmount) : donationAmount}
-                      purpose={`Emergency Crowdfunding Donation: ${selectedCampaignForDonation.title} (Beneficiary: ${selectedCampaignForDonation.studentName})`}
-                      studentName={isAnonymous ? 'Anonymous Donor' : (donorName || effectiveUser.name)}
-                      studentEmail={donorEmail || effectiveUser.email}
-                      studentPhone={effectiveUser.phone}
-                      university={selectedCampaignForDonation.institution}
-                      showCardTitle={false}
-                      onPaymentSubmitted={() => {
-                        const finalAmt = customAmount ? Number(customAmount) : donationAmount;
-                        if (onDonate) {
-                          onDonate(
-                            selectedCampaignForDonation.id,
-                            finalAmt,
-                            isAnonymous ? 'Anonymous Donor' : donorName,
-                            donorEmail,
-                            donorMessage,
-                            isAnonymous
-                          );
-                        } else if (onDonateToCampaign) {
-                          onDonateToCampaign(selectedCampaignForDonation.id, {
-                            amount: finalAmt,
-                            donorName: isAnonymous ? 'Anonymous Donor' : donorName,
-                            donorEmail,
-                            message: donorMessage,
-                            isAnonymous
-                          });
-                        }
-                        setPaystackStep('success');
-                      }}
-                    />
-                  </div>
-                ) : (
-                  <>
-                    {/* Paystack Guarantee */}
-                    <div className="p-3 rounded-2xl bg-emerald-50/70 border border-emerald-200 text-[11px] text-emerald-900 space-y-1">
-                      <div className="flex items-center gap-1.5 font-bold text-emerald-950">
-                        <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                        <span>UniNest Paystack Escrow Subaccount #0192</span>
-                      </div>
-                      <p className="text-[10px] text-emerald-800">
-                        Funds are isolated safely in escrow until the student&apos;s educational milestones are certified by UniNest.
-                      </p>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={handleExecutePaystackDonation}
-                      className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-xs shadow-lg shadow-emerald-600/20 transition flex items-center justify-center gap-2 cursor-pointer"
-                    >
-                      <Lock className="w-3.5 h-3.5" />
-                      <span>
-                        Proceed to Pay ₦{(customAmount ? Number(customAmount) : donationAmount).toLocaleString()} via Paystack
-                      </span>
-                    </button>
-                  </>
-                )}
               </div>
             )}
 

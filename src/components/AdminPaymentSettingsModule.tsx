@@ -238,7 +238,7 @@ export const AdminPaymentSettingsModule: React.FC<AdminPaymentSettingsModuleProp
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2">
-            {/* Option A: Direct Bank Transfer */}
+            {/* Option A: Direct Bank Transfer (Active) */}
             <div
               onClick={() => setPaymentMode('bank_transfer')}
               className={`p-4 rounded-2xl border-2 transition cursor-pointer flex flex-col justify-between ${
@@ -253,66 +253,64 @@ export const AdminPaymentSettingsModule: React.FC<AdminPaymentSettingsModuleProp
                     <Building className="w-4 h-4 text-[#FF6A00]" />
                     <span className="font-black text-xs uppercase tracking-wide">Direct Bank Transfer</span>
                   </div>
-                  {paymentMode === 'bank_transfer' && <Check className="w-4 h-4 text-[#FF6A00]" />}
+                  <span className="px-2 py-0.5 rounded-full bg-[#FF6A00]/20 text-[#FF6A00] text-[9px] font-black uppercase">
+                    Active &amp; Verified
+                  </span>
                 </div>
                 <p className="text-[11px] text-slate-400 leading-relaxed">
                   Students transfer funds to the official bank account (NUBAN) and upload debit alert/receipt proof for admin vetting.
                 </p>
               </div>
-              <div className="mt-3 pt-2 border-t border-slate-800/80 text-[10px] font-mono text-slate-400">
+              <div className="mt-3 pt-2 border-t border-slate-800/80 text-[10px] font-mono text-emerald-400">
                 • 0% gateway commission<br/>• Instant manual receipt verification
               </div>
             </div>
 
-            {/* Option B: Paystack Gateway Only */}
+            {/* Option B: Paystack Gateway (Unavailable) */}
             <div
-              onClick={() => setPaymentMode('paystack')}
-              className={`p-4 rounded-2xl border-2 transition cursor-pointer flex flex-col justify-between ${
-                paymentMode === 'paystack'
-                  ? 'border-emerald-500 bg-emerald-500/10 text-white shadow-md'
-                  : 'border-slate-800 bg-slate-950/60 hover:border-slate-700 text-slate-300'
-              }`}
+              className="p-4 rounded-2xl border-2 border-slate-800/60 bg-slate-950/40 text-slate-500 flex flex-col justify-between opacity-60 cursor-not-allowed"
+              title="Paystack is not available for now"
             >
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Zap className="w-4 h-4 text-emerald-400" />
-                    <span className="font-black text-xs uppercase tracking-wide">Paystack Gateway</span>
+                    <Zap className="w-4 h-4 text-slate-500" />
+                    <span className="font-black text-xs uppercase tracking-wide text-slate-400">Paystack Gateway</span>
                   </div>
-                  {paymentMode === 'paystack' && <Check className="w-4 h-4 text-emerald-400" />}
+                  <span className="px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-400 text-[9px] font-black uppercase">
+                    Unavailable For Now
+                  </span>
                 </div>
-                <p className="text-[11px] text-slate-400 leading-relaxed">
-                  Students pay seamlessly through Paystack using ATM cards, USSD, Apple Pay, or dedicated virtual bank accounts.
+                <p className="text-[11px] text-slate-500 leading-relaxed">
+                  Automated card and USSD processing via Paystack is currently disabled. All payments are securely routed via Direct Bank Transfer.
                 </p>
               </div>
-              <div className="mt-3 pt-2 border-t border-slate-800/80 text-[10px] font-mono text-emerald-400">
-                • 100% automated settlement<br/>• Instant automated wallet crediting
+              <div className="mt-3 pt-2 border-t border-slate-800/80 text-[10px] font-mono text-slate-500">
+                • Temporarily inactive<br/>• Bank transfer active
               </div>
             </div>
 
-            {/* Option C: Hybrid / Both Active */}
+            {/* Option C: Hybrid / Both Active (Unavailable) */}
             <div
-              onClick={() => setPaymentMode('both')}
-              className={`p-4 rounded-2xl border-2 transition cursor-pointer flex flex-col justify-between ${
-                paymentMode === 'both'
-                  ? 'border-sky-500 bg-sky-500/10 text-white shadow-md'
-                  : 'border-slate-800 bg-slate-950/60 hover:border-slate-700 text-slate-300'
-              }`}
+              className="p-4 rounded-2xl border-2 border-slate-800/60 bg-slate-950/40 text-slate-500 flex flex-col justify-between opacity-60 cursor-not-allowed"
+              title="Paystack is not available for now"
             >
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-sky-400" />
-                    <span className="font-black text-xs uppercase tracking-wide">Hybrid (Both Active)</span>
+                    <Sparkles className="w-4 h-4 text-slate-500" />
+                    <span className="font-black text-xs uppercase tracking-wide text-slate-400">Hybrid Mode</span>
                   </div>
-                  {paymentMode === 'both' && <Check className="w-4 h-4 text-sky-400" />}
+                  <span className="px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 text-[9px] font-black uppercase">
+                    Unavailable
+                  </span>
                 </div>
-                <p className="text-[11px] text-slate-400 leading-relaxed">
-                  Students get to choose between Direct Official Bank Transfer and Paystack at the payment screen.
+                <p className="text-[11px] text-slate-500 leading-relaxed">
+                  Requires active Paystack gateway integration. Paystack is currently disabled across UniNest.
                 </p>
               </div>
-              <div className="mt-3 pt-2 border-t border-slate-800/80 text-[10px] font-mono text-sky-400">
-                • Recommended for maximum convenience<br/>• Zero student friction
+              <div className="mt-3 pt-2 border-t border-slate-800/80 text-[10px] font-mono text-slate-500">
+                • Standard: Direct Bank Transfer
               </div>
             </div>
           </div>
@@ -466,18 +464,18 @@ export const AdminPaymentSettingsModule: React.FC<AdminPaymentSettingsModuleProp
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
               <h3 className="text-sm font-black text-white uppercase tracking-wider flex items-center gap-2">
-                <Zap className="w-4 h-4 text-emerald-400" />
-                3. Paystack API &amp; Gateway Configuration
+                <Zap className="w-4 h-4 text-amber-400" />
+                3. Paystack Gateway Configuration (Temporarily Inactive)
               </h3>
               <p className="text-xs text-slate-400">
-                Connect your Paystack merchant keys to enable automated card, USSD, and virtual transfer processing.
+                Paystack integration is currently unavailable. When reactivated in the future, these merchant keys and automated settings will take effect.
               </p>
             </div>
             
-            {/* Production Status */}
-            <div className="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-700">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span className="text-[11px] font-bold text-emerald-400">Live Production Gateway</span>
+            {/* Status Badge */}
+            <div className="flex items-center gap-2 bg-rose-950/40 px-3 py-1.5 rounded-xl border border-rose-800/40">
+              <span className="w-2 h-2 rounded-full bg-rose-400"></span>
+              <span className="text-[11px] font-bold text-rose-300">Disabled For Now</span>
             </div>
           </div>
 

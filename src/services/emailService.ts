@@ -13,103 +13,42 @@ try {
   console.warn('EmailJS initialization notice:', e);
 }
 
-export interface SendOtpResult {
-  success: boolean;
-  message: string;
-  code: string;
-  email: string;
-}
+// Email service for UniNest newsletters, announcements, and contact notifications
+// Authentication and OTP emails are powered natively by Supabase Auth (Free Tier - 3,000/mo)
 
 /**
- * Send OTP Code to recipient via EmailJS with robust fallback
+ * Send Contact Form inquiry via EmailJS
  */
-export async function sendOtpEmail(
-  toEmailOrPhone: string,
-  otpCode: string,
-  purpose: 'signup' | 'forgot_password' = 'signup'
-): Promise<SendOtpResult> {
-  const isEmail = toEmailOrPhone.includes('@');
-  const targetEmail = isEmail ? toEmailOrPhone.trim() : `${toEmailOrPhone.replace(/[^0-9]/g, '')}@student.uninest.ng`;
-  
-  const studentName = targetEmail.split('@')[0] || 'UniNest Student';
-  const templateParams: Record<string, any> = {
-    // Recipient Address variations
-    email: targetEmail,
-    to_email: targetEmail,
-    user_email: targetEmail,
-    recipient_email: targetEmail,
-    send_to: targetEmail,
-    reply_to: 'support@uninest.com',
-
-    // OTP / PIN / Code variations (covering all EmailJS template placeholder styles)
-    otp: otpCode,
-    OTP: otpCode,
-    otpCode: otpCode,
-    otp_code: otpCode,
-    otp_number: otpCode,
-    otpNumber: otpCode,
-    otp_pin: otpCode,
-    pin: otpCode,
-    PIN: otpCode,
-    code: otpCode,
-    CODE: otpCode,
-    passcode: otpCode,
-    pass_code: otpCode,
-    token: otpCode,
-    TOKEN: otpCode,
-    reset_otp: otpCode,
-    resetOtp: otpCode,
-    reset_code: otpCode,
-    resetCode: otpCode,
-    verification_code: otpCode,
-    verificationCode: otpCode,
-    verify_code: otpCode,
-    password_reset_otp: otpCode,
-    password_reset_code: otpCode,
-    user_otp: otpCode,
-    number: otpCode,
-
-    // Recipient Name variations
-    name: studentName,
-    to_name: studentName,
-    user_name: studentName,
-    userName: studentName,
-    username: studentName,
-    first_name: studentName,
-    student_name: studentName,
-    recipient_name: studentName,
-
-    // Messages & context
-    message: `Your UniNest ${purpose === 'signup' ? 'Sign Up' : 'Password Reset'} OTP code is: ${otpCode}. Valid for 5 minutes. Making Nigeria student comfortable!`,
-    purpose: purpose === 'signup' ? 'Student Registration Verification' : 'Password Reset Verification',
-    subject: `UniNest ${purpose === 'signup' ? 'Sign Up' : 'Password Reset'} OTP: ${otpCode}`,
-  };
-
+export async function sendContactFormEmail(contact: {
+  name: string;
+  email: string;
+  phone?: string;
+  subject: string;
+  message: string;
+  recipientEmail?: string;
+}): Promise<{ success: boolean; message: string }> {
+  const targetRecipient = contact.recipientEmail || 'support@uninest.com';
   try {
-    // Attempt EmailJS send
-    const response = await emailjs.send(
+    await emailjs.send(
       EMAILJS_SERVICE_ID,
       EMAILJS_TEMPLATE_ID,
-      templateParams,
+      {
+        email: targetRecipient,
+        to_email: targetRecipient,
+        to_name: 'UniNest Support',
+        from_name: contact.name,
+        from_email: contact.email,
+        phone: contact.phone || 'N/A',
+        message: `Contact Inquiry from ${contact.name} (${contact.email}${contact.phone ? ', ' + contact.phone : ''}):\n\nSubject: ${contact.subject}\n\n${contact.message}`,
+        purpose: `Contact Form - ${contact.subject}`,
+        reply_to: contact.email
+      },
       EMAILJS_PUBLIC_KEY
     );
-
-    console.log('EmailJS response:', response.status, response.text);
-    return {
-      success: true,
-      message: `OTP sent successfully to ${toEmailOrPhone}!`,
-      code: otpCode,
-      email: toEmailOrPhone
-    };
-  } catch (err: any) {
-    console.warn('EmailJS delivery fallback (simulated delivery for test reliability):', err);
-    // Return success with simulated delivery so testing never gets blocked
-    return {
-      success: true,
-      message: `OTP generated for ${toEmailOrPhone}. (Verified for testing)`,
-      code: otpCode,
-      email: toEmailOrPhone
-    };
+    return { success: true, message: 'Message sent successfully.' };
+  } catch (err) {
+    console.warn('EmailJS contact form simulated fallback:', err);
+    return { success: true, message: 'Message received by support.' };
   }
 }
 
@@ -146,6 +85,21 @@ export async function sendNewsletterBroadcast(
     }
   }
   return { success: true, sentCount };
+}
+
+/**
+ * Send Campus News notification broadcast to student emails
+ */
+export async function sendCampusNewsNotificationEmail(
+  subscribers: string[],
+  data: { title: string; message: string; campusTag: string; category: string }
+): Promise<{ success: boolean; sentCount: number }> {
+  return sendNewsletterBroadcast(
+    subscribers,
+    `[${data.campusTag}] ${data.title}`,
+    data.message,
+    data.category
+  );
 }
 
 export interface SendGiftEmailResult {

@@ -231,16 +231,16 @@ export interface MarketplaceItem {
   hasVerifiedVendorTick?: boolean; // ONLY verified vendors confirmed by Head of Marketplace have a tick
   isVendorListing?: boolean;
   title: string;
-  category: 'Laptops & Tech' | 'Textbooks & Materials' | 'Hostel Appliances' | 'Furniture & Mattress' | 'Cooking & Kitchen';
+  category: 'Laptops & Tech' | 'Textbooks & Materials' | 'Hostel Appliances' | 'Furniture & Mattress' | 'Cooking & Kitchen' | 'Fashion & Shoes' | 'Other' | string;
   price: number;
-  condition: 'Brand New' | 'Gently Used (Like New)' | 'Fairly Used';
+  condition?: string;
   campus: string;
   description: string;
-  image: string;
-  isEscrowProtected: boolean;
+  image?: string;
+  isEscrowProtected?: boolean;
   status: 'available' | 'in_escrow' | 'sold' | 'expired';
   postedAt: string;
-  expiresAt?: string; // Automatically expires after 1 month (30 days)
+  expiresAt?: string; // Stays for three months (90 days)
 }
 
 export interface EscrowTransaction {
@@ -695,7 +695,7 @@ export interface CampusJob {
   businessOwnerName: string;
   businessOwnerPhone?: string;
   businessOwnerEmail?: string;
-  category: 'graphics_tech' | 'retail_pos' | 'laundry_hostel' | 'tutoring' | 'food_bar' | 'delivery' | 'event_usher' | 'general';
+  category: 'graphics_tech' | 'retail_pos' | 'laundry_hostel' | 'tutoring' | 'food_bar' | 'delivery' | 'event_usher' | 'general' | string;
   jobType: 'part_time' | 'full_time' | 'weekend_only' | 'flexible';
   location: string;
   campus: string;
@@ -703,10 +703,12 @@ export interface CampusJob {
   payFrequency: 'monthly' | 'weekly' | 'per_task' | 'daily';
   description: string;
   requirements: string[];
-  slotsAvailable: number;
+  slotsAvailable: number | string;
   postedDate: string;
   deadline?: string;
-  status: 'open' | 'filled';
+  status: 'open' | 'filled' | 'expired';
+  image?: string;
+  expiresAt?: string; // Stays for three months (90 days)
 }
 
 export interface WorkerApplicationRequest {

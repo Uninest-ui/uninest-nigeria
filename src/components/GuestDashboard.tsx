@@ -28,11 +28,13 @@ import {
   Phone,
   AlertCircle,
   MapPin,
-  Clock
+  Clock,
+  Briefcase
 } from 'lucide-react';
-import { NewsItem, ChatMessage, MarketplaceItem } from '../types';
+import { NewsItem, ChatMessage, MarketplaceItem, UniNestUser } from '../types';
 import { UniNestLogo } from './UniNestLogo';
 import { CampusTickerMarquee } from './CampusTickerMarquee';
+import { CampusJobsTab } from './CampusJobsTab';
 import { UNINEST_OFFICIAL_BANK } from '../utils/paymentConfig';
 
 interface GuestDashboardProps {
@@ -52,9 +54,21 @@ export const GuestDashboard: React.FC<GuestDashboardProps> = ({
   onSubscribeNewsletter,
   isSubscribedNewsletter,
 }) => {
-  const [activeTab, setActiveTab] = useState<'news' | 'lodges' | 'marketplace' | 'chat'>('news');
+  const [activeTab, setActiveTab] = useState<'news' | 'lodges' | 'marketplace' | 'jobs' | 'chat'>('news');
   const [newsFilter, setNewsFilter] = useState<'all' | 'scholarship' | 'strike' | 'school'>('all');
   const [newsSearch, setNewsSearch] = useState('');
+
+  const guestUser: UniNestUser = {
+    id: 'guest-visitor',
+    name: 'Guest Visitor',
+    email: 'guest@uninest.ng',
+    password: '',
+    verified: true,
+    createdAt: '2026-09-01',
+    role: 'student',
+    phone: '',
+    university: 'Niger Delta University (NDU)'
+  };
 
   // Marketplace state for guests
   const [marketplaceCategory, setMarketplaceCategory] = useState<string>('all');
@@ -265,6 +279,15 @@ export const GuestDashboard: React.FC<GuestDashboardProps> = ({
           >
             <ShoppingBag className="w-3.5 h-3.5" />
             <span>Marketplace &amp; Deals</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('jobs')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap ${
+              activeTab === 'jobs' ? 'bg-[#0f172a] text-white' : 'text-gray-600 hover:bg-slate-100'
+            }`}
+          >
+            <Briefcase className="w-3.5 h-3.5" />
+            <span>Campus Jobs</span>
           </button>
           <button
             onClick={() => setActiveTab('chat')}
@@ -543,9 +566,6 @@ export const GuestDashboard: React.FC<GuestDashboardProps> = ({
                           <span className="px-2.5 py-1 rounded-full bg-black/70 backdrop-blur-xs text-white font-bold text-[11px] shadow-sm">
                             {item.category}
                           </span>
-                          <span className="px-2.5 py-1 rounded-full bg-amber-500/90 backdrop-blur-xs text-slate-950 font-black text-[11px] shadow-sm">
-                            {item.condition}
-                          </span>
                         </div>
 
                         {item.isVerifiedVendor && (
@@ -620,6 +640,11 @@ export const GuestDashboard: React.FC<GuestDashboardProps> = ({
               </div>
             )}
           </div>
+        )}
+
+        {/* ================= TAB: CAMPUS JOBS ================= */}
+        {activeTab === 'jobs' && (
+          <CampusJobsTab currentUser={guestUser} />
         )}
 
         {/* ================= TAB 4: CHAT ================= */}

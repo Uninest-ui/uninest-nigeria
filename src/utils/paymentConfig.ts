@@ -30,13 +30,13 @@ export const DEFAULT_PAYMENT_CONFIG: OfficialPaymentConfig = {
   escrowAccountNumber: '2150445461',
   escrowPolicy: 'Payment is sent to Escrow Account (2150445461 - UBA) and released after buyer confirmation or within 3 working days.',
   supportWhatsApp: '2349039847154', // UniNest Official Finance & Payment Verification WhatsApp Desk
-  paymentMode: 'both', // 'bank_transfer' | 'paystack' | 'both'
+  paymentMode: 'bank_transfer', // 'bank_transfer' (Paystack is not available for now)
   paystackPublicKey: 'pk_test_uninest_escrow_official_8892',
   paystackSecretKey: '',
   paystackLiveMode: false,
   paystackBusinessName: 'UniNest Technologies Ltd',
   paystackAutoApprove: false, // Admin must confirm every deposit
-  lastUpdated: '2026-09-14',
+  lastUpdated: '2026-09-23',
   updatedBy: 'admin@uninest.com',
 };
 
@@ -48,7 +48,9 @@ export function getOfficialPaymentConfig(): OfficialPaymentConfig {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      return { ...DEFAULT_PAYMENT_CONFIG, ...parsed };
+      // If paymentMode was previously saved as 'paystack' or 'both', enforce 'bank_transfer' since Paystack is unavailable for now
+      const effectivePaymentMode = parsed.paymentMode === 'paystack' || parsed.paymentMode === 'both' ? 'bank_transfer' : (parsed.paymentMode || 'bank_transfer');
+      return { ...DEFAULT_PAYMENT_CONFIG, ...parsed, paymentMode: effectivePaymentMode };
     }
   } catch (err) {
     console.warn('Error loading payment config from localStorage:', err);

@@ -33,7 +33,9 @@ import {
   Shield,
   Key,
   Eye,
-  EyeOff
+  EyeOff,
+  Pencil,
+  Sliders
 } from 'lucide-react';
 import { STSSavingsAccount, UniNestUser, StudentGift, UniNestRewardToken } from '../types';
 import { SavingsGoalChart } from './SavingsGoalChart';
@@ -52,6 +54,8 @@ interface STSSavingsTabProps {
   onRepayLoan?: (amount: number) => void;
   onCreateSavingsPlan?: (targetYear: string, goalName: string, targetAmount: number, frequency: 'daily' | 'weekly' | 'monthly' | 'flexible') => void;
   onOpenWalletHistory?: () => void;
+  onUpdateSavingsTarget?: (targetAmount: number, targetGoalName?: string, targetYear?: string) => void;
+  onUpdateSTSSavingsAccount?: (account: STSSavingsAccount) => void;
 }
 
 export const STSSavingsTab: React.FC<STSSavingsTabProps> = ({
@@ -63,6 +67,8 @@ export const STSSavingsTab: React.FC<STSSavingsTabProps> = ({
   onGiftStudent,
   onCreateSavingsPlan,
   onOpenWalletHistory,
+  onUpdateSavingsTarget,
+  onUpdateSTSSavingsAccount,
 }) => {
   const safeUser = user || {
     name: 'Student',
@@ -252,6 +258,66 @@ export const STSSavingsTab: React.FC<STSSavingsTabProps> = ({
   const [saveErrorMessage, setSaveErrorMessage] = useState<string | null>(null);
   const [stsDepositAmount, setStsDepositAmount] = useState('5000');
   const [stsDepositPurpose, setStsDepositPurpose] = useState('Final Year Project Binding & Printing');
+
+  // Editable Savings Target State (Minimum ₦100,000)
+  const [showEditTargetModal, setShowEditTargetModal] = useState(false);
+  const [editTargetAmount, setEditTargetAmount] = useState<string>('');
+  const [editTargetGoalName, setEditTargetGoalName] = useState<string>('');
+  const [editTargetYear, setEditTargetYear] = useState<string>('');
+  const [editTargetFrequency, setEditTargetFrequency] = useState<'daily' | 'weekly' | 'monthly' | 'flexible'>('monthly');
+  const [editTargetError, setEditTargetError] = useState<string | null>(null);
+  const [editTargetSuccess, setEditTargetSuccess] = useState<string | null>(null);
+
+  const handleOpenEditTarget = () => {
+    setEditTargetAmount(String(account?.targetAmount || 150000));
+    setEditTargetGoalName(account?.targetGoalName || 'Final Year Project + Clearance + Convocation Suit');
+    setEditTargetYear(account?.targetYear || account?.expectedSignOutYear || '2027');
+    setEditTargetFrequency(account?.savingsFrequency || account?.frequency || 'monthly');
+    setEditTargetError(null);
+    setEditTargetSuccess(null);
+    setShowEditTargetModal(true);
+  };
+
+  const handleSaveTarget = (e: React.FormEvent) => {
+    e.preventDefault();
+    setEditTargetError(null);
+    const cleaned = editTargetAmount.replace(/[^0-9]/g, '');
+    const num = Number(cleaned);
+
+    if (!num || isNaN(num)) {
+      setEditTargetError('Please enter a valid numeric target amount.');
+      return;
+    }
+
+    if (num < 100000) {
+      setEditTargetError('Savings Target cannot be less than ₦100,000. Minimum target is ₦100,000.');
+      return;
+    }
+
+    const goalName = editTargetGoalName.trim() || 'Sign-Out & Clearance Fund';
+    const targetYr = editTargetYear.trim() || '2027';
+
+    if (onUpdateSavingsTarget) {
+      onUpdateSavingsTarget(num, goalName, targetYr);
+    } else if (onUpdateSTSSavingsAccount && account) {
+      onUpdateSTSSavingsAccount({
+        ...account,
+        targetAmount: num,
+        targetGoalName: goalName,
+        targetYear: targetYr,
+        expectedSignOutYear: targetYr,
+        savingsFrequency: editTargetFrequency
+      });
+    } else if (onCreateSavingsPlan) {
+      onCreateSavingsPlan(targetYr, goalName, num, editTargetFrequency);
+    }
+
+    setEditTargetSuccess(`Savings target successfully updated to ₦${num.toLocaleString()}!`);
+    setTimeout(() => {
+      setShowEditTargetModal(false);
+      setEditTargetSuccess(null);
+    }, 1200);
+  };
 
   // Trigger modal immediately when user arrives via quick action (Home Page Save in STS or Send Gift)
   useEffect(() => {
@@ -1016,33 +1082,58 @@ export const STSSavingsTab: React.FC<STSSavingsTabProps> = ({
         <div className="p-5 rounded-3xl bg-white border-2 border-[#0A1931]/15 shadow-xs space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-xs font-black text-[#0A1931]">Sign-Out Target</span>
-            <span className="p-2 rounded-xl bg-[#0A1931]/5 text-[#0A1931]">
-              <GraduationCap className="w-4 h-4 text-[#FF6A00]" />
-            </span>
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={handleOpenEditTarget}
+                className="px-2.5 py-1 rounded-lg bg-orange-100 hover:bg-orange-200 text-orange-700 text-[11px] font-bold flex items-center gap-1 transition cursor-pointer shadow-xs"
+                title="Edit Savings Target (Minimum ₦100,000)"
+              >
+                <Pencil className="w-3 h-3" />
+                <span>Edit Target</span>
+              </button>
+              <span className="p-2 rounded-xl bg-[#0A1931]/5 text-[#0A1931]">
+                <GraduationCap className="w-4 h-4 text-[#FF6A00]" />
+              </span>
+            </div>
           </div>
           <div className="text-2xl font-black text-[#0A1931]">
             ₦{targetTotal.toLocaleString()}
           </div>
-          <div className="text-[11px] text-[#0A1931]/60">
-            Class of {account?.targetYear || '2027'} Sign-Out Target ({progressPercent}%)
+          <div className="text-[11px] text-[#0A1931]/60 flex items-center justify-between">
+            <span>Class of {account?.targetYear || '2027'} Sign-Out Target ({progressPercent}%)</span>
+            <span className="text-[10px] font-bold text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded border border-orange-200">Min ₦100k</span>
           </div>
         </div>
       </div>
 
       {/* Progress Bar Towards Sign-Out */}
       <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-xs space-y-3">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h3 className="text-sm font-bold text-slate-900">
-              {account?.targetGoalName || 'Final Year Project + Clearance + Convocation Suit'}
-            </h3>
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-bold text-slate-900">
+                {account?.targetGoalName || 'Final Year Project + Clearance + Convocation Suit'}
+              </h3>
+              <button
+                type="button"
+                onClick={handleOpenEditTarget}
+                className="text-[11px] font-bold text-orange-600 hover:text-orange-700 underline flex items-center gap-1 cursor-pointer"
+                title="Edit Target Goal and Amount"
+              >
+                <Pencil className="w-3 h-3 inline" />
+                <span>Edit Target</span>
+              </button>
+            </div>
             <p className="text-xs text-gray-500">
-              {progressPercent}% of target reached ({account?.targetYear || '2027'} Sign-Out)
+              {progressPercent}% of target reached ({account?.targetYear || '2027'} Sign-Out • Minimum Target: ₦100,000)
             </p>
           </div>
-          <span className="text-xs font-black text-orange-600 px-3 py-1 bg-orange-50 rounded-full border border-orange-200">
-            ₦{currentBalance.toLocaleString()} / ₦{targetTotal.toLocaleString()}
-          </span>
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-xs font-black text-orange-600 px-3 py-1 bg-orange-50 rounded-full border border-orange-200">
+              ₦{currentBalance.toLocaleString()} / ₦{targetTotal.toLocaleString()}
+            </span>
+          </div>
         </div>
 
         <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
@@ -1641,6 +1732,253 @@ export const STSSavingsTab: React.FC<STSSavingsTabProps> = ({
           })}
         </div>
       </div>
+
+      {/* ================= EDIT SAVINGS TARGET MODAL (MINIMUM ₦100,000) ================= */}
+      {showEditTargetModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-xs overflow-y-auto"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowEditTargetModal(false);
+          }}
+        >
+          <div
+            className="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col max-h-[92vh] my-auto animate-in fade-in zoom-in duration-200 overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 p-4 sm:p-5 bg-white dark:bg-slate-900 shrink-0 sticky top-0 z-10">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-orange-500/10 text-orange-600 flex items-center justify-center font-bold">
+                  <GraduationCap className="w-5 h-5 text-orange-500" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-slate-900 dark:text-white">
+                    Edit STS Savings Target
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Set your target goal for Sign-Out • Minimum is ₦100,000
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowEditTargetModal(false)}
+                className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white flex items-center justify-center transition cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveTarget} className="p-4 sm:p-6 overflow-y-auto space-y-5 text-xs text-slate-700 dark:text-slate-300">
+              {/* Minimum Target Notice Banner */}
+              <div className="p-3.5 rounded-2xl bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800/40 flex items-start gap-2.5">
+                <AlertCircle className="w-4 h-4 text-orange-600 dark:text-orange-400 shrink-0 mt-0.5" />
+                <div className="text-xs text-orange-900 dark:text-orange-200 leading-relaxed">
+                  <strong>Policy Requirement:</strong> Every UniNest student's savings target must be at least <strong>₦100,000</strong>. This guarantees adequate funding for final year project binding, departmental sign-out clearance, and convocation preparations.
+                </div>
+              </div>
+
+              {editTargetError && (
+                <div className="p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/40 text-rose-700 dark:text-rose-300 text-xs font-bold flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+                  <span>{editTargetError}</span>
+                </div>
+              )}
+
+              {editTargetSuccess && (
+                <div className="p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/40 text-emerald-700 dark:text-emerald-300 text-xs font-bold flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
+                  <span>{editTargetSuccess}</span>
+                </div>
+              )}
+
+              {/* Quick Preset Buttons */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">
+                  Quick Select Target Amount:
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {[
+                    { label: '₦100k (Min)', val: 100000 },
+                    { label: '₦150k', val: 150000 },
+                    { label: '₦200k', val: 200000 },
+                    { label: '₦250k', val: 250000 },
+                    { label: '₦350k', val: 350000 },
+                    { label: '₦500k', val: 500000 },
+                    { label: '₦750k', val: 750000 },
+                    { label: '₦1,000,000', val: 1000000 },
+                  ].map((preset) => {
+                    const isSelected = Number(editTargetAmount.replace(/\D/g, '')) === preset.val;
+                    return (
+                      <button
+                        key={preset.val}
+                        type="button"
+                        onClick={() => {
+                          setEditTargetAmount(String(preset.val));
+                          setEditTargetError(null);
+                        }}
+                        className={`px-2.5 py-2 rounded-xl text-xs font-bold border transition cursor-pointer text-center ${
+                          isSelected
+                            ? 'bg-orange-500 text-white border-orange-500 shadow-sm'
+                            : 'bg-slate-50 dark:bg-slate-800/70 border-slate-200 dark:border-slate-700 hover:border-orange-400 text-slate-700 dark:text-slate-300'
+                        }`}
+                      >
+                        {preset.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Target Amount Input */}
+              <div className="space-y-1">
+                <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">
+                  Target Amount in Nigerian Naira (₦) *
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3.5 top-2.5 text-base font-bold text-slate-400">₦</span>
+                  <input
+                    type="number"
+                    min="100000"
+                    step="5000"
+                    required
+                    value={editTargetAmount}
+                    onChange={(e) => {
+                      setEditTargetAmount(e.target.value);
+                      setEditTargetError(null);
+                    }}
+                    placeholder="e.g. 150000"
+                    className="w-full h-11 pl-9 pr-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-base font-black text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  />
+                </div>
+                <div className="flex items-center justify-between text-[11px] text-slate-500">
+                  <span>Minimum target: ₦100,000</span>
+                  {Number(editTargetAmount) >= 100000 && (
+                    <span className="font-bold text-emerald-600">
+                      ₦{Number(editTargetAmount).toLocaleString()}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Target Goal Name */}
+              <div className="space-y-1">
+                <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">
+                  Target Goal Purpose / Description
+                </label>
+                <input
+                  type="text"
+                  value={editTargetGoalName}
+                  onChange={(e) => setEditTargetGoalName(e.target.value)}
+                  placeholder="e.g. Final Year Project Binding + Departmental Clearance + Convocation"
+                  className="w-full h-10 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                />
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {[
+                    'Project Binding & Hardcover Copies',
+                    'Departmental & Faculty Clearance',
+                    'Convocation Gown & Gown Photography',
+                    'Sign-Out Dinner & Induction Fee'
+                  ].map((quickGoal) => (
+                    <button
+                      key={quickGoal}
+                      type="button"
+                      onClick={() => setEditTargetGoalName(quickGoal)}
+                      className="text-[10px] px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-orange-600 cursor-pointer"
+                    >
+                      + {quickGoal}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Expected Sign-Out Year & Frequency */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">
+                    Expected Sign-Out Year
+                  </label>
+                  <select
+                    value={editTargetYear}
+                    onChange={(e) => setEditTargetYear(e.target.value)}
+                    className="w-full h-10 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  >
+                    <option value="2026">2026 (Finalist / Outgoing)</option>
+                    <option value="2027">2027 (Penultimate)</option>
+                    <option value="2028">2028 (Undergraduate)</option>
+                    <option value="2029">2029 (5-Year Program)</option>
+                    <option value="2030">2030 (Medical / Pharmacy)</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">
+                    Preferred Savings Frequency
+                  </label>
+                  <select
+                    value={editTargetFrequency}
+                    onChange={(e: any) => setEditTargetFrequency(e.target.value)}
+                    className="w-full h-10 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  >
+                    <option value="monthly">Monthly Deposit Plan</option>
+                    <option value="weekly">Weekly Deposit Plan</option>
+                    <option value="daily">Daily Deposit Plan</option>
+                    <option value="flexible">Flexible / Anytime</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Progress Simulation based on new target */}
+              <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-bold text-slate-600 dark:text-slate-400">Current Saved:</span>
+                  <span className="font-black text-slate-900 dark:text-white">₦{currentBalance.toLocaleString()}</span>
+                </div>
+                {Number(editTargetAmount) >= 100000 && (
+                  <>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-bold text-slate-600 dark:text-slate-400">Projected Target Progress:</span>
+                      <span className="font-bold text-orange-600">
+                        {Math.min(100, Math.round((currentBalance / Number(editTargetAmount)) * 100))}%
+                      </span>
+                    </div>
+                    <div className="w-full bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
+                      <div
+                        className="bg-orange-500 h-full rounded-full transition-all"
+                        style={{ width: `${Math.min(100, Math.round((currentBalance / Number(editTargetAmount)) * 100))}%` }}
+                      />
+                    </div>
+                    <div className="text-[11px] text-slate-500 flex justify-between">
+                      <span>70% UniNest Perks Unlock Threshold:</span>
+                      <span className="font-bold text-slate-700 dark:text-slate-300">
+                        ₦{Math.round(Number(editTargetAmount) * 0.7).toLocaleString()}
+                      </span>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Form Actions */}
+              <div className="flex items-center justify-end gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setShowEditTargetModal(false)}
+                  className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold transition cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-500 text-white text-xs font-black transition flex items-center gap-1.5 shadow-md cursor-pointer"
+                >
+                  <Check className="w-4 h-4" />
+                  <span>Save Savings Target (Min ₦100k)</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Save in STS Vault Form Modal (Direct immediate form filling from Home Tap) */}
       {showSaveModal && (

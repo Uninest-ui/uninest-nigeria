@@ -119,6 +119,8 @@ interface StudentDashboardProps {
   onRequestRoommate: (profile: Omit<BayelsaRoommateProfile, 'id'>) => void;
   onSubmitAcademicRequest: (req: Omit<AcademicAssistRequest, 'id' | 'createdAt'>) => void;
   onPostMarketplaceItem: (item: Omit<MarketplaceItem, 'id' | 'postedAt'>) => void;
+  onUpdateMarketplaceItem?: (item: MarketplaceItem) => void;
+  onDeleteMarketplaceItem?: (itemId: string) => void;
   onInitiateEscrow: (item: MarketplaceItem) => void;
   onReleaseEscrow: (escrowId: string) => void;
   onRelistMarketplaceItem?: (itemId: string) => void;
@@ -143,6 +145,8 @@ interface StudentDashboardProps {
   onAddQuestion?: (question: Omit<StudentQuestion, 'id' | 'answersCount' | 'createdAt' | 'status' | 'answers'>) => void;
   onAddAnswer?: (questionId: string, answer: Omit<QuestionAnswer, 'id' | 'createdAt' | 'upvotes'>) => void;
   onUpvoteAnswer?: (questionId: string, answerId: string) => void;
+  onUpdateSTSSavingsAccount?: (account: STSSavingsAccount) => void;
+  onUpdateSavingsTarget?: (targetAmount: number, targetGoalName?: string, targetYear?: string) => void;
 }
 
 export const StudentDashboard: React.FC<StudentDashboardProps> = ({
@@ -164,6 +168,8 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
   onRequestRoommate,
   onSubmitAcademicRequest,
   onPostMarketplaceItem,
+  onUpdateMarketplaceItem,
+  onDeleteMarketplaceItem,
   onInitiateEscrow,
   onReleaseEscrow,
   onRelistMarketplaceItem,
@@ -189,6 +195,8 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
   onAddQuestion = () => {},
   onAddAnswer = () => {},
   onUpvoteAnswer = () => {},
+  onUpdateSTSSavingsAccount,
+  onUpdateSavingsTarget,
 }) => {
   const safeUser: UniNestUser = user || {
     id: 'user-default',
@@ -1313,6 +1321,8 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
             onGiftStudent={onGiftStudent}
             onRequestLoan={onRequestSTSLoan}
             onRepayLoan={onRepaySTSLoan}
+            onUpdateSavingsTarget={onUpdateSavingsTarget}
+            onUpdateSTSSavingsAccount={onUpdateSTSSavingsAccount}
           />
         )}
 
@@ -1336,7 +1346,13 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
             onGiftStudent={onGiftStudent}
             onRequestLoan={onRequestSTSLoan}
             onRepayLoan={onRepaySTSLoan}
-            onCreateSavingsPlan={() => {}}
+            onCreateSavingsPlan={(targetYear, goalName, targetAmount, frequency) => {
+              if (onUpdateSavingsTarget) {
+                onUpdateSavingsTarget(targetAmount, goalName, targetYear);
+              }
+            }}
+            onUpdateSavingsTarget={onUpdateSavingsTarget}
+            onUpdateSTSSavingsAccount={onUpdateSTSSavingsAccount}
             onOpenWalletHistory={() => setActiveTab('wallet')}
           />
         )}
@@ -1437,6 +1453,8 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
             items={marketplaceItems}
             escrows={escrowTransactions}
             onPostItem={onPostMarketplaceItem}
+            onUpdateItem={onUpdateMarketplaceItem}
+            onDeleteItem={onDeleteMarketplaceItem}
             onInitiateEscrow={onInitiateEscrow}
             onReleaseEscrow={onReleaseEscrow}
             onRelistItem={onRelistMarketplaceItem}

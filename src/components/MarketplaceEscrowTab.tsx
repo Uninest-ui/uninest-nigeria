@@ -20,6 +20,7 @@ import {
   Camera,
   ShoppingCart,
   Trash2,
+  Edit3,
   ArrowRight,
   Sparkles
 } from 'lucide-react';
@@ -36,6 +37,8 @@ interface MarketplaceEscrowTabProps {
   onInitiateEscrow: (item: MarketplaceItem) => void;
   onReleaseEscrow: (escrowId: string) => void;
   onRelistItem?: (itemId: string) => void;
+  onUpdateItem?: (updatedItem: MarketplaceItem) => void;
+  onDeleteItem?: (itemId: string) => void;
 }
 
 const CAMPUS_ITEM_PRESETS = [
@@ -54,7 +57,9 @@ export const MarketplaceEscrowTab: React.FC<MarketplaceEscrowTabProps> = ({
   onPostItem,
   onInitiateEscrow,
   onReleaseEscrow,
-  onRelistItem
+  onRelistItem,
+  onUpdateItem,
+  onDeleteItem
 }) => {
   const safeUser = user || {
     name: 'Student',
@@ -185,9 +190,8 @@ export const MarketplaceEscrowTab: React.FC<MarketplaceEscrowTabProps> = ({
   // Post Item Modal
   const [showPostModal, setShowPostModal] = useState(false);
   const [itemTitle, setItemTitle] = useState('');
-  const [itemCategory, setItemCategory] = useState<MarketplaceItem['category']>('Laptops & Tech');
+  const [itemCategory, setItemCategory] = useState<string>('Laptops & Tech');
   const [itemPrice, setItemPrice] = useState('');
-  const [itemCondition, setItemCondition] = useState<MarketplaceItem['condition']>('Gently Used (Like New)');
   const [itemCampus, setItemCampus] = useState(safeUser.university || 'Niger Delta University (NDU)');
   const [itemDesc, setItemDesc] = useState('');
   const [itemImage, setItemImage] = useState(CAMPUS_ITEM_PRESETS[0].url);
@@ -198,6 +202,108 @@ export const MarketplaceEscrowTab: React.FC<MarketplaceEscrowTabProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Edit Item Modal State (Price and picture can be edited and deleted even after posting)
+  const [editingItem, setEditingItem] = useState<MarketplaceItem | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editCategory, setEditCategory] = useState<string>('Laptops & Tech');
+  const [editPrice, setEditPrice] = useState('');
+  const [editCampus, setEditCampus] = useState('');
+  const [editDesc, setEditDesc] = useState('');
+  const [editImage, setEditImage] = useState('');
+  const [editUploadedFileName, setEditUploadedFileName] = useState<string | null>(null);
+  const [isEditDragging, setIsEditDragging] = useState(false);
+  const editFileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleOpenEditModal = (item: MarketplaceItem) => {
+    setEditingItem(item);
+    setEditTitle(item.title || '');
+    setEditCategory(item.category || 'Laptops & Tech');
+    setEditPrice(String(item.price || ''));
+    setEditCampus(item.campus || safeUser.university || 'Niger Delta University (NDU)');
+    setEditDesc(item.description || '');
+    setEditImage(item.image || '');
+    setEditUploadedFileName(null);
+  };
+
+  const handleEditFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      if (file.size > 8 * 1024 * 1024) {
+        alert('Photo is too large. Please upload an image under 8MB.');
+        return;
+      }
+      setEditUploadedFileName(file.name);
+      const reader = new FileReader();
+      reader.onload = (uploadEvent) => {
+        if (uploadEvent.target?.result) {
+          setEditImage(uploadEvent.target.result as string);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSaveEditSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingItem) return;
+    const priceNum = Number(editPrice);
+    if (!editTitle.trim() || isNaN(priceNum) || priceNum <= 0) {
+      alert('Please enter a valid title and asking price.');
+      return;
+    }
+
+    const updatedItem: MarketplaceItem = {
+      ...editingItem,
+      title: editTitle.trim(),
+      category: editCategory,
+      price: priceNum,
+      campus: editCampus.trim() || editingItem.campus,
+      description: editDesc.trim(),
+      image: editImage // Can be updated or cleared (deleted)
+    };
+
+    if (onUpdateItem) {
+      onUpdateItem(updatedItem);
+    } else {
+      try {
+        const stored = localStorage.getItem('uninest_marketplace_items');
+        if (stored) {
+          const list = JSON.parse(stored);
+          const next = list.map((it: any) => it.id === updatedItem.id ? updatedItem : it);
+          localStorage.setItem('uninest_marketplace_items', JSON.stringify(next));
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    setPostSuccess(`Listing "${editTitle.trim()}" updated successfully! Price: ₦${priceNum.toLocaleString()}.`);
+    setEditingItem(null);
+    setTimeout(() => setPostSuccess(null), 6000);
+  };
+
+  const handleDeleteItem = (itemId: string, itemTitle?: string) => {
+    if (!window.confirm(`Are you sure you want to delete "${itemTitle || 'this listing'}"? This action cannot be undone.`)) {
+      return;
+    }
+    if (onDeleteItem) {
+      onDeleteItem(itemId);
+    } else {
+      try {
+        const stored = localStorage.getItem('uninest_marketplace_items');
+        if (stored) {
+          const list = JSON.parse(stored);
+          const next = list.filter((it: any) => it.id !== itemId);
+          localStorage.setItem('uninest_marketplace_items', JSON.stringify(next));
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    setPostSuccess(`Listing "${itemTitle || 'Item'}" deleted successfully.`);
+    setTimeout(() => setPostSuccess(null), 6000);
+  };
+
   // Escrow checkout modal
   const [selectedItemForEscrow, setSelectedItemForEscrow] = useState<MarketplaceItem | null>(null);
   const [escrowPaymentMethod, setEscrowPaymentMethod] = useState<'bank' | 'wallet'>('bank');
@@ -205,14 +311,20 @@ export const MarketplaceEscrowTab: React.FC<MarketplaceEscrowTabProps> = ({
   const [postSuccess, setPostSuccess] = useState<string | null>(null);
   const [autoConfirmSuccess, setAutoConfirmSuccess] = useState<string | null>(null);
 
-  // Helper: check expiry status & remaining days
+  // Helper: check expiry status & remaining days (Every listing stays for three months / 90 days)
   const getDaysRemaining = (item: MarketplaceItem): { days: number; isExpired: boolean; label: string } => {
-    if (!item.expiresAt) {
-      return { days: 30, isExpired: item.status === 'expired', label: '30 days left' };
-    }
     const today = new Date();
-    const expiry = new Date(item.expiresAt);
-    const diffTime = expiry.getTime() - today.getTime();
+    let expiryDate: Date;
+    if (item.expiresAt) {
+      expiryDate = new Date(item.expiresAt);
+    } else if (item.postedAt) {
+      const posted = new Date(item.postedAt);
+      expiryDate = new Date(posted.getTime() + 90 * 24 * 60 * 60 * 1000);
+    } else {
+      expiryDate = new Date(today.getTime() + 90 * 24 * 60 * 60 * 1000);
+    }
+
+    const diffTime = expiryDate.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
     if (diffDays <= 0 || item.status === 'expired') {
@@ -310,7 +422,7 @@ export const MarketplaceEscrowTab: React.FC<MarketplaceEscrowTabProps> = ({
     if (!itemTitle.trim() || priceNum <= 0) return;
 
     const now = new Date();
-    const expires = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+    const expires = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000); // 3 months lifespan
 
     const isVerifiedVendor = Boolean(safeUser.vendorVerifiedByHead && listingSellerType === 'vendor');
 
@@ -321,7 +433,6 @@ export const MarketplaceEscrowTab: React.FC<MarketplaceEscrowTabProps> = ({
       title: itemTitle.trim(),
       category: itemCategory,
       price: priceNum,
-      condition: itemCondition,
       campus: itemCampus,
       description: itemDesc.trim(),
       image: itemImage || CAMPUS_ITEM_PRESETS[0].url,
@@ -798,7 +909,7 @@ export const MarketplaceEscrowTab: React.FC<MarketplaceEscrowTabProps> = ({
                       <div className="p-4 space-y-2 text-[#0A1931]">
                         <div className="flex items-center justify-between text-xs">
                           <span className="font-bold text-[#FF6A00]">{item.category}</span>
-                          <span className="text-[11px] text-[#0A1931]/60 font-medium">{item.condition}</span>
+                          <span className="text-[10px] text-[#0A1931]/60 font-semibold">{expiryInfo.label}</span>
                         </div>
 
                         <h3 className="font-black text-sm text-[#0A1931] line-clamp-1">
@@ -842,11 +953,35 @@ export const MarketplaceEscrowTab: React.FC<MarketplaceEscrowTabProps> = ({
                       </div>
                     </div>
 
-                    {/* Action Buttons: Add to Cart & Buy with Safe Escrow */}
+                    {/* Action Buttons: Add to Cart & Buy with Safe Escrow OR Edit & Delete for My Listing */}
                     <div className="p-4 pt-0">
                       {isMyItem ? (
-                        <div className="py-2.5 rounded-xl bg-[#0A1931]/5 text-[#0A1931] text-xs font-bold text-center border border-[#0A1931]/10">
-                          Your Listing ({expiryInfo.label})
+                        <div className="space-y-2">
+                          <div className="py-1 px-2.5 rounded-xl bg-[#0A1931]/5 text-[#0A1931] text-[11px] font-bold text-center border border-[#0A1931]/10 flex items-center justify-between">
+                            <span>Your Active Listing</span>
+                            <span className="text-[#FF6A00] font-black">{expiryInfo.label}</span>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleOpenEditModal(item)}
+                              id={`btn-edit-listing-${item.id}`}
+                              className="py-2 px-2.5 rounded-xl bg-[#0A1931] hover:bg-[#152847] text-white font-black text-xs transition flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+                            >
+                              <Edit3 className="w-3.5 h-3.5 text-[#FF6A00]" />
+                              <span>Edit Listing</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteItem(item.id, item.title)}
+                              id={`btn-delete-listing-${item.id}`}
+                              className="py-2 px-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 font-bold text-xs transition flex items-center justify-center gap-1.5 cursor-pointer"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              <span>Delete</span>
+                            </button>
+                          </div>
                         </div>
                       ) : (
                         <div className="grid grid-cols-2 gap-2">
@@ -1002,33 +1137,57 @@ export const MarketplaceEscrowTab: React.FC<MarketplaceEscrowTabProps> = ({
             </div>
           ) : (
             <div className="space-y-3">
-              {myListings.map(item => (
-                <div 
-                  key={item.id}
-                  className="p-4 rounded-2xl bg-[#FFFFFF] border border-[#0A1931]/15 flex items-center justify-between gap-4 text-xs"
-                >
-                  <div className="flex items-center gap-3">
-                    <img src={item.image || 'https://images.unsplash.com/photo-1526738549149-8e07eca6c147?w=500&auto=format&fit=crop&q=80'} alt={item.title} className="w-12 h-12 rounded-xl object-cover" />
-                    <div>
-                      <h4 className="font-bold text-[#0A1931]">{item.title}</h4>
-                      <p className="text-[#0A1931]/60">₦{(item.price || 0).toLocaleString()} • {item.campus}</p>
+              {myListings.map(item => {
+                const expiryInfo = getDaysRemaining(item);
+                return (
+                  <div 
+                    key={item.id}
+                    className="p-4 rounded-2xl bg-[#FFFFFF] border border-[#0A1931]/15 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+                  >
+                    <div className="flex items-center gap-3">
+                      <img src={item.image || 'https://images.unsplash.com/photo-1526738549149-8e07eca6c147?w=500&auto=format&fit=crop&q=80'} alt={item.title} className="w-14 h-14 rounded-xl object-cover border border-[#0A1931]/10 shrink-0" />
+                      <div>
+                        <h4 className="font-bold text-[#0A1931]">{item.title}</h4>
+                        <p className="text-[#0A1931]/60">₦{(item.price || 0).toLocaleString()} • {item.campus}</p>
+                        <span className="text-[10px] text-[#FF6A00] font-black">{expiryInfo.label}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {item.hasVerifiedVendorTick ? (
+                        <span className="px-2.5 py-1 rounded-full bg-[#FF6A00] text-white text-[10px] font-black flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3" />
+                          Verified Vendor Tick
+                        </span>
+                      ) : (
+                        <span className="px-2.5 py-1 rounded-full bg-[#0A1931]/10 text-[#0A1931] text-[10px] font-bold">
+                          Student Listing
+                        </span>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => handleOpenEditModal(item)}
+                        className="px-3 py-1.5 rounded-xl bg-[#0A1931] hover:bg-[#152847] text-white text-[11px] font-bold transition flex items-center gap-1 cursor-pointer"
+                        title="Edit price and picture"
+                      >
+                        <Edit3 className="w-3 h-3 text-[#FF6A00]" />
+                        <span>Edit</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteItem(item.id, item.title)}
+                        className="px-2.5 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-[11px] font-bold transition flex items-center gap-1 cursor-pointer"
+                        title="Delete listing"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                        <span>Delete</span>
+                      </button>
                     </div>
                   </div>
-
-                  <div className="flex items-center gap-2">
-                    {item.hasVerifiedVendorTick ? (
-                      <span className="px-2.5 py-1 rounded-full bg-[#FF6A00] text-white text-[10px] font-black flex items-center gap-1">
-                        <CheckCircle2 className="w-3 h-3" />
-                        Verified Vendor Tick
-                      </span>
-                    ) : (
-                      <span className="px-2.5 py-1 rounded-full bg-[#0A1931]/10 text-[#0A1931] text-[10px] font-bold">
-                        Student Listing
-                      </span>
-                    )}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -1457,8 +1616,245 @@ export const MarketplaceEscrowTab: React.FC<MarketplaceEscrowTabProps> = ({
                   type="submit"
                   className="px-5 py-2.5 rounded-xl bg-[#FF6A00] hover:bg-[#E55E00] text-white font-black text-xs shadow-md transition cursor-pointer"
                 >
-                  Publish Listing
+                  Publish Listing (3 Months)
                 </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ================= MODAL: EDIT ITEM (PRICE, PICTURE & DETAILS) ================= */}
+      {editingItem && (
+        <div className="fixed inset-0 z-50 bg-[#0A1931]/80 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-[#FFFFFF] text-[#0A1931] rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl border-2 border-[#0A1931] my-8 animate-in fade-in zoom-in duration-200">
+            <div className="flex items-center justify-between border-b border-[#0A1931]/10 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-[#0A1931] text-[#FF6A00] flex items-center justify-center font-bold">
+                  <Edit3 className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-black text-base text-[#0A1931]">Edit Marketplace Listing</h3>
+                  <p className="text-[11px] text-[#0A1931]/70">Edit price, replace or delete picture, and update details</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingItem(null)}
+                className="text-[#0A1931]/50 hover:text-[#0A1931] font-bold text-lg cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-3 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5 font-bold">
+                <Clock className="w-4 h-4 text-[#FF6A00] shrink-0" />
+                <span>Active 3-Month Listing:</span>
+              </div>
+              <span className="font-bold text-[11px] text-[#0A1931]">
+                {getDaysRemaining(editingItem).label}
+              </span>
+            </div>
+
+            <form onSubmit={handleSaveEditSubmit} className="space-y-3.5 text-xs">
+              <div>
+                <label className="block text-[11px] font-bold text-[#0A1931] mb-1">Item Title *</label>
+                <input
+                  type="text"
+                  required
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-[#0A1931]/20 focus:outline-none focus:border-[#FF6A00]"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-[#0A1931] mb-1">Category *</label>
+                  <select
+                    value={editCategory}
+                    onChange={(e) => setEditCategory(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-[#0A1931]/20 focus:outline-none focus:border-[#FF6A00]"
+                  >
+                    <option value="Laptops & Tech">Laptops &amp; Tech</option>
+                    <option value="Hostel Gadgets">Hostel Gadgets</option>
+                    <option value="Textbooks & Notes">Textbooks &amp; Notes</option>
+                    <option value="Cooking & Gas">Cooking &amp; Gas</option>
+                    <option value="Furniture">Furniture</option>
+                    <option value="Fashion & Shoes">Fashion &amp; Shoes</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-[#0A1931] mb-1">
+                    Asking Price (₦) *
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    min="100"
+                    value={editPrice}
+                    onChange={(e) => setEditPrice(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border-2 border-[#FF6A00] font-bold text-sm focus:outline-none"
+                  />
+                  <span className="text-[10px] text-[#0A1931]/60 block mt-0.5">
+                    Editable anytime after posting
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-[#0A1931] mb-1">Campus Location *</label>
+                <input
+                  type="text"
+                  required
+                  value={editCampus}
+                  onChange={(e) => setEditCampus(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-[#0A1931]/20 focus:outline-none focus:border-[#FF6A00]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-[#0A1931] mb-1">Description</label>
+                <textarea
+                  rows={2}
+                  value={editDesc}
+                  onChange={(e) => setEditDesc(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-[#0A1931]/20 focus:outline-none focus:border-[#FF6A00]"
+                />
+              </div>
+
+              {/* Picture Edit & Delete Section */}
+              <div className="space-y-2 p-3.5 rounded-2xl bg-[#0A1931]/5 border-2 border-dashed border-[#0A1931]/20">
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-black text-[#0A1931] flex items-center gap-1.5">
+                    <Camera className="w-3.5 h-3.5 text-[#FF6A00]" />
+                    <span>Listing Picture (Can be edited or deleted)</span>
+                  </label>
+                  {editImage && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditImage('');
+                        setEditUploadedFileName(null);
+                      }}
+                      className="text-[11px] text-rose-600 font-bold hover:underline flex items-center gap-1 cursor-pointer"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                      <span>Delete Picture</span>
+                    </button>
+                  )}
+                </div>
+
+                <input
+                  ref={editFileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleEditFileInputChange}
+                />
+
+                {editImage ? (
+                  <div className="space-y-2">
+                    <div className="relative h-40 rounded-xl overflow-hidden border-2 border-[#FF6A00] bg-black/10">
+                      <img
+                        src={editImage}
+                        alt="Listing Preview"
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-[#0A1931] text-white text-[10px] font-black flex items-center gap-1 shadow-xs">
+                        <CheckCircle2 className="w-3 h-3 text-[#FF6A00]" />
+                        <span>Active Photo</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => editFileInputRef.current?.click()}
+                        className="flex-1 py-1.5 rounded-xl bg-[#0A1931] text-white text-[11px] font-bold hover:bg-[#0A1931]/80 transition flex items-center justify-center gap-1.5 cursor-pointer"
+                      >
+                        <Upload className="w-3.5 h-3.5 text-[#FF6A00]" />
+                        <span>Change / Replace Picture</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditImage('');
+                          setEditUploadedFileName(null);
+                        }}
+                        className="px-3 py-1.5 rounded-xl bg-rose-50 text-rose-600 border border-rose-200 text-[11px] font-bold hover:bg-rose-100 transition cursor-pointer flex items-center gap-1"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                        <span>Delete Photo</span>
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    onClick={() => editFileInputRef.current?.click()}
+                    className="p-5 rounded-xl border-2 border-dashed border-[#0A1931]/30 hover:border-[#FF6A00] bg-white text-center cursor-pointer space-y-1 transition"
+                  >
+                    <Upload className="w-6 h-6 text-[#FF6A00] mx-auto" />
+                    <p className="text-xs font-bold text-[#0A1931]">Click to upload new picture</p>
+                    <p className="text-[10px] text-[#0A1931]/60">Or select from presets below</p>
+                  </div>
+                )}
+
+                {/* Presets */}
+                <div className="pt-2 border-t border-[#0A1931]/10 space-y-1">
+                  <span className="text-[10px] font-black text-[#0A1931]/70 block">
+                    Presets:
+                  </span>
+                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
+                    {CAMPUS_ITEM_PRESETS.map((preset) => (
+                      <button
+                        key={preset.name}
+                        type="button"
+                        onClick={() => {
+                          setEditImage(preset.url);
+                          setEditUploadedFileName(`Preset: ${preset.name}`);
+                        }}
+                        className={`p-1 rounded-lg border text-[9px] font-bold transition flex flex-col items-center gap-0.5 cursor-pointer ${
+                          editImage === preset.url
+                            ? 'bg-[#FF6A00] text-white border-[#FF6A00]'
+                            : 'bg-white text-[#0A1931] border-[#0A1931]/15 hover:border-[#FF6A00]'
+                        }`}
+                      >
+                        <img src={preset.url} alt={preset.name} className="w-full h-7 object-cover rounded" />
+                        <span className="truncate w-full text-center">{preset.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-3 border-t border-[#0A1931]/10">
+                <button
+                  type="button"
+                  onClick={() => handleDeleteItem(editingItem.id, editingItem.title)}
+                  className="px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-bold transition flex items-center gap-1 cursor-pointer"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Delete Listing Entirely</span>
+                </button>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setEditingItem(null)}
+                    className="px-4 py-2 rounded-xl text-xs font-bold text-[#0A1931]/60 hover:text-[#0A1931] cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2.5 rounded-xl bg-[#FF6A00] hover:bg-[#E55E00] text-white font-black text-xs shadow-md transition cursor-pointer"
+                  >
+                    Save Changes
+                  </button>
+                </div>
               </div>
             </form>
           </div>

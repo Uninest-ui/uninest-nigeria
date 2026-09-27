@@ -36,7 +36,9 @@ import {
   MessageSquare,
   Key,
   Camera,
-  Bell
+  Bell,
+  ArrowRight,
+  GraduationCap
 } from 'lucide-react';
 import { UniNestUser, STSAccount, NewsItem, AdminLog, CrowdfundingCampaign, DepositWithdrawalApproval, LiveSupportConversation, LiveSupportMessage } from '../types';
 import { UniNestLogo } from './UniNestLogo';
@@ -83,6 +85,7 @@ interface AdminDashboardProps {
   stsSavingsAccounts?: any[];
   onToggleUserVendorTicker?: (email: string) => void;
   onUpdateSTSSavingsAccount?: (account: any) => void;
+  onRefreshUsers?: () => Promise<void> | void;
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
@@ -105,6 +108,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onResetPassword,
   stsSavingsAccounts = [],
   onUpdateSTSSavingsAccount,
+  onRefreshUsers,
 }) => {
   const [activeTab, setActiveTab] = useState<'overview' | 'approvals' | 'live_support' | 'crowdfunding' | 'payment_settings' | 'users' | 'sts' | 'news' | 'newsletter' | 'head_of_marketplace' | 'scouts' | 'logs'>('overview');
   
@@ -242,6 +246,50 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     return matchesSearch && matchesRole;
   });
 
+  const [isRefreshingUsers, setIsRefreshingUsers] = useState(false);
+
+  const handleRefreshLiveUsers = async () => {
+    if (!onRefreshUsers) return;
+    setIsRefreshingUsers(true);
+    try {
+      await onRefreshUsers();
+      onAddLog('Admin Synchronized Live Users Directory', 'Pulled fresh records from Supabase and database.');
+    } catch (e: any) {
+      console.error(e);
+    } finally {
+      setTimeout(() => setIsRefreshingUsers(false), 500);
+    }
+  };
+
+  const handleExportUsersCSV = () => {
+    const headers = ['Full Name', 'Email', 'Phone', 'Role', 'University', 'Department', 'Verified Status', 'STS Target (NGN)', 'STS Saved (NGN)', 'Gift Balance (NGN)', 'Joined Date'];
+    const rows = filteredUsers.map(u => {
+      const sa = stsSavingsAccounts.find(a => a.userEmail?.toLowerCase() === u.email.toLowerCase());
+      return [
+        `"${(u.name || '').replace(/"/g, '""')}"`,
+        `"${(u.email || '').replace(/"/g, '""')}"`,
+        `"${(u.phone || '').replace(/"/g, '""')}"`,
+        `"${u.role || 'student'}"`,
+        `"${(u.university || '').replace(/"/g, '""')}"`,
+        `"${(u.department || '').replace(/"/g, '""')}"`,
+        u.verified !== false ? 'Verified' : 'Pending',
+        sa?.targetAmount || 100000,
+        sa?.currentBalance || 0,
+        sa?.giftAccountBalance ?? sa?.giftBalance ?? u.giftBalance ?? 0,
+        `"${u.createdAt || ''}"`
+      ].join(',');
+    });
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `uninest_users_directory_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    onAddLog('Exported User Directory CSV', `Downloaded ${filteredUsers.length} records.`);
+  };
+
   const handleOpenEditUser = (targetUser: UniNestUser) => {
     setSelectedUserForEdit(targetUser);
     setUserModalMode('profile');
@@ -353,7 +401,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           }`}
         >
           <CreditCard className="w-3.5 h-3.5 text-emerald-400" />
-          <span>Official Bank &amp; Paystack</span>
+          <span>Official Bank Account</span>
         </button>
 
         <button
@@ -546,13 +594,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
             {/* Top Stat Metrics */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-              <div className="p-5 rounded-2xl bg-slate-800/80 border border-slate-700 space-y-2">
-                <div className="flex items-center justify-between text-slate-400 text-xs font-bold">
-                  <span>REGISTERED STUDENTS</span>
+              <div 
+                onClick={() => setActiveTab('users')}
+                className="p-5 rounded-2xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700 hover:border-amber-500/50 space-y-2 cursor-pointer transition group"
+              >
+                <div className="flex items-center justify-between text-slate-400 group-hover:text-amber-400 text-xs font-bold">
+                  <span>REGISTERED USERS</span>
                   <Users className="w-4 h-4 text-orange-400" />
                 </div>
                 <div className="text-3xl font-extrabold text-white font-mono">{users.length}</div>
-                <p className="text-[11px] text-emerald-400">● OTP 2FA Verified Database</p>
+                <p className="text-[11px] text-emerald-400">● View All {users.length} User Accounts →</p>
               </div>
 
               <div 
@@ -596,6 +647,224 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
                 <div className="text-3xl font-extrabold text-white font-mono">{news.length}</div>
                 <p className="text-[11px] text-slate-400">Curated Nigerian Campus Bulletins</p>
+              </div>
+            </div>
+
+            {/* ================= ALL USERS DIRECTORY SECTION (DIRECTLY ON OVERVIEW DASHBOARD) ================= */}
+            <div className="rounded-3xl bg-slate-900 border border-slate-800 p-5 sm:p-6 space-y-4 shadow-xl">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+                <div>
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold">
+                      <Users className="w-5 h-5 text-amber-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                        <span>All Registered Users Directory</span>
+                        <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-mono text-xs font-bold border border-amber-500/30">
+                          {users.length} Total Users
+                        </span>
+                      </h3>
+                      <p className="text-xs text-slate-400">
+                        Institutional roster of all verified students, campus vendors, and administrators on UniNest.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  {onRefreshUsers && (
+                    <button
+                      type="button"
+                      onClick={handleRefreshLiveUsers}
+                      disabled={isRefreshingUsers}
+                      className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition flex items-center gap-1.5 border border-slate-700 cursor-pointer disabled:opacity-50"
+                      title="Sync live users from Supabase and database"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 text-amber-400 ${isRefreshingUsers ? 'animate-spin' : ''}`} />
+                      <span>{isRefreshingUsers ? 'Syncing...' : 'Sync / Refresh Users'}</span>
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleExportUsersCSV}
+                    className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition flex items-center gap-1.5 border border-slate-700 cursor-pointer"
+                    title="Export all users to CSV file"
+                  >
+                    <Download className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Export CSV</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('users')}
+                    className="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm"
+                  >
+                    <span>Full User Console</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Filters & Search Bar */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 overflow-x-auto">
+                  {(['all', 'student', 'vendor', 'admin'] as const).map((r) => (
+                    <button
+                      key={r}
+                      onClick={() => setUserRoleFilter(r)}
+                      className={`px-3 py-1 rounded-lg text-xs font-bold capitalize transition cursor-pointer whitespace-nowrap ${
+                        userRoleFilter === r
+                          ? 'bg-amber-500 text-slate-950 shadow-xs'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      {r === 'all' ? `All (${users.length})` : `${r}s (${users.filter(u => (u.role || 'student') === r).length})`}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="relative w-full sm:w-72">
+                  <Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
+                  <input
+                    type="text"
+                    placeholder="Search by name, email, phone, campus..."
+                    value={userSearch}
+                    onChange={(e) => setUserSearch(e.target.value)}
+                    className="w-full h-9 pl-9 pr-3 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white placeholder:text-slate-500 focus:border-amber-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Responsive Table */}
+              <div className="rounded-2xl border border-slate-800 bg-slate-950 overflow-x-auto">
+                <table className="w-full text-left text-xs text-slate-300">
+                  <thead className="bg-slate-900 text-slate-400 uppercase font-mono text-[10px]">
+                    <tr>
+                      <th className="p-3">User Profile</th>
+                      <th className="p-3">Email &amp; Campus</th>
+                      <th className="p-3">Phone</th>
+                      <th className="p-3">Role</th>
+                      <th className="p-3">STS Savings Target &amp; Saved</th>
+                      <th className="p-3">Gift Wallet</th>
+                      <th className="p-3">2FA Status</th>
+                      <th className="p-3">Joined Date</th>
+                      <th className="p-3 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/60 font-medium">
+                    {filteredUsers.length === 0 ? (
+                      <tr>
+                        <td colSpan={9} className="p-8 text-center text-slate-500">
+                          No user accounts found matching your search.
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredUsers.map((u, i) => {
+                        const sa = stsSavingsAccounts.find(a => a.userEmail?.toLowerCase() === u.email.toLowerCase());
+                        const target = Math.max(100000, sa?.targetAmount || 100000);
+                        const saved = sa?.currentBalance || 0;
+                        const pct = Math.min(100, Math.round((saved / target) * 100));
+                        return (
+                          <tr key={i} className="hover:bg-slate-900/50 transition">
+                            <td className="p-3">
+                              <div className="flex items-center gap-2.5">
+                                <img
+                                  src={u.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=60&auto=format&fit=crop&q=80'}
+                                  alt="avatar"
+                                  className="w-8 h-8 rounded-full object-cover border border-slate-700 shrink-0"
+                                />
+                                <div>
+                                  <span className="font-bold text-white block text-xs">{u.name || 'UniNest User'}</span>
+                                  {u.department && (
+                                    <span className="text-[10px] text-slate-400 block truncate max-w-[140px]">{u.department}</span>
+                                  )}
+                                </div>
+                              </div>
+                            </td>
+                            <td className="p-3">
+                              <div className="font-mono text-slate-200 text-xs">{u.email}</div>
+                              <div className="text-[10px] text-slate-400 truncate max-w-[160px]">{u.university || 'General Campus'}</div>
+                            </td>
+                            <td className="p-3 font-mono text-slate-300">{u.phone || '—'}</td>
+                            <td className="p-3">
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                u.role === 'admin'
+                                  ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                                  : u.role === 'vendor'
+                                  ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
+                                  : 'bg-slate-800 text-slate-300'
+                              }`}>
+                                {u.role || 'student'}
+                              </span>
+                            </td>
+                            <td className="p-3">
+                              <div className="space-y-1 min-w-[140px]">
+                                <div className="flex items-center justify-between text-[11px] font-mono">
+                                  <span className="font-bold text-white">₦{saved.toLocaleString()}</span>
+                                  <span className="text-slate-400">/ ₦{target.toLocaleString()}</span>
+                                </div>
+                                <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                                  <div
+                                    className="bg-orange-500 h-full rounded-full"
+                                    style={{ width: `${pct}%` }}
+                                  />
+                                </div>
+                                <div className="text-[10px] text-slate-400 flex justify-between">
+                                  <span>{pct}% Target</span>
+                                  <span>Class of {sa?.expectedSignOutYear || sa?.targetYear || '2028'}</span>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="p-3 font-mono text-emerald-400 text-xs font-bold">
+                              ₦{(sa?.giftAccountBalance ?? sa?.giftBalance ?? u.giftBalance ?? 0).toLocaleString()}
+                            </td>
+                            <td className="p-3">
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                u.verified !== false
+                                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                                  : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                              }`}>
+                                {u.verified !== false ? 'Verified ✓' : 'Pending'}
+                              </span>
+                            </td>
+                            <td className="p-3 text-slate-400 font-mono text-[11px]">{u.createdAt}</td>
+                            <td className="p-3 text-right">
+                              <div className="flex items-center justify-end gap-1.5">
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenCreditSavingsModal(u.email)}
+                                  title="Increase student savings balance after manual payment"
+                                  className="px-2 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[11px] font-bold transition flex items-center gap-1 cursor-pointer"
+                                >
+                                  <PiggyBank className="w-3 h-3" />
+                                  <span>Credit</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenEditUser(u)}
+                                  title="Edit user profile and university information"
+                                  className="px-2 py-1 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 text-[11px] font-bold transition flex items-center gap-1 cursor-pointer"
+                                >
+                                  <Edit3 className="w-3 h-3" />
+                                  <span>Edit</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenResetPassword(u)}
+                                  title="Reset user password for security"
+                                  className="px-2 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[11px] font-bold transition flex items-center gap-1 cursor-pointer"
+                                >
+                                  <Key className="w-3 h-3" />
+                                  <span>Password</span>
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
               </div>
             </div>
 
@@ -754,21 +1023,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               </div>
             </div>
 
-            {/* Quick Banner: Official Bank & Paystack Mode */}
+            {/* Quick Banner: Official Bank Settings */}
             <div className="p-5 rounded-3xl bg-linear-to-r from-emerald-950/50 to-slate-900 border border-emerald-800/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="flex items-center gap-3.5">
-                <div className="w-11 h-11 rounded-2xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+                <div className="w-11 h-11 rounded-2xl bg-[#FF6A00]/20 border border-[#FF6A00]/30 flex items-center justify-center text-[#FF6A00] shrink-0">
                   <CreditCard className="w-6 h-6" />
                 </div>
                 <div>
                   <h4 className="text-sm font-bold text-white flex items-center gap-2">
-                    <span>Official Bank Account &amp; Paystack Switcher</span>
+                    <span>Official Institutional Bank Account</span>
                     <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-mono font-black">
-                      ACTIVE
+                      ACTIVE (DIRECT NUBAN)
                     </span>
                   </h4>
                   <p className="text-xs text-slate-300">
-                    Switch student payment channels between Direct Bank Transfer, Automated Paystack Checkout, or Hybrid Mode.
+                    Manage the institutional bank account details, verification WhatsApp desk, and escrow policy displayed to students across the platform. (Paystack is disabled for now).
                   </p>
                 </div>
               </div>
@@ -777,7 +1046,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 onClick={() => setActiveTab('payment_settings')}
                 className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black transition flex items-center gap-1.5 cursor-pointer shrink-0 shadow-md"
               >
-                <span>Manage Bank &amp; Paystack</span>
+                <span>Manage Bank Settings</span>
                 <ExternalLink className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -823,19 +1092,75 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
         {/* ================= TAB 2: USER ACCOUNTS & CREDENTIALS ================= */}
         {activeTab === 'users' && (
-          <div className="space-y-4">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="space-y-5">
+            {/* User Directory Stat Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-1">
+                <span className="text-[11px] font-bold text-slate-400">Total Registered</span>
+                <div className="text-2xl font-black text-white font-mono">{users.length}</div>
+                <span className="text-[10px] text-emerald-400">● 100% Platform Roster</span>
+              </div>
+              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-1">
+                <span className="text-[11px] font-bold text-slate-400">Students</span>
+                <div className="text-2xl font-black text-amber-400 font-mono">
+                  {users.filter(u => (u.role || 'student') === 'student').length}
+                </div>
+                <span className="text-[10px] text-slate-500">Undergraduate &amp; Finalists</span>
+              </div>
+              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-1">
+                <span className="text-[11px] font-bold text-slate-400">Campus Vendors</span>
+                <div className="text-2xl font-black text-purple-400 font-mono">
+                  {users.filter(u => u.role === 'vendor').length}
+                </div>
+                <span className="text-[10px] text-slate-500">Marketplace Merchants</span>
+              </div>
+              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-1">
+                <span className="text-[11px] font-bold text-slate-400">Super Admins</span>
+                <div className="text-2xl font-black text-emerald-400 font-mono">
+                  {users.filter(u => u.role === 'admin').length}
+                </div>
+                <span className="text-[10px] text-slate-500">Full System Clearance</span>
+              </div>
+            </div>
+
+            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
               <div>
                 <h2 className="text-xl font-bold text-white flex items-center gap-2">
                   <Users className="w-5 h-5 text-amber-400" />
                   <span>Student &amp; User Accounts Directory</span>
+                  <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-mono text-xs font-bold">
+                    {filteredUsers.length} of {users.length}
+                  </span>
                 </h2>
                 <p className="text-xs text-slate-400">
-                  Manage user profiles, edit registration details, or execute security password changes.
+                  Manage user profiles, view STS savings targets &amp; balances, or execute security password changes.
                 </p>
               </div>
 
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+              <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+                {onRefreshUsers && (
+                  <button
+                    type="button"
+                    onClick={handleRefreshLiveUsers}
+                    disabled={isRefreshingUsers}
+                    className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition flex items-center gap-1.5 border border-slate-700 cursor-pointer disabled:opacity-50 shadow-xs"
+                    title="Sync live users from Supabase and database"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 text-amber-400 ${isRefreshingUsers ? 'animate-spin' : ''}`} />
+                    <span>{isRefreshingUsers ? 'Syncing...' : 'Sync / Refresh'}</span>
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={handleExportUsersCSV}
+                  className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition flex items-center gap-1.5 border border-slate-700 cursor-pointer shadow-xs"
+                  title="Export all users to CSV file"
+                >
+                  <Download className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Export CSV</span>
+                </button>
+
                 {/* Credit Savings Button */}
                 <button
                   type="button"
@@ -871,7 +1196,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     placeholder="Search by name, email, phone..."
                     value={userSearch}
                     onChange={(e) => setUserSearch(e.target.value)}
-                    className="w-full h-9 pl-9 pr-3 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white placeholder:text-slate-500"
+                    className="w-full h-9 pl-9 pr-3 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-amber-500"
                   />
                 </div>
               </div>
@@ -885,6 +1210,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <th className="p-3">Email &amp; Campus</th>
                     <th className="p-3">Phone</th>
                     <th className="p-3">Role</th>
+                    <th className="p-3">STS Savings Target &amp; Saved</th>
+                    <th className="p-3">Gift Wallet</th>
                     <th className="p-3">2FA Status</th>
                     <th className="p-3">Joined Date</th>
                     <th className="p-3 text-right">Admin Actions</th>
@@ -893,87 +1220,114 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <tbody className="divide-y divide-slate-800/60 font-medium">
                   {filteredUsers.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="p-8 text-center text-slate-500">
+                      <td colSpan={9} className="p-8 text-center text-slate-500">
                         No accounts found matching your search query.
                       </td>
                     </tr>
                   ) : (
-                    filteredUsers.map((u, i) => (
-                      <tr key={i} className="hover:bg-slate-900/50 transition">
-                        <td className="p-3">
-                          <div className="flex items-center gap-2.5">
-                            <img 
-                              src={u.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=60&auto=format&fit=crop&q=80'} 
-                              alt="avatar" 
-                              className="w-8 h-8 rounded-full object-cover border border-slate-700 shrink-0" 
-                            />
-                            <div>
-                              <span className="font-bold text-white block text-xs">{u.name || 'UniNest User'}</span>
-                              {u.department && (
-                                <span className="text-[10px] text-slate-400 block truncate max-w-[140px]">{u.department}</span>
-                              )}
+                    filteredUsers.map((u, i) => {
+                      const sa = stsSavingsAccounts.find(a => a.userEmail?.toLowerCase() === u.email.toLowerCase());
+                      const target = Math.max(100000, sa?.targetAmount || 100000);
+                      const saved = sa?.currentBalance || 0;
+                      const pct = Math.min(100, Math.round((saved / target) * 100));
+                      return (
+                        <tr key={i} className="hover:bg-slate-900/50 transition">
+                          <td className="p-3">
+                            <div className="flex items-center gap-2.5">
+                              <img 
+                                src={u.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=60&auto=format&fit=crop&q=80'} 
+                                alt="avatar" 
+                                className="w-8 h-8 rounded-full object-cover border border-slate-700 shrink-0" 
+                              />
+                              <div>
+                                <span className="font-bold text-white block text-xs">{u.name || 'UniNest User'}</span>
+                                {u.department && (
+                                  <span className="text-[10px] text-slate-400 block truncate max-w-[140px]">{u.department}</span>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        </td>
-                        <td className="p-3">
-                          <div className="font-mono text-slate-200 text-xs">{u.email}</div>
-                          <div className="text-[10px] text-slate-400 truncate max-w-[160px]">{u.university || 'General Campus'}</div>
-                        </td>
-                        <td className="p-3 font-mono text-slate-300">{u.phone || '—'}</td>
-                        <td className="p-3">
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                            u.role === 'admin' 
-                              ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' 
-                              : u.role === 'vendor'
-                              ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
-                              : 'bg-slate-800 text-slate-300'
-                          }`}>
-                            {u.role || 'student'}
-                          </span>
-                        </td>
-                        <td className="p-3">
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                            u.verified !== false
-                              ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                              : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                          }`}>
-                            {u.verified !== false ? 'Verified ✓' : 'Pending'}
-                          </span>
-                        </td>
-                        <td className="p-3 text-slate-400 font-mono text-[11px]">{u.createdAt}</td>
-                        <td className="p-3 text-right">
-                          <div className="flex items-center justify-end gap-1.5">
-                            <button
-                              type="button"
-                              onClick={() => handleOpenCreditSavingsModal(u.email)}
-                              title="Increase student savings balance after manual payment"
-                              className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[11px] font-bold transition flex items-center gap-1 cursor-pointer"
-                            >
-                              <PiggyBank className="w-3 h-3" />
-                              <span>Credit Savings</span>
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleOpenEditUser(u)}
-                              title="Edit user profile and university information"
-                              className="px-2.5 py-1 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 text-[11px] font-bold transition flex items-center gap-1 cursor-pointer"
-                            >
-                              <Edit3 className="w-3 h-3" />
-                              <span>Edit Details</span>
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleOpenResetPassword(u)}
-                              title="Reset user password for security"
-                              className="px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[11px] font-bold transition flex items-center gap-1 cursor-pointer"
-                            >
-                              <Key className="w-3 h-3" />
-                              <span>Change Password</span>
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
+                          </td>
+                          <td className="p-3">
+                            <div className="font-mono text-slate-200 text-xs">{u.email}</div>
+                            <div className="text-[10px] text-slate-400 truncate max-w-[160px]">{u.university || 'General Campus'}</div>
+                          </td>
+                          <td className="p-3 font-mono text-slate-300">{u.phone || '—'}</td>
+                          <td className="p-3">
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                              u.role === 'admin' 
+                                ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' 
+                                : u.role === 'vendor'
+                                ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
+                                : 'bg-slate-800 text-slate-300'
+                            }`}>
+                              {u.role || 'student'}
+                            </span>
+                          </td>
+                          <td className="p-3">
+                            <div className="space-y-1 min-w-[140px]">
+                              <div className="flex items-center justify-between text-[11px] font-mono">
+                                <span className="font-bold text-white">₦{saved.toLocaleString()}</span>
+                                <span className="text-slate-400">/ ₦{target.toLocaleString()}</span>
+                              </div>
+                              <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                                <div
+                                  className="bg-orange-500 h-full rounded-full"
+                                  style={{ width: `${pct}%` }}
+                                />
+                              </div>
+                              <div className="text-[10px] text-slate-400 flex justify-between">
+                                <span>{pct}% Target</span>
+                                <span>Class of {sa?.expectedSignOutYear || sa?.targetYear || '2028'}</span>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="p-3 font-mono text-emerald-400 text-xs font-bold">
+                            ₦{(sa?.giftAccountBalance ?? sa?.giftBalance ?? u.giftBalance ?? 0).toLocaleString()}
+                          </td>
+                          <td className="p-3">
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                              u.verified !== false
+                                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                                : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                            }`}>
+                              {u.verified !== false ? 'Verified ✓' : 'Pending'}
+                            </span>
+                          </td>
+                          <td className="p-3 text-slate-400 font-mono text-[11px]">{u.createdAt}</td>
+                          <td className="p-3 text-right">
+                            <div className="flex items-center justify-end gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => handleOpenCreditSavingsModal(u.email)}
+                                title="Increase student savings balance after manual payment"
+                                className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[11px] font-bold transition flex items-center gap-1 cursor-pointer"
+                              >
+                                <PiggyBank className="w-3 h-3" />
+                                <span>Credit</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleOpenEditUser(u)}
+                                title="Edit user profile and university information"
+                                className="px-2.5 py-1 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 text-[11px] font-bold transition flex items-center gap-1 cursor-pointer"
+                              >
+                                <Edit3 className="w-3 h-3" />
+                                <span>Edit</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleOpenResetPassword(u)}
+                                title="Reset user password for security"
+                                className="px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[11px] font-bold transition flex items-center gap-1 cursor-pointer"
+                              >
+                                <Key className="w-3 h-3" />
+                                <span>Password</span>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
                   )}
                 </tbody>
               </table>

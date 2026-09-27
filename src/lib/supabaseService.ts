@@ -152,27 +152,62 @@ export async function updateProfileInSupabase(user: UniNestUser): Promise<void> 
   }
 }
 
-// 4. Supabase Sign Up
+// 4. Supabase Sign Up (Dispatches native Supabase Auth email with confirmation OTP / link)
 export async function signUpWithSupabase(
   email: string,
   pass: string,
   userMetadata?: Record<string, any>
-): Promise<{ user: any; error: any }> {
+): Promise<{ user: any; session: any; error: any }> {
   try {
+    const cleanEmail = email.trim().toLowerCase();
     const { data, error } = await supabase.auth.signUp({
-      email: email.trim().toLowerCase(),
+      email: cleanEmail,
       password: pass,
       options: {
         data: userMetadata || {}
       }
     });
-    return { user: data?.user || null, error };
+    return { user: data?.user || null, session: data?.session || null, error };
   } catch (err: any) {
-    return { user: null, error: err };
+    return { user: null, session: null, error: err };
   }
 }
 
-// 5. Supabase Sign In with Password
+// 5. Supabase Verify Signup OTP / Token
+export async function verifySignupOtpWithSupabase(
+  email: string,
+  token: string
+): Promise<{ session: any; user: any; error: any }> {
+  try {
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanToken = token.trim();
+    
+    // First attempt 'signup' verification type
+    let res = await supabase.auth.verifyOtp({
+      email: cleanEmail,
+      token: cleanToken,
+      type: 'signup'
+    });
+
+    // If 'signup' fails, fallback to 'email' verification type
+    if (res.error) {
+      const emailRes = await supabase.auth.verifyOtp({
+        email: cleanEmail,
+        token: cleanToken,
+        type: 'email'
+      });
+      if (!emailRes.error) {
+        res = emailRes;
+      }
+    }
+
+    return { session: res.data?.session || null, user: res.data?.user || null, error: res.error };
+  } catch (err: any) {
+    return { session: null, user: null, error: err };
+  }
+}
+
+// 6. Supabase Sign In with Password
 export async function signInWithSupabase(
   email: string,
   pass: string
@@ -188,7 +223,7 @@ export async function signInWithSupabase(
   }
 }
 
-// 6. Supabase Sign In with Google OAuth
+// 7. Supabase Sign In with Google OAuth
 export async function signInWithGoogleSupabase(): Promise<{ data: any; error: any }> {
   try {
     const { data, error } = await supabase.auth.signInWithOAuth({
@@ -203,10 +238,11 @@ export async function signInWithGoogleSupabase(): Promise<{ data: any; error: an
   }
 }
 
-// 7. Supabase Password Reset Email
+// 8. Supabase Password Reset Email (Sends native Supabase OTP code / recovery link)
 export async function sendSupabasePasswordReset(email: string): Promise<{ data: any; error: any }> {
   try {
-    const { data, error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
+    const cleanEmail = email.trim().toLowerCase();
+    const { data, error } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
       redirectTo: `${window.location.origin}/reset-password`
     });
     return { data, error };
@@ -215,12 +251,58 @@ export async function sendSupabasePasswordReset(email: string): Promise<{ data: 
   }
 }
 
-// 8. Supabase Sign Out
+// 9. Supabase Verify Password Recovery OTP
+export async function verifyRecoveryOtpWithSupabase(
+  email: string,
+  token: string
+): Promise<{ session: any; user: any; error: any }> {
+  try {
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanToken = token.trim();
+    const { data, error } = await supabase.auth.verifyOtp({
+      email: cleanEmail,
+      token: cleanToken,
+      type: 'recovery'
+    });
+    return { session: data?.session || null, user: data?.user || null, error };
+  } catch (err: any) {
+    return { session: null, user: null, error: err };
+  }
+}
+
+// 10. Supabase Update Password
+export async function updateSupabasePassword(newPassword: string): Promise<{ user: any; error: any }> {
+  try {
+    const { data, error } = await supabase.auth.updateUser({
+      password: newPassword
+    });
+    return { user: data?.user || null, error };
+  } catch (err: any) {
+    return { user: null, error: err };
+  }
+}
+
+// 11. Supabase Sign Out
 export async function signOutSupabase(): Promise<{ error: any }> {
   try {
     const { error } = await supabase.auth.signOut();
     return { error };
   } catch (err: any) {
     return { error: err };
+  }
+}
+
+// 9. Supabase Delete Profile
+export async function deleteProfileFromSupabase(email: string): Promise<void> {
+  try {
+    const { error } = await supabase
+      .from('profiles')
+      .delete()
+      .eq('email', email.trim().toLowerCase());
+    if (error) {
+      console.warn('Supabase delete profile notice:', error.message);
+    }
+  } catch (err) {
+    console.warn('Error deleting Supabase profile:', err);
   }
 }

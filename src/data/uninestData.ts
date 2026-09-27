@@ -97,7 +97,7 @@ export const INITIAL_BAYELSA_ACCOMMODATIONS: AccommodationListing[] = [];
 // 3. Academic Assist Initial Data
 export const INITIAL_ACADEMIC_ASSIST_REQUESTS: AcademicAssistRequest[] = [];
 
-// 4. UniNest Marketplace & Escrow
+// 4. UniNest Marketplace & Escrow (Real user listings only - demo goods removed)
 export const INITIAL_MARKETPLACE_ITEMS: MarketplaceItem[] = [];
 
 export const INITIAL_ESCROW_TRANSACTIONS: EscrowTransaction[] = [];

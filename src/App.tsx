@@ -50,9 +50,35 @@ import { AuthCard } from './components/AuthCard';
 import { StudentDashboard } from './components/StudentDashboard';
 import { AdminDashboard } from './components/AdminDashboard';
 import { GuestDashboard } from './components/GuestDashboard';
-import { sendStudentGiftEmail, sendNewUserSignupAdminAlert } from './services/emailService';
+import { sendStudentGiftEmail, sendNewUserSignupAdminAlert, sendCampusNewsNotificationEmail } from './services/emailService';
 import { supabase, insertSignupProfileToSupabase, fetchProfilesFromSupabase, updateProfileInSupabase } from './lib/supabaseService';
 import { approvalService } from './utils/approvalService';
+
+// Filter helper: ensure only genuine real user listings exist (no demo/mock items)
+const isRealUserMarketplaceItem = (m: any) => {
+  if (!m || !m.id) return false;
+  const id = String(m.id).toLowerCase();
+  if (
+    id.startsWith('item-0') || 
+    id.startsWith('mkt-init') || 
+    id.startsWith('mkt-') || 
+    id.startsWith('demo-') || 
+    id.startsWith('init-')
+  ) {
+    return false;
+  }
+  const title = String(m.title || '').toLowerCase();
+  if (
+    title.includes('hp elitebook 840') || 
+    title.includes('rechargeable standing fan') || 
+    title.includes('complete 6kg gas cylinder') || 
+    title.includes('calculus early transcendentals') || 
+    title.includes('haier thermocool')
+  ) {
+    return false;
+  }
+  return true;
+};
 
 export const App: React.FC = () => {
   // App view modes: 'auth' | 'student' | 'admin' | 'guest'
@@ -224,15 +250,30 @@ export const App: React.FC = () => {
     return [];
   });
 
-  // 4. Marketplace Items & Escrows (Community & Student posted only - generated goods removed)
+  // 4. Marketplace Items & Escrows (Community & Student posted only - all demo listings removed)
   const [marketplaceItems, setMarketplaceItems] = useState<MarketplaceItem[]>(() => {
     try {
       const saved = localStorage.getItem('uninest_marketplace_items');
       if (saved) {
         const parsed = JSON.parse(saved);
-        const filtered = Array.isArray(parsed) ? parsed.filter((m: any) => m && m.id && !m.id.startsWith('mkt-') && !m.id.startsWith('demo-') && !m.id.startsWith('item-0')) : [];
-        localStorage.setItem('uninest_marketplace_items', JSON.stringify(filtered));
-        return filtered;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // Keep only real user listings; remove all demo / mock / init listings
+          const realItems = parsed.filter(isRealUserMarketplaceItem);
+          if (realItems.length > 0) {
+            // Ensure 3-month lifespan (90 days) for all user listings
+            const updatedLifespan = realItems.map((m: any) => {
+              const postedTime = m.postedAt ? new Date(m.postedAt).getTime() : Date.now();
+              const targetExpiry = new Date(postedTime + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+              const currentExpiryTime = m.expiresAt ? new Date(m.expiresAt).getTime() : 0;
+              if (!m.expiresAt || (currentExpiryTime - postedTime < 45 * 24 * 60 * 60 * 1000)) {
+                return { ...m, expiresAt: targetExpiry, status: m.status === 'expired' ? 'available' : m.status };
+              }
+              return m;
+            });
+            localStorage.setItem('uninest_marketplace_items', JSON.stringify(updatedLifespan));
+            return updatedLifespan;
+          }
+        }
       }
     } catch (e) {
       console.error(e);
@@ -456,7 +497,31 @@ export const App: React.FC = () => {
 
   useEffect(() => {
     localStorage.setItem('uninest_marketplace_items', JSON.stringify(marketplaceItems));
+    window.dispatchEvent(new CustomEvent('uninest_marketplace_items_updated'));
   }, [marketplaceItems]);
+
+  useEffect(() => {
+    const handleMarketplaceSync = () => {
+      try {
+        const raw = localStorage.getItem('uninest_marketplace_items');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) {
+            const realOnly = parsed.filter(isRealUserMarketplaceItem);
+            setMarketplaceItems(realOnly);
+          }
+        }
+      } catch (e) {
+        console.error('Failed to reload marketplace items on sync event:', e);
+      }
+    };
+    window.addEventListener('uninest_marketplace_items_updated', handleMarketplaceSync);
+    window.addEventListener('storage', handleMarketplaceSync);
+    return () => {
+      window.removeEventListener('uninest_marketplace_items_updated', handleMarketplaceSync);
+      window.removeEventListener('storage', handleMarketplaceSync);
+    };
+  }, []);
 
   useEffect(() => {
     localStorage.setItem('uninest_verified_profiles_v3', JSON.stringify(verifiedBusinesses));
@@ -653,8 +718,9 @@ export const App: React.FC = () => {
 
     // Send Email Alert to Admin notifying them of the new user sign up
     const adminRecipients: string[] = ['amaechihellis@gmail.com', 'admin@uninest.com'];
-    if (adminAccount?.email && !adminRecipients.includes(adminAccount.email)) {
-      adminRecipients.push(adminAccount.email);
+    const adminUserObj = users.find(u => u.role === 'admin');
+    if (adminUserObj?.email && !adminRecipients.includes(adminUserObj.email)) {
+      adminRecipients.push(adminUserObj.email);
     }
     sendNewUserSignupAdminAlert(
       {
@@ -1131,7 +1197,7 @@ export const App: React.FC = () => {
   // 4. Marketplace & Escrow
   const handlePostMarketplaceItem = (item: Omit<MarketplaceItem, 'id' | 'postedAt'>) => {
     const now = new Date();
-    const expires = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 1 month (30 days) lifespan
+    const expires = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000); // 3 months (90 days) lifespan
     const newItem: MarketplaceItem = {
       ...item,
       id: `item-${Date.now()}`,
@@ -1140,12 +1206,17 @@ export const App: React.FC = () => {
       expiresAt: expires.toISOString().split('T')[0]
     };
     setMarketplaceItems(prev => [newItem, ...prev]);
-    addAdminLog('Marketplace Listing Created', `${item.title} (₦${(item.price || 0).toLocaleString()}) - 30-day listing`);
+    addAdminLog('Marketplace Listing Created', `${item.title} (₦${(item.price || 0).toLocaleString()}) - 3-month listing`);
+  };
+
+  const handleUpdateMarketplaceItem = (updatedItem: MarketplaceItem) => {
+    setMarketplaceItems(prev => prev.map(it => it.id === updatedItem.id ? updatedItem : it));
+    addAdminLog('Marketplace Listing Updated', `${updatedItem.title} updated by user (Price: ₦${(updatedItem.price || 0).toLocaleString()})`);
   };
 
   const handleRelistMarketplaceItem = (itemId: string) => {
     const now = new Date();
-    const expires = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+    const expires = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
     setMarketplaceItems(prev => prev.map(it => {
       if (it.id === itemId) {
         return {
@@ -1157,7 +1228,7 @@ export const App: React.FC = () => {
       }
       return it;
     }));
-    addAdminLog('Marketplace Listing Renewed', `Item #${itemId} relisted for 30 more days`);
+    addAdminLog('Marketplace Listing Renewed', `Item #${itemId} relisted for 3 more months`);
   };
 
   const handleInitiateEscrow = (item: MarketplaceItem, guestDetails?: { name: string; phone: string; email?: string; address?: string }) => {
@@ -1330,17 +1401,91 @@ export const App: React.FC = () => {
   };
 
   const handleUpdateSTSSavingsAccount = (updatedAcc: STSSavingsAccount) => {
+    const validatedAcc: STSSavingsAccount = {
+      ...updatedAcc,
+      targetAmount: Math.max(100000, Number(updatedAcc.targetAmount) || 100000)
+    };
     setStsSavingsAccounts(prev => {
-      const exists = prev.some(a => a.id === updatedAcc.id || a.userEmail.toLowerCase() === updatedAcc.userEmail.toLowerCase());
+      const exists = prev.some(a => a.id === validatedAcc.id || a.userEmail.toLowerCase() === validatedAcc.userEmail.toLowerCase());
       if (exists) {
-        return prev.map(a => (a.id === updatedAcc.id || a.userEmail.toLowerCase() === updatedAcc.userEmail.toLowerCase()) ? updatedAcc : a);
+        return prev.map(a => (a.id === validatedAcc.id || a.userEmail.toLowerCase() === validatedAcc.userEmail.toLowerCase()) ? validatedAcc : a);
       }
-      return [updatedAcc, ...prev];
+      return [validatedAcc, ...prev];
     });
     addAdminLog(
       'Student STS Savings Adjusted',
-      `Updated balance for ${updatedAcc.studentName || updatedAcc.userEmail} (Current: ₦${(updatedAcc.currentBalance || 0).toLocaleString()})`
+      `Updated savings plan for ${validatedAcc.studentName || validatedAcc.userEmail} (Target: ₦${validatedAcc.targetAmount.toLocaleString()}, Current: ₦${(validatedAcc.currentBalance || 0).toLocaleString()})`
     );
+  };
+
+  const handleUpdateSavingsTarget = (targetAmount: number, targetGoalName?: string, targetYear?: string) => {
+    if (!currentUser) return;
+    const validatedTarget = Math.max(100000, Number(targetAmount) || 100000);
+    setStsSavingsAccounts(prev => {
+      const existing = prev.find(a => a.userEmail.toLowerCase() === currentUser.email.toLowerCase());
+      if (existing) {
+        return prev.map(a => a.userEmail.toLowerCase() === currentUser.email.toLowerCase() ? {
+          ...a,
+          targetAmount: validatedTarget,
+          targetGoalName: targetGoalName || a.targetGoalName || 'Final Year Project + Clearance + Convocation Suit',
+          targetYear: targetYear || a.targetYear || '2027',
+          expectedSignOutYear: targetYear || a.expectedSignOutYear || '2027'
+        } : a);
+      } else {
+        const newAcc: STSSavingsAccount = {
+          id: `sts-sav-${Date.now()}`,
+          userEmail: currentUser.email,
+          studentName: currentUser.name || 'Student',
+          university: currentUser.university || 'Nigerian University',
+          department: currentUser.department || 'General Studies',
+          currentLevel: '200L',
+          expectedSignOutYear: targetYear || '2027',
+          targetGoalName: targetGoalName || 'Final Year Project + Clearance + Convocation Suit',
+          targetAmount: validatedTarget,
+          targetYear: targetYear || '2027',
+          currentBalance: 500,
+          giftAccountBalance: 0,
+          giftBalance: 0,
+          walletBalance: 500,
+          monthlyContribution: 10000,
+          savingsFrequency: 'monthly',
+          startDate: new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+          status: 'active',
+          transactions: []
+        };
+        return [newAcc, ...prev];
+      }
+    });
+    addAdminLog(
+      'Student Savings Target Updated',
+      `${currentUser.email} set savings target to ₦${validatedTarget.toLocaleString()} (${targetGoalName || 'Sign-Out Clearance'})`
+    );
+  };
+
+  const handleRefreshUsers = async () => {
+    try {
+      const supabaseUsers = await fetchProfilesFromSupabase();
+      if (supabaseUsers && supabaseUsers.length > 0) {
+        setUsers(prev => {
+          const map = new Map<string, UniNestUser>();
+          prev.forEach(u => map.set(u.email.toLowerCase(), u));
+          supabaseUsers.forEach(su => {
+            const cleaned = sanitizeUserBalance(su);
+            const existing = map.get(cleaned.email.toLowerCase());
+            if (existing) {
+              map.set(cleaned.email.toLowerCase(), { ...existing, ...cleaned });
+            } else {
+              map.set(cleaned.email.toLowerCase(), cleaned);
+            }
+          });
+          const merged = Array.from(map.values());
+          localStorage.setItem('uninest_users', JSON.stringify(merged));
+          return merged;
+        });
+      }
+    } catch (e) {
+      console.error('Failed to refresh users:', e);
+    }
   };
 
   // 5. Cheap Data Top-Up
@@ -1764,6 +1909,67 @@ export const App: React.FC = () => {
     acc => currentUser && acc.userEmail.toLowerCase() === currentUser.email.toLowerCase()
   );
 
+  // Comprehensive platform user directory for Admin visibility
+  const allPlatformUsers = React.useMemo(() => {
+    const userMap = new Map<string, UniNestUser>();
+    
+    // 1. All users in state
+    users.forEach(u => {
+      if (u && u.email) {
+        userMap.set(u.email.toLowerCase().trim(), u);
+      }
+    });
+
+    // 2. Any user from stsSavingsAccounts not yet in userMap
+    stsSavingsAccounts.forEach(sa => {
+      const email = (sa.userEmail || '').toLowerCase().trim();
+      if (email && !userMap.has(email)) {
+        userMap.set(email, {
+          id: sa.id || `user-sts-${Date.now()}`,
+          name: sa.studentName || 'Student User',
+          email: sa.userEmail,
+          phone: '',
+          password: 'UniNest@123',
+          role: sa.stsAccountType === 'vendor_sts' || sa.isSTSVendorAccount ? 'vendor' : 'student',
+          verified: true,
+          createdAt: sa.startDate || new Date().toISOString().split('T')[0],
+          university: sa.university || 'Nigerian University',
+          department: sa.department || 'General Studies',
+          walletBalance: sa.walletBalance || 0,
+          giftBalance: sa.giftAccountBalance ?? sa.giftBalance ?? 0
+        });
+      }
+    });
+
+    // 3. Any user from stsAccounts not yet in userMap
+    stsAccounts.forEach(sta => {
+      const email = (sta.userEmail || '').toLowerCase().trim();
+      if (email && !userMap.has(email)) {
+        userMap.set(email, {
+          id: sta.id || `user-sta-${Date.now()}`,
+          name: sta.studentName || 'Student User',
+          email: sta.userEmail,
+          phone: sta.studentPhone || '',
+          password: 'UniNest@123',
+          role: 'student',
+          verified: true,
+          createdAt: sta.requestedDate || new Date().toISOString().split('T')[0],
+          university: sta.institution || 'Nigerian University',
+          department: 'Student Studies',
+          walletBalance: 0,
+          giftBalance: 0
+        });
+      }
+    });
+
+    // 4. Always ensure DEFAULT_ADMIN is present
+    if (!userMap.has(DEFAULT_ADMIN.email.toLowerCase().trim())) {
+      userMap.set(DEFAULT_ADMIN.email.toLowerCase().trim(), DEFAULT_ADMIN);
+    }
+
+    return Array.from(userMap.values());
+  }, [users, stsSavingsAccounts, stsAccounts]);
+
   const activeSTSSavings = stsSavingsAccounts.find(
     acc => currentUser && acc.userEmail.toLowerCase() === currentUser.email.toLowerCase()
   ) || stsSavingsAccounts[0];
@@ -1814,9 +2020,13 @@ export const App: React.FC = () => {
                 onGiftStudent={handleGiftStudent}
                 onRequestSTSLoan={handleRequestSTSLoan}
                 onRepaySTSLoan={handleRepaySTSLoan}
+                onUpdateSTSSavingsAccount={handleUpdateSTSSavingsAccount}
+                onUpdateSavingsTarget={handleUpdateSavingsTarget}
                 onRequestRoommate={handleRequestRoommate}
                 onSubmitAcademicRequest={handleSubmitAcademicRequest}
                 onPostMarketplaceItem={handlePostMarketplaceItem}
+                onUpdateMarketplaceItem={handleUpdateMarketplaceItem}
+                onDeleteMarketplaceItem={handleDeleteMarketplaceItem}
                 onRelistMarketplaceItem={handleRelistMarketplaceItem}
                 onInitiateEscrow={handleInitiateEscrow}
                 onReleaseEscrow={handleReleaseEscrow}
@@ -1843,7 +2053,7 @@ export const App: React.FC = () => {
             {currentView === 'admin' && currentUser && (
               <AdminDashboard
                 adminUser={currentUser}
-                users={users}
+                users={allPlatformUsers}
                 stsAccounts={stsAccounts}
                 news={news}
                 subscribers={subscribers}
@@ -1870,6 +2080,7 @@ export const App: React.FC = () => {
                 stsSavingsAccounts={stsSavingsAccounts}
                 onToggleUserVendorTicker={handleToggleUserVendorTicker}
                 onUpdateSTSSavingsAccount={handleUpdateSTSSavingsAccount}
+                onRefreshUsers={handleRefreshUsers}
               />
             )}
 

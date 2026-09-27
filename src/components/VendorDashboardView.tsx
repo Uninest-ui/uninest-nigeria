@@ -48,69 +48,42 @@ export const VendorDashboardView: React.FC<VendorDashboardViewProps> = ({
   user,
   pendingOrders,
   onConfirmOrderHandover,
-  giftWalletBalance = 48500,
+  giftWalletBalance = 0,
   onWithdrawGiftBalance
 }) => {
   const [activeTab, setActiveTab] = useState<'orders' | 'performance' | 'wallet'>('orders');
-  const [currentGiftBalance, setCurrentGiftBalance] = useState(giftWalletBalance);
+  const [currentGiftBalance, setCurrentGiftBalance] = useState(user.giftBalance || giftWalletBalance || 0);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
-  const [withdrawAmount, setWithdrawAmount] = useState('15000');
+  const [withdrawAmount, setWithdrawAmount] = useState('1000');
   const [withdrawBank, setWithdrawBank] = useState(NIGERIAN_BANKS[0]);
-  const [withdrawAccountNum, setWithdrawAccountNum] = useState(user.phone || '1027118833');
-  const [withdrawAccountName, setWithdrawAccountName] = useState(user.name || 'Verified Campus Vendor');
+  const [withdrawAccountNum, setWithdrawAccountNum] = useState(user.phone || '');
+  const [withdrawAccountName, setWithdrawAccountName] = useState(user.businessName || user.name || 'Verified Campus Vendor');
   const [withdrawalSuccess, setWithdrawalSuccess] = useState<string | null>(null);
   const [confirmedOrderSuccess, setConfirmedOrderSuccess] = useState<string | null>(null);
 
-  // Local pending orders that can be interacted with
+  // Local pending orders initialized from real user orders or empty
   const [orders, setOrders] = useState<EscrowTransaction[]>(() => {
     if (pendingOrders && pendingOrders.length > 0) return pendingOrders;
-    return [
-      {
-        id: 'ESC-NDU-9082',
-        itemTitle: 'HP Pavilion 15 Laptop (Intel i5, 16GB RAM, 512GB SSD)',
-        amount: 145000,
-        escrowFee: 7250,
-        totalAmount: 152250,
-        campus: 'Niger Delta University (NDU)',
-        buyerEmail: 'tonye.student@ndu.edu.ng',
-        buyerPhone: '08134455667',
-        sellerEmail: user.email,
-        sellerPhone: user.phone || '09034648644',
-        status: 'Pending',
-        createdAt: new Date().toISOString().split('T')[0],
-        escrowAccountNumber: '1027118833 (UBA Official Escrow Vault)'
-      },
-      {
-        id: 'ESC-FUO-7719',
-        itemTitle: 'Standing Reversible Campus Fan (Ox 18-inch Rechargeable)',
-        amount: 22000,
-        escrowFee: 1100,
-        totalAmount: 23100,
-        campus: 'Federal University Otuoke (FUOTUOKE)',
-        buyerEmail: 'ebi.preye@fuotuoke.edu.ng',
-        buyerPhone: '08099887766',
-        sellerEmail: user.email,
-        sellerPhone: user.phone || '09034648644',
-        status: 'Pending',
-        createdAt: new Date(Date.now() - 86400000).toISOString().split('T')[0],
-        escrowAccountNumber: '1027118833 (UBA Official Escrow Vault)'
-      }
-    ];
+    return [];
   });
 
-  const totalSalesVolume = 187500;
+  const totalSalesVolume = orders
+    .filter(o => o.status === 'Payment Released to Seller' || o.status === 'Delivered' || o.status === 'Completed')
+    .reduce((acc, curr) => acc + (curr.amount || 0), 0);
   const pendingOrdersCount = orders.filter(o => o.status === 'Pending' || o.status?.includes('Pending')).length;
   const pendingFundsInVault = orders
     .filter(o => o.status === 'Pending' || o.status?.includes('Pending'))
     .reduce((acc, curr) => acc + (curr.amount || 0), 0);
 
   const handleConfirmHandover = (orderId: string) => {
+    const targetOrder = orders.find(o => o.id === orderId);
+    const amountToRelease = targetOrder ? targetOrder.amount : 0;
     setOrders(prev =>
       prev.map(o => (o.id === orderId ? { ...o, status: 'Payment Released to Seller' } : o))
     );
     onConfirmOrderHandover(orderId);
-    setConfirmedOrderSuccess(`Order ${orderId} marked as handed over! Escrow funds cleared to your Gift Wallet balance.`);
-    setCurrentGiftBalance(prev => prev + 22000);
+    setConfirmedOrderSuccess(`Order ${orderId} marked as handed over! Escrow funds (₦${amountToRelease.toLocaleString()}) cleared to your Gift Wallet balance.`);
+    setCurrentGiftBalance(prev => prev + amountToRelease);
     setTimeout(() => setConfirmedOrderSuccess(null), 7000);
   };
 
@@ -278,7 +251,18 @@ export const VendorDashboardView: React.FC<VendorDashboardViewProps> = ({
           </div>
 
           <div className="grid grid-cols-1 gap-4">
-            {orders.map((order) => {
+            {orders.length === 0 ? (
+              <div className="p-12 text-center rounded-3xl bg-white border-2 border-[#0A1931]/10 space-y-3 shadow-xs">
+                <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center mx-auto">
+                  <ShoppingBag className="w-6 h-6" />
+                </div>
+                <h4 className="text-sm font-black text-[#0A1931]">No Pending Customer Orders</h4>
+                <p className="text-xs text-[#0A1931]/60 max-w-sm mx-auto">
+                  When students purchase your products using UniNest Escrow, orders will show up here for you to verify delivery and release funds.
+                </p>
+              </div>
+            ) : (
+              orders.map((order) => {
               const isPending = order.status === 'Pending' || order.status?.includes('Pending');
               return (
                 <div
@@ -378,7 +362,7 @@ export const VendorDashboardView: React.FC<VendorDashboardViewProps> = ({
                   </div>
                 </div>
               );
-            })}
+            }))}
           </div>
         </div>
       )}
@@ -395,8 +379,8 @@ export const VendorDashboardView: React.FC<VendorDashboardViewProps> = ({
               <div className="text-2xl font-black text-[#0A1931]">
                 ₦{(totalSalesVolume || 0).toLocaleString()}
               </div>
-              <p className="text-[11px] text-emerald-700 font-semibold">
-                ↑ 22.5% increase this semester
+              <p className="text-[11px] text-slate-500 font-semibold">
+                Cleared from completed customer handovers
               </p>
             </div>
 
@@ -409,7 +393,7 @@ export const VendorDashboardView: React.FC<VendorDashboardViewProps> = ({
                 ₦{(pendingFundsInVault || 0).toLocaleString()}
               </div>
               <p className="text-[11px] text-amber-800 font-semibold">
-                Held safely in UBA Escrow Vault #1027118833
+                Held safely in UBA Escrow Vault #{UNINEST_OFFICIAL_BANK.accountNumber}
               </p>
             </div>
 
@@ -419,7 +403,7 @@ export const VendorDashboardView: React.FC<VendorDashboardViewProps> = ({
                 <PackageCheck className="w-4 h-4 text-[#FF6A00]" />
               </div>
               <div className="text-2xl font-black text-[#0A1931]">
-                18 Completed
+                {orders.filter(o => o.status === 'Payment Released to Seller' || o.status === 'Delivered').length} Completed
               </div>
               <p className="text-[11px] text-slate-500">
                 Zero return or escrow chargeback disputes
@@ -432,7 +416,7 @@ export const VendorDashboardView: React.FC<VendorDashboardViewProps> = ({
                 <Sparkles className="w-4 h-4 text-[#FF6A00]" />
               </div>
               <div className="text-2xl font-black text-[#FF6A00]">
-                99.4%
+                100%
               </div>
               <p className="text-[11px] text-slate-600 font-bold">
                 Audited by Head of Marketplace
@@ -440,32 +424,29 @@ export const VendorDashboardView: React.FC<VendorDashboardViewProps> = ({
             </div>
           </div>
 
-          {/* Performance Chart / Breakdown */}
+          {/* Performance Overview */}
           <div className="p-6 rounded-3xl bg-white border-2 border-[#0A1931]/10 shadow-xs space-y-4">
             <h3 className="text-base font-black text-[#0A1931]">
-              Weekly Sales &amp; Clearance Velocity
+              Live Sales &amp; Clearance Status
             </h3>
-            <div className="space-y-3">
-              {[
-                { week: 'Week 1 (Laptops & Electronics)', amount: 65000, percentage: 80 },
-                { week: 'Week 2 (Rechargeable Fans & Appliances)', amount: 42000, percentage: 65 },
-                { week: 'Week 3 (Campus Provisions & Books)', amount: 38500, percentage: 55 },
-                { week: 'Week 4 (Hostel Furniture & Fittings)', amount: 42000, percentage: 70 }
-              ].map((item, idx) => (
-                <div key={idx} className="space-y-1">
-                  <div className="flex justify-between text-xs font-bold">
-                    <span className="text-[#0A1931]">{item.week}</span>
-                    <span className="text-[#FF6A00]">₦{(item.amount || 0).toLocaleString()}</span>
-                  </div>
-                  <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-gradient-to-r from-[#0A1931] to-[#FF6A00] rounded-full"
-                      style={{ width: `${item.percentage}%` }}
-                    />
-                  </div>
+            {orders.length === 0 ? (
+              <div className="py-8 text-center text-xs text-slate-500">
+                No orders processed yet. Once orders are fulfilled and handed over, your weekly sales volume breakdown will appear here.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="flex justify-between text-xs font-bold">
+                  <span className="text-[#0A1931]">Current Completed Orders</span>
+                  <span className="text-[#FF6A00]">₦{totalSalesVolume.toLocaleString()}</span>
                 </div>
-              ))}
-            </div>
+                <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-[#0A1931] to-[#FF6A00] rounded-full"
+                    style={{ width: totalSalesVolume > 0 ? '100%' : '0%' }}
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -502,48 +483,9 @@ export const VendorDashboardView: React.FC<VendorDashboardViewProps> = ({
               Recent Payouts &amp; Escrow Disbursements
             </h4>
             <div className="divide-y divide-slate-100 text-xs">
-              {[
-                {
-                  id: 'PAY-8812',
-                  date: 'Today, 11:20 AM',
-                  desc: 'Escrow Release: HP Pavilion Laptop',
-                  amount: 145000,
-                  type: 'inflow',
-                  bank: 'UniNest Escrow Vault'
-                },
-                {
-                  id: 'PAY-8790',
-                  date: 'Yesterday, 04:15 PM',
-                  desc: 'Student Gifting Donation (Sign-Out Support)',
-                  amount: 15000,
-                  type: 'inflow',
-                  bank: 'Direct STS Gift Account'
-                },
-                {
-                  id: 'PAY-8651',
-                  date: '3 days ago',
-                  desc: 'Bank Withdrawal to UBA (1027118833)',
-                  amount: 40000,
-                  type: 'outflow',
-                  bank: 'United Bank for Africa (UBA)'
-                }
-              ].map((tx) => (
-                <div key={tx.id} className="py-3 flex items-center justify-between">
-                  <div>
-                    <div className="font-bold text-[#0A1931]">{tx.desc}</div>
-                    <div className="text-[11px] text-slate-500">
-                      {tx.date} • {tx.bank}
-                    </div>
-                  </div>
-                  <div
-                    className={`font-black text-sm ${
-                      tx.type === 'inflow' ? 'text-emerald-700' : 'text-slate-800'
-                    }`}
-                  >
-                    {tx.type === 'inflow' ? '+' : '-'}₦{(tx.amount || 0).toLocaleString()}
-                  </div>
-                </div>
-              ))}
+              <div className="py-6 text-center text-xs text-slate-500">
+                No bank payouts requested yet. Submit a withdrawal above to transfer funds directly to your verified bank account.
+              </div>
             </div>
           </div>
         </div>
