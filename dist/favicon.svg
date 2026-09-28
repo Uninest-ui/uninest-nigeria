@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="navyMainGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#143c72" />
+      <stop offset="35%" stop-color="#0c254b" />
+      <stop offset="70%" stop-color="#091c38" />
+      <stop offset="100%" stop-color="#051226" />
+    </linearGradient>
+
+    <linearGradient id="navySheen" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.75" />
+      <stop offset="25%" stop-color="#7da8df" stop-opacity="0.5" />
+      <stop offset="60%" stop-color="#1d4ed8" stop-opacity="0" />
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.4" />
+    </linearGradient>
+
+    <linearGradient id="orangeBarGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ff9248" />
+      <stop offset="22%" stop-color="#ff6a00" />
+      <stop offset="55%" stop-color="#f05300" />
+      <stop offset="85%" stop-color="#d03b00" />
+      <stop offset="100%" stop-color="#9a2900" />
+    </linearGradient>
+
+    <linearGradient id="orangeGlossHighlight" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95" />
+      <stop offset="50%" stop-color="#ffedd5" stop-opacity="0.6" />
+      <stop offset="100%" stop-color="#ff9800" stop-opacity="0" />
+    </linearGradient>
+  </defs>
+
+  <g>
+    <path 
+      d="M 124,210 L 256,92 L 388,210 L 388,210 L 360,210 L 360,358 C 360,378 344,394 324,394 L 188,394 C 168,394 152,378 152,358 L 152,210 Z" 
+      fill="none" 
+      stroke="url(#navyMainGrad)" 
+      stroke-width="36" 
+      stroke-linecap="round" 
+      stroke-linejoin="round"
+    />
+    <path 
+      d="M 126,206 L 256,90 L 386,206" 
+      fill="none" 
+      stroke="url(#navySheen)" 
+      stroke-width="7" 
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      opacity="0.85"
+    />
+    <!-- 3 Orange Arches -->
+    <g>
+      <path d="M 180,236 Q 256,198 332,236" fill="none" stroke="url(#orangeBarGrad)" stroke-width="32" stroke-linecap="round" />
+      <path d="M 184,230 Q 256,192 328,230" fill="none" stroke="url(#orangeGlossHighlight)" stroke-width="6.5" stroke-linecap="round" />
+    </g>
+    <g>
+      <path d="M 180,286 Q 256,248 332,286" fill="none" stroke="url(#orangeBarGrad)" stroke-width="32" stroke-linecap="round" />
+      <path d="M 184,280 Q 256,242 328,280" fill="none" stroke="url(#orangeGlossHighlight)" stroke-width="6.5" stroke-linecap="round" />
+    </g>
+    <g>
+      <path d="M 180,336 Q 256,298 332,336" fill="none" stroke="url(#orangeBarGrad)" stroke-width="32" stroke-linecap="round" />
+      <path d="M 184,330 Q 256,292 328,330" fill="none" stroke="url(#orangeGlossHighlight)" stroke-width="6.5" stroke-linecap="round" />
+    </g>
+  </g>
+</svg>
