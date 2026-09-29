@@ -54,7 +54,7 @@ interface STSSavingsTabProps {
   onRepayLoan?: (amount: number) => void;
   onCreateSavingsPlan?: (targetYear: string, goalName: string, targetAmount: number, frequency: 'daily' | 'weekly' | 'monthly' | 'flexible') => void;
   onOpenWalletHistory?: () => void;
-  onUpdateSavingsTarget?: (targetAmount: number, targetGoalName?: string, targetYear?: string) => void;
+  onUpdateSavingsTarget?: (targetAmount: number, targetGoalName?: string, targetYear?: string, withdrawalDate?: string) => void;
   onUpdateSTSSavingsAccount?: (account: STSSavingsAccount) => void;
 }
 
@@ -259,11 +259,12 @@ export const STSSavingsTab: React.FC<STSSavingsTabProps> = ({
   const [stsDepositAmount, setStsDepositAmount] = useState('5000');
   const [stsDepositPurpose, setStsDepositPurpose] = useState('Final Year Project Binding & Printing');
 
-  // Editable Savings Target State (Minimum ₦100,000)
+  // Editable Savings Target State (Minimum ₦100,000 & Target Date for Withdrawal)
   const [showEditTargetModal, setShowEditTargetModal] = useState(false);
   const [editTargetAmount, setEditTargetAmount] = useState<string>('');
   const [editTargetGoalName, setEditTargetGoalName] = useState<string>('');
   const [editTargetYear, setEditTargetYear] = useState<string>('');
+  const [editTargetWithdrawalDate, setEditTargetWithdrawalDate] = useState<string>('');
   const [editTargetFrequency, setEditTargetFrequency] = useState<'daily' | 'weekly' | 'monthly' | 'flexible'>('monthly');
   const [editTargetError, setEditTargetError] = useState<string | null>(null);
   const [editTargetSuccess, setEditTargetSuccess] = useState<string | null>(null);
@@ -271,7 +272,9 @@ export const STSSavingsTab: React.FC<STSSavingsTabProps> = ({
   const handleOpenEditTarget = () => {
     setEditTargetAmount(String(account?.targetAmount || 150000));
     setEditTargetGoalName(account?.targetGoalName || 'Final Year Project + Clearance + Convocation Suit');
-    setEditTargetYear(account?.targetYear || account?.expectedSignOutYear || '2027');
+    const yr = account?.targetYear || account?.expectedSignOutYear || '2027';
+    setEditTargetYear(yr);
+    setEditTargetWithdrawalDate(account?.withdrawalDate || `${yr}-11-30`);
     setEditTargetFrequency(account?.savingsFrequency || account?.frequency || 'monthly');
     setEditTargetError(null);
     setEditTargetSuccess(null);
@@ -295,10 +298,11 @@ export const STSSavingsTab: React.FC<STSSavingsTabProps> = ({
     }
 
     const goalName = editTargetGoalName.trim() || 'Sign-Out & Clearance Fund';
-    const targetYr = editTargetYear.trim() || '2027';
+    const targetYr = editTargetYear.trim() || (editTargetWithdrawalDate ? editTargetWithdrawalDate.substring(0, 4) : '2027');
+    const withdrawalDt = editTargetWithdrawalDate || `${targetYr}-11-30`;
 
     if (onUpdateSavingsTarget) {
-      onUpdateSavingsTarget(num, goalName, targetYr);
+      onUpdateSavingsTarget(num, goalName, targetYr, withdrawalDt);
     } else if (onUpdateSTSSavingsAccount && account) {
       onUpdateSTSSavingsAccount({
         ...account,
@@ -306,13 +310,14 @@ export const STSSavingsTab: React.FC<STSSavingsTabProps> = ({
         targetGoalName: goalName,
         targetYear: targetYr,
         expectedSignOutYear: targetYr,
+        withdrawalDate: withdrawalDt,
         savingsFrequency: editTargetFrequency
       });
     } else if (onCreateSavingsPlan) {
       onCreateSavingsPlan(targetYr, goalName, num, editTargetFrequency);
     }
 
-    setEditTargetSuccess(`Savings target successfully updated to ₦${num.toLocaleString()}!`);
+    setEditTargetSuccess(`Savings target successfully updated to ₦${num.toLocaleString()} (Withdrawal Date: ${withdrawalDt})!`);
     setTimeout(() => {
       setShowEditTargetModal(false);
       setEditTargetSuccess(null);
@@ -1100,9 +1105,19 @@ export const STSSavingsTab: React.FC<STSSavingsTabProps> = ({
           <div className="text-2xl font-black text-[#0A1931]">
             ₦{targetTotal.toLocaleString()}
           </div>
-          <div className="text-[11px] text-[#0A1931]/60 flex items-center justify-between">
-            <span>Class of {account?.targetYear || '2027'} Sign-Out Target ({progressPercent}%)</span>
-            <span className="text-[10px] font-bold text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded border border-orange-200">Min ₦100k</span>
+          <div className="space-y-1 pt-1 border-t border-slate-100">
+            <div className="text-[11px] text-[#0A1931]/70 flex items-center justify-between">
+              <span>Class of {account?.targetYear || '2027'} ({progressPercent}%)</span>
+              <span className="text-[10px] font-bold text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded border border-orange-200">Min ₦100k</span>
+            </div>
+            <div className="text-[11px] text-slate-600 flex items-center justify-between">
+              <span className="font-semibold text-slate-500">Withdrawal Date:</span>
+              <span className="font-bold text-[#0A1931] bg-slate-100 px-2 py-0.5 rounded-md">
+                {account?.withdrawalDate
+                  ? new Date(account.withdrawalDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+                  : `Nov 30, ${account?.targetYear || '2027'}`}
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -1887,6 +1902,60 @@ export const STSSavingsTab: React.FC<STSSavingsTabProps> = ({
                       className="text-[10px] px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-orange-600 cursor-pointer"
                     >
                       + {quickGoal}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Date for Withdrawal (Sign-Out / Graduation Clearance Date) */}
+              <div className="space-y-2 p-3.5 rounded-2xl bg-orange-50/70 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800/40">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">
+                    Date for Withdrawal (Sign-Out Date) *
+                  </label>
+                  <span className="text-[10px] text-orange-700 dark:text-orange-300 font-bold bg-orange-100 dark:bg-orange-900/60 px-2 py-0.5 rounded-full border border-orange-200">
+                    🔒 STS Lock Date
+                  </span>
+                </div>
+                <input
+                  type="date"
+                  required
+                  value={editTargetWithdrawalDate}
+                  onChange={(e) => {
+                    setEditTargetWithdrawalDate(e.target.value);
+                    if (e.target.value) {
+                      setEditTargetYear(e.target.value.substring(0, 4));
+                    }
+                  }}
+                  min={new Date().toISOString().split('T')[0]}
+                  className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500 cursor-pointer"
+                />
+                <p className="text-[11px] text-slate-600 dark:text-slate-400">
+                  Select your expected final year graduation/sign-out clearance date. Your STS funds are securely compounded and unlocked for disbursement on this date.
+                </p>
+                {/* Quick Presets for Date */}
+                <div className="flex flex-wrap gap-1.5 pt-0.5">
+                  {[
+                    { label: 'Nov 2026', date: '2026-11-30' },
+                    { label: 'July 2027', date: '2027-07-31' },
+                    { label: 'Nov 2027', date: '2027-11-30' },
+                    { label: 'July 2028', date: '2028-07-31' },
+                    { label: 'Nov 2028', date: '2028-11-30' },
+                  ].map((preset) => (
+                    <button
+                      key={preset.date}
+                      type="button"
+                      onClick={() => {
+                        setEditTargetWithdrawalDate(preset.date);
+                        setEditTargetYear(preset.date.substring(0, 4));
+                      }}
+                      className={`text-[10px] font-bold px-2 py-1 rounded-lg border transition cursor-pointer ${
+                        editTargetWithdrawalDate === preset.date
+                          ? 'bg-orange-500 text-white border-orange-500 shadow-xs'
+                          : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-orange-400'
+                      }`}
+                    >
+                      {preset.label}
                     </button>
                   ))}
                 </div>

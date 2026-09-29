@@ -1418,9 +1418,10 @@ export const App: React.FC = () => {
     );
   };
 
-  const handleUpdateSavingsTarget = (targetAmount: number, targetGoalName?: string, targetYear?: string) => {
+  const handleUpdateSavingsTarget = (targetAmount: number, targetGoalName?: string, targetYear?: string, withdrawalDate?: string) => {
     if (!currentUser) return;
     const validatedTarget = Math.max(100000, Number(targetAmount) || 100000);
+    const resolvedWithdrawalDate = withdrawalDate || `${targetYear || '2027'}-11-30`;
     setStsSavingsAccounts(prev => {
       const existing = prev.find(a => a.userEmail.toLowerCase() === currentUser.email.toLowerCase());
       if (existing) {
@@ -1429,7 +1430,8 @@ export const App: React.FC = () => {
           targetAmount: validatedTarget,
           targetGoalName: targetGoalName || a.targetGoalName || 'Final Year Project + Clearance + Convocation Suit',
           targetYear: targetYear || a.targetYear || '2027',
-          expectedSignOutYear: targetYear || a.expectedSignOutYear || '2027'
+          expectedSignOutYear: targetYear || a.expectedSignOutYear || '2027',
+          withdrawalDate: resolvedWithdrawalDate
         } : a);
       } else {
         const newAcc: STSSavingsAccount = {
@@ -1443,6 +1445,7 @@ export const App: React.FC = () => {
           targetGoalName: targetGoalName || 'Final Year Project + Clearance + Convocation Suit',
           targetAmount: validatedTarget,
           targetYear: targetYear || '2027',
+          withdrawalDate: resolvedWithdrawalDate,
           currentBalance: 500,
           giftAccountBalance: 0,
           giftBalance: 0,
@@ -1458,7 +1461,7 @@ export const App: React.FC = () => {
     });
     addAdminLog(
       'Student Savings Target Updated',
-      `${currentUser.email} set savings target to ₦${validatedTarget.toLocaleString()} (${targetGoalName || 'Sign-Out Clearance'})`
+      `${currentUser.email} set savings target to ₦${validatedTarget.toLocaleString()} (Withdrawal Date: ${resolvedWithdrawalDate})`
     );
   };
 

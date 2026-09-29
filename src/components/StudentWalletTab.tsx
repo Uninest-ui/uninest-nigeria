@@ -45,7 +45,7 @@ interface StudentWalletTabProps {
   onGiftStudent?: (gift: Omit<StudentGift, 'id' | 'date'>) => void;
   onRequestLoan?: (amount: number, purpose: string, durationMonths: number) => void;
   onRepayLoan?: (amount: number) => void;
-  onUpdateSavingsTarget?: (targetAmount: number, targetGoalName?: string, targetYear?: string) => void;
+  onUpdateSavingsTarget?: (targetAmount: number, targetGoalName?: string, targetYear?: string, withdrawalDate?: string) => void;
   onUpdateSTSSavingsAccount?: (account: STSSavingsAccount) => void;
 }
 
@@ -95,18 +95,21 @@ export const StudentWalletTab: React.FC<StudentWalletTabProps> = ({
   // Statement of Account Modal
   const [showStatementModal, setShowStatementModal] = useState(false);
 
-  // Editable Savings Target State (Minimum ₦100,000)
+  // Editable Savings Target State (Minimum ₦100,000 & Target Date for Withdrawal)
   const [showEditTargetModal, setShowEditTargetModal] = useState(false);
   const [editTargetAmount, setEditTargetAmount] = useState<string>('');
   const [editTargetGoalName, setEditTargetGoalName] = useState<string>('');
   const [editTargetYear, setEditTargetYear] = useState<string>('');
+  const [editTargetWithdrawalDate, setEditTargetWithdrawalDate] = useState<string>('');
   const [editTargetError, setEditTargetError] = useState<string | null>(null);
   const [editTargetSuccess, setEditTargetSuccess] = useState<string | null>(null);
 
   const handleOpenEditTarget = () => {
     setEditTargetAmount(String(account?.targetAmount || 100000));
     setEditTargetGoalName(account?.targetGoalName || 'Final Year Project + Clearance + Convocation');
-    setEditTargetYear(account?.targetYear || account?.expectedSignOutYear || '2028');
+    const yr = account?.targetYear || account?.expectedSignOutYear || '2028';
+    setEditTargetYear(yr);
+    setEditTargetWithdrawalDate(account?.withdrawalDate || `${yr}-11-30`);
     setEditTargetError(null);
     setEditTargetSuccess(null);
     setShowEditTargetModal(true);
@@ -129,21 +132,23 @@ export const StudentWalletTab: React.FC<StudentWalletTabProps> = ({
     }
 
     const goalName = editTargetGoalName.trim() || 'Sign-Out & Clearance Fund';
-    const targetYr = editTargetYear.trim() || '2028';
+    const targetYr = editTargetYear.trim() || (editTargetWithdrawalDate ? editTargetWithdrawalDate.substring(0, 4) : '2028');
+    const withdrawalDt = editTargetWithdrawalDate || `${targetYr}-11-30`;
 
     if (onUpdateSavingsTarget) {
-      onUpdateSavingsTarget(num, goalName, targetYr);
+      onUpdateSavingsTarget(num, goalName, targetYr, withdrawalDt);
     } else if (onUpdateSTSSavingsAccount && account) {
       onUpdateSTSSavingsAccount({
         ...account,
         targetAmount: num,
         targetGoalName: goalName,
         targetYear: targetYr,
-        expectedSignOutYear: targetYr
+        expectedSignOutYear: targetYr,
+        withdrawalDate: withdrawalDt
       });
     }
 
-    setEditTargetSuccess(`Savings target successfully updated to ₦${num.toLocaleString()}!`);
+    setEditTargetSuccess(`Savings target successfully updated to ₦${num.toLocaleString()} (Withdrawal Date: ${withdrawalDt})!`);
     setTimeout(() => {
       setShowEditTargetModal(false);
       setEditTargetSuccess(null);
@@ -428,9 +433,17 @@ export const StudentWalletTab: React.FC<StudentWalletTabProps> = ({
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
-            <div className="text-[10px] text-slate-400 font-bold flex justify-between pt-0.5">
+            <div className="text-[10px] text-slate-300 font-bold flex justify-between pt-0.5">
               <span>{progressPercent}% Achieved (Min ₦100k)</span>
               <span>Class of {account?.expectedSignOutYear || '2028'}</span>
+            </div>
+            <div className="text-[10px] text-orange-200/80 font-medium flex items-center justify-between pt-0.5 border-t border-white/5">
+              <span>Withdrawal Date:</span>
+              <span className="font-bold text-white bg-white/10 px-1.5 py-0.2 rounded">
+                {account?.withdrawalDate
+                  ? new Date(account.withdrawalDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+                  : `Nov 30, ${account?.expectedSignOutYear || '2028'}`}
+              </span>
             </div>
           </div>
 
@@ -1424,6 +1437,60 @@ export const StudentWalletTab: React.FC<StudentWalletTabProps> = ({
                   placeholder="e.g. Final Year Project Binding + Departmental Clearance + Convocation"
                   className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-500"
                 />
+              </div>
+
+              {/* Date for Withdrawal (Sign-Out Date) */}
+              <div className="space-y-2 p-3.5 rounded-2xl bg-orange-50/70 border border-orange-200">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-bold text-slate-800">
+                    Date for Withdrawal (Sign-Out Date) *
+                  </label>
+                  <span className="text-[10px] text-orange-700 font-bold bg-orange-100 px-2 py-0.5 rounded-full border border-orange-200">
+                    🔒 STS Locked Till Date
+                  </span>
+                </div>
+                <input
+                  type="date"
+                  required
+                  value={editTargetWithdrawalDate}
+                  onChange={(e) => {
+                    setEditTargetWithdrawalDate(e.target.value);
+                    if (e.target.value) {
+                      setEditTargetYear(e.target.value.substring(0, 4));
+                    }
+                  }}
+                  min={new Date().toISOString().split('T')[0]}
+                  className="w-full h-11 px-3.5 rounded-xl border border-slate-200 bg-white text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-500 cursor-pointer"
+                />
+                <p className="text-[11px] text-slate-600">
+                  Select your expected final year graduation/sign-out clearance date. Your STS funds are strictly locked and unlocked for withdrawal on this date.
+                </p>
+                {/* Quick Presets for Date */}
+                <div className="flex flex-wrap gap-1.5 pt-0.5">
+                  {[
+                    { label: 'Nov 2026', date: '2026-11-30' },
+                    { label: 'July 2027', date: '2027-07-31' },
+                    { label: 'Nov 2027', date: '2027-11-30' },
+                    { label: 'July 2028', date: '2028-07-31' },
+                    { label: 'Nov 2028', date: '2028-11-30' },
+                  ].map((preset) => (
+                    <button
+                      key={preset.date}
+                      type="button"
+                      onClick={() => {
+                        setEditTargetWithdrawalDate(preset.date);
+                        setEditTargetYear(preset.date.substring(0, 4));
+                      }}
+                      className={`text-[10px] font-bold px-2 py-1 rounded-lg border transition cursor-pointer ${
+                        editTargetWithdrawalDate === preset.date
+                          ? 'bg-orange-500 text-white border-orange-500 shadow-xs'
+                          : 'bg-white text-slate-700 border-slate-200 hover:border-orange-400'
+                      }`}
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* Expected Sign-Out Year */}

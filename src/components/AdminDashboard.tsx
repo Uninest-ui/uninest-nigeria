@@ -809,9 +809,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                     style={{ width: `${pct}%` }}
                                   />
                                 </div>
-                                <div className="text-[10px] text-slate-400 flex justify-between">
-                                  <span>{pct}% Target</span>
-                                  <span>Class of {sa?.expectedSignOutYear || sa?.targetYear || '2028'}</span>
+                                <div className="text-[10px] text-slate-400 flex flex-col gap-0.5">
+                                  <div className="flex justify-between">
+                                    <span>{pct}% Target</span>
+                                    <span>Class of {sa?.expectedSignOutYear || sa?.targetYear || '2028'}</span>
+                                  </div>
+                                  {sa?.withdrawalDate && (
+                                    <div className="text-[9px] text-orange-300 font-mono">
+                                      Withdrawal: {sa.withdrawalDate}
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                             </td>
@@ -1275,9 +1282,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                   style={{ width: `${pct}%` }}
                                 />
                               </div>
-                              <div className="text-[10px] text-slate-400 flex justify-between">
-                                <span>{pct}% Target</span>
-                                <span>Class of {sa?.expectedSignOutYear || sa?.targetYear || '2028'}</span>
+                              <div className="text-[10px] text-slate-400 flex flex-col gap-0.5">
+                                <div className="flex justify-between">
+                                  <span>{pct}% Target</span>
+                                  <span>Class of {sa?.expectedSignOutYear || sa?.targetYear || '2028'}</span>
+                                </div>
+                                {sa?.withdrawalDate && (
+                                  <div className="text-[9px] text-orange-300 font-mono">
+                                    Withdrawal: {sa.withdrawalDate}
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </td>
