@@ -39,7 +39,7 @@ import {
 } from 'lucide-react';
 import { STSSavingsAccount, UniNestUser, StudentGift, UniNestRewardToken } from '../types';
 import { SavingsGoalChart } from './SavingsGoalChart';
-import { getStudentSTSWalletNumber, findStudentBySTSWallet, KNOWN_STS_STUDENTS } from '../utils/walletUtils';
+import { getStudentSTSWalletNumber, findStudentBySTSWallet, KNOWN_STS_STUDENTS, StudentWalletDirectoryEntry } from '../utils/walletUtils';
 import { OfficialBankPaymentCard } from './OfficialBankPaymentCard';
 import { getOfficialPaymentConfig } from '../utils/paymentConfig';
 
@@ -152,6 +152,7 @@ export const STSSavingsTab: React.FC<STSSavingsTabProps> = ({
   const [giftSuccess, setGiftSuccess] = useState<string | null>(null);
   const [giftError, setGiftError] = useState<string | null>(null);
   const [recipientWalletNumber, setRecipientWalletNumber] = useState('');
+  const [resolvedPeer, setResolvedPeer] = useState<StudentWalletDirectoryEntry | null>(null);
 
   // Current Student STS Account Number (used to receive gifts to gift account)
   const mySTSWalletNumber = account?.stsAccountNumber || getStudentSTSWalletNumber(safeUser.email, safeUser.phone);
@@ -222,9 +223,13 @@ export const STSSavingsTab: React.FC<STSSavingsTabProps> = ({
     setRecipientWalletNumber(walletNum);
     const peer = findStudentBySTSWallet(walletNum);
     if (peer) {
+      setResolvedPeer(peer);
       setRecipientEmail(peer.email);
       setRecipientName(peer.name);
       setRecipientSchool(peer.university);
+      setGiftError(null);
+    } else {
+      setResolvedPeer(null);
     }
   };
 
@@ -232,9 +237,13 @@ export const STSSavingsTab: React.FC<STSSavingsTabProps> = ({
     setRecipientWalletNumber(val);
     const peer = findStudentBySTSWallet(val);
     if (peer) {
+      setResolvedPeer(peer);
       setRecipientEmail(peer.email);
       setRecipientName(peer.name);
       setRecipientSchool(peer.university);
+      setGiftError(null);
+    } else {
+      setResolvedPeer(null);
     }
   };
 
@@ -2415,30 +2424,80 @@ export const STSSavingsTab: React.FC<STSSavingsTabProps> = ({
               )}
 
               {/* Recipient STS Account Number & Quick Selector */}
-              <div className="space-y-1.5 p-3 rounded-2xl bg-[#0A1931]/5 border-2 border-[#FF6A00]/40">
+              <div className="space-y-2 p-3.5 rounded-2xl bg-[#0A1931]/5 border-2 border-[#FF6A00]/40">
                 <div className="flex items-center justify-between">
                   <label className="text-[11px] font-black text-[#0A1931] flex items-center gap-1.5">
                     <Gift className="w-3.5 h-3.5 text-[#FF6A00]" />
                     <span>Recipient STS Account Number</span>
                   </label>
-                  <span className="text-[10px] text-[#FF6A00] font-bold">0% Transfer Fee</span>
+                  <span className="text-[10px] text-emerald-700 bg-emerald-100 font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Auto-Lookup
+                  </span>
                 </div>
-                <p className="text-[10px] text-[#0A1931]/70">
-                  Note: STS Account number delivers gifts directly into the student&apos;s <strong>Gift Account</strong>.
+                <p className="text-[10px] text-[#0A1931]/70 leading-relaxed">
+                  Enter student&apos;s 8-digit STS Number (e.g. <strong>STS-9034-4429</strong> or <strong>90344429</strong>). Their verified name, campus, and contact details will appear automatically.
                 </p>
-                <input
-                  type="text"
-                  value={recipientWalletNumber}
-                  onChange={(e) => handleWalletInputChange(e.target.value)}
-                  placeholder="e.g. STS-9034-4429"
-                  className="w-full px-3 py-1.5 rounded-xl border border-[#0A1931]/20 bg-white font-mono text-xs font-black text-[#0A1931] focus:ring-2 focus:ring-[#FF6A00] focus:outline-none"
-                />
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={recipientWalletNumber}
+                    onChange={(e) => handleWalletInputChange(e.target.value)}
+                    placeholder="e.g. STS-9034-4429 or 90344429"
+                    className="w-full pl-3 pr-20 py-2 rounded-xl border border-[#0A1931]/20 bg-white font-mono text-xs font-black text-[#0A1931] focus:ring-2 focus:ring-[#FF6A00] focus:outline-none tracking-wider"
+                  />
+                  {resolvedPeer && (
+                    <div className="absolute right-2 top-2 px-2 py-0.5 rounded-md bg-emerald-600 text-white text-[10px] font-bold flex items-center gap-1 shadow-2xs">
+                      <Check className="w-3 h-3" /> Verified
+                    </div>
+                  )}
+                </div>
+
+                {/* Instant Verified Recipient Preview Card */}
+                {resolvedPeer ? (
+                  <div className="p-3 rounded-xl bg-emerald-50/95 border border-emerald-300 text-emerald-950 animate-in fade-in slide-in-from-top-1 duration-200">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-emerald-600 text-white font-black text-xs flex items-center justify-center shadow-xs">
+                          {resolvedPeer.name.charAt(0)}
+                        </div>
+                        <div>
+                          <div className="text-xs font-black text-emerald-900 flex items-center gap-1">
+                            <span>{resolvedPeer.name}</span>
+                            <span className="text-[9px] bg-emerald-200 text-emerald-800 px-1.5 py-0.5 rounded font-bold">Verified Student</span>
+                          </div>
+                          <div className="text-[10px] text-emerald-700 font-medium">
+                            {resolvedPeer.university}
+                          </div>
+                        </div>
+                      </div>
+                      <span className="font-mono text-[10px] font-black text-emerald-800 bg-white/80 px-2 py-0.5 rounded-md border border-emerald-200">
+                        {resolvedPeer.stsWalletNumber}
+                      </span>
+                    </div>
+
+                    <div className="mt-2 pt-2 border-t border-emerald-200/60 grid grid-cols-2 gap-2 text-[10px] text-emerald-800">
+                      <div>
+                        <span className="text-emerald-600/90 block font-semibold text-[9px] uppercase">Department / Level</span>
+                        <span className="font-bold">{resolvedPeer.department} • {resolvedPeer.level}</span>
+                      </div>
+                      <div>
+                        <span className="text-emerald-600/90 block font-semibold text-[9px] uppercase">Contact / Email</span>
+                        <span className="font-bold truncate block">{resolvedPeer.email}</span>
+                      </div>
+                    </div>
+                  </div>
+                ) : recipientWalletNumber.length >= 4 ? (
+                  <div className="p-2 rounded-xl bg-amber-50 border border-amber-200 text-[10px] text-amber-800 flex items-center gap-1.5">
+                    <AlertCircle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                    <span>Enter full 8-digit STS number (e.g. STS-9034-4429 or 90344429) to automatically fetch recipient info.</span>
+                  </div>
+                ) : null}
                 
                 {/* Quick Peer Chips */}
                 <div className="pt-1">
-                  <span className="text-[10px] text-[#0A1931]/60 font-semibold block mb-1">Quick-select campus students:</span>
+                  <span className="text-[10px] text-[#0A1931]/60 font-semibold block mb-1">Quick-select verified students:</span>
                   <div className="flex flex-wrap gap-1.5">
-                    {KNOWN_STS_STUDENTS.slice(0, 3).map((peer) => (
+                    {KNOWN_STS_STUDENTS.slice(0, 4).map((peer) => (
                       <button
                         key={peer.stsWalletNumber}
                         type="button"
@@ -2459,51 +2518,77 @@ export const STSSavingsTab: React.FC<STSSavingsTabProps> = ({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-[11px] font-bold text-[#0A1931] mb-0.5">
-                    Recipient Student Name *
-                  </label>
+                  <div className="flex items-center justify-between mb-0.5">
+                    <label className="block text-[11px] font-bold text-[#0A1931]">
+                      Recipient Student Name *
+                    </label>
+                    {resolvedPeer && (
+                      <span className="text-[9px] text-emerald-600 font-bold flex items-center gap-0.5">
+                        <Check className="w-2.5 h-2.5" /> Auto-filled
+                      </span>
+                    )}
+                  </div>
                   <input
                     type="text"
                     value={recipientName}
                     onChange={(e) => setRecipientName(e.target.value)}
                     placeholder="e.g. Ebiere Tonye"
                     required
-                    className="w-full px-2.5 py-1.5 rounded-xl border border-[#0A1931]/20 text-xs focus:ring-2 focus:ring-[#FF6A00] focus:outline-none text-[#0A1931]"
+                    className="w-full px-2.5 py-1.5 rounded-xl border border-[#0A1931]/20 text-xs focus:ring-2 focus:ring-[#FF6A00] focus:outline-none text-[#0A1931] bg-white font-medium"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-[#0A1931] mb-0.5">
-                    Recipient Email or Phone *
-                  </label>
+                  <div className="flex items-center justify-between mb-0.5">
+                    <label className="block text-[11px] font-bold text-[#0A1931]">
+                      Recipient Email or Phone *
+                    </label>
+                    {resolvedPeer && (
+                      <span className="text-[9px] text-emerald-600 font-bold flex items-center gap-0.5">
+                        <Check className="w-2.5 h-2.5" /> Auto-filled
+                      </span>
+                    )}
+                  </div>
                   <input
                     type="text"
                     value={recipientEmail}
                     onChange={(e) => setRecipientEmail(e.target.value)}
                     placeholder="e.g. ebiere@campus.edu"
                     required
-                    className="w-full px-2.5 py-1.5 rounded-xl border border-[#0A1931]/20 text-xs focus:ring-2 focus:ring-[#FF6A00] focus:outline-none text-[#0A1931]"
+                    className="w-full px-2.5 py-1.5 rounded-xl border border-[#0A1931]/20 text-xs focus:ring-2 focus:ring-[#FF6A00] focus:outline-none text-[#0A1931] bg-white font-medium"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-[11px] font-bold text-[#0A1931] mb-0.5">
-                    Campus / University
-                  </label>
-                  <select
+                  <div className="flex items-center justify-between mb-0.5">
+                    <label className="block text-[11px] font-bold text-[#0A1931]">
+                      Campus / University *
+                    </label>
+                    {resolvedPeer && (
+                      <span className="text-[9px] text-emerald-600 font-bold flex items-center gap-0.5">
+                        <Check className="w-2.5 h-2.5" /> Auto-filled
+                      </span>
+                    )}
+                  </div>
+                  <input
+                    type="text"
                     value={recipientSchool}
                     onChange={(e) => setRecipientSchool(e.target.value)}
-                    className="w-full px-2 py-1.5 rounded-xl border border-[#0A1931]/20 text-xs focus:ring-2 focus:ring-[#FF6A00] focus:outline-none bg-white text-[#0A1931]"
-                  >
-                    <option value="Niger Delta University (NDU)">NDU Amassoma</option>
-                    <option value="Bayelsa Medical University (BMU)">BMU Yenagoa</option>
-                    <option value="Federal University Otuoke (FUOTUOKE)">FUOTUOKE</option>
-                    <option value="Abia State University (ABSU)">Abia State University (ABSU, Uturu)</option>
-                    <option value="University of Port Harcourt (UNIPORT)">UNIPORT</option>
-                    <option value="Delta State University (DELSU)">DELSU Abraka</option>
-                  </select>
+                    list="campus-school-datalist"
+                    placeholder="e.g. Niger Delta University (NDU)"
+                    required
+                    className="w-full px-2.5 py-1.5 rounded-xl border border-[#0A1931]/20 text-xs focus:ring-2 focus:ring-[#FF6A00] focus:outline-none bg-white text-[#0A1931] font-medium"
+                  />
+                  <datalist id="campus-school-datalist">
+                    <option value="Niger Delta University (NDU, Amassoma & Wilberforce Island)" />
+                    <option value="Bayelsa Medical University (BMU, Yenagoa)" />
+                    <option value="Federal University Otuoke (FUOTUOKE)" />
+                    <option value="University of Port Harcourt (UNIPORT, Choba)" />
+                    <option value="Abia State University (ABSU, Uturu)" />
+                    <option value="Delta State University (DELSU, Abraka)" />
+                  </datalist>
                 </div>
 
                 <div>
