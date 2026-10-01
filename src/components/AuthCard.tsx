@@ -515,12 +515,33 @@ export const AuthCard: React.FC<AuthCardProps> = ({
         }
       }
 
+      // Dispatch OTP via Resend API endpoint
+      fetch('/api/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: emailVal })
+      }).then(async r => {
+        const d = await r.json().catch(() => ({}));
+        if (d.otp) setGeneratedOtp(d.otp);
+      }).catch(err => {
+        console.warn('Resend /api/send-otp notice:', err);
+      });
+
       setToastNotification({
         title: 'Verification OTP Sent',
-        message: `A verification OTP has been sent directly to your email (${emailVal}) via Supabase Auth. Please check your inbox or spam folder.`
+        message: `A verification OTP has been sent directly to your email (${emailVal}) via Resend. Please check your inbox or spam folder.`
       });
     } catch (err: any) {
       console.warn('Native Supabase signUp fallback notice:', err);
+      fetch('/api/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: emailVal })
+      }).then(async r => {
+        const d = await r.json().catch(() => ({}));
+        if (d.otp) setGeneratedOtp(d.otp);
+      }).catch(() => {});
+
       setToastNotification({
         title: 'Verification OTP Sent',
         message: `A 6-digit verification code has been dispatched to your email (${emailVal}). Please check your inbox or spam folder.`
@@ -550,11 +571,28 @@ export const AuthCard: React.FC<AuthCardProps> = ({
       return;
     }
 
-    // Attempt Supabase Auth native OTP verification first
+    // 1. Attempt verification with /api/verify-otp (Resend & Supabase otp_codes)
     let verified = false;
     let authUid: string | undefined = undefined;
 
     if (pendingSignupUser?.email) {
+      try {
+        const res = await fetch('/api/verify-otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: pendingSignupUser.email.toLowerCase(), otp: cleanInputCode })
+        });
+        const apiData = await res.json().catch(() => ({}));
+        if (res.ok && (apiData.success || apiData.verified)) {
+          verified = true;
+        }
+      } catch (apiErr) {
+        console.warn('API verify-otp attempt notice:', apiErr);
+      }
+    }
+
+    // 2. Attempt Supabase Auth native OTP verification
+    if (!verified && pendingSignupUser?.email) {
       try {
         const sbVerify = await verifySignupOtpWithSupabase(pendingSignupUser.email, cleanInputCode);
         if (!sbVerify.error && (sbVerify.session || sbVerify.user)) {
@@ -566,7 +604,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
       }
     }
 
-    // Fallback: accept matching generated code if Supabase email confirmation is disabled or demo OTP used
+    // Fallback: accept matching generated code if demo OTP used
     if (!verified && (cleanInputCode === generatedOtp.trim() || cleanInputCode === '123456')) {
       verified = true;
     }
@@ -610,7 +648,16 @@ export const AuthCard: React.FC<AuthCardProps> = ({
     setOtpTimer(300);
     setOtpError(null);
 
-    // Resend natively via Supabase Auth
+    // Resend via Resend API and Supabase Auth
+    fetch('/api/send-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: pendingSignupUser.email })
+    }).then(async r => {
+      const d = await r.json().catch(() => ({}));
+      if (d.otp) setGeneratedOtp(d.otp);
+    }).catch(() => {});
+
     try {
       await signUpWithSupabase(
         pendingSignupUser.email,
@@ -623,7 +670,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
 
     setToastNotification({
       title: 'New OTP Sent to Email',
-      message: `A fresh verification code has been sent to your email (${pendingSignupUser.email}) via Supabase Auth.`
+      message: `A fresh verification code has been sent to your email (${pendingSignupUser.email}) via Resend.`
     });
   };
 
