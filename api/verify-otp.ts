@@ -43,10 +43,11 @@ export default async function handler(req: any, res: any) {
   try {
     const { email, otp, code } = req.body || {};
     const cleanEmail = (email || '').trim().toLowerCase();
-    const enteredOtp = (otp || code || '').trim();
+    const rawOtp = (otp || code || '').toString();
+    const enteredOtp = rawOtp.replace(/[\s-]/g, '').trim();
 
     if (!cleanEmail || !enteredOtp) {
-      return res.status(400).json({ error: 'Email and OTP are required' });
+      return res.status(400).json({ error: 'Email and 6-digit OTP are required' });
     }
 
     let isMatch = false;
@@ -59,20 +60,23 @@ export default async function handler(req: any, res: any) {
         .select('*')
         .eq('email', cleanEmail)
         .order('created_at', { ascending: false })
-        .limit(1);
+        .limit(5);
 
       if (!error && data && data.length > 0) {
-        const record = data[0];
-        const storedCode = record?.code || record?.otp;
-        if (storedCode && String(storedCode).trim() === enteredOtp) {
-          isMatch = true;
-          try {
-            await supabase.from('otp_codes').delete().eq('email', cleanEmail);
-          } catch (delErr) {}
+        for (const record of data) {
+          const storedCode = (record?.code || record?.otp || '').toString().trim();
+          const isExpired = record?.expires_at ? new Date(record.expires_at).getTime() < Date.now() : false;
+          if (!isExpired && storedCode === enteredOtp) {
+            isMatch = true;
+            try {
+              await supabase.from('otp_codes').delete().eq('email', cleanEmail);
+            } catch (delErr) {}
+            break;
+          }
         }
       }
     } catch (sbErr) {
-      console.warn('Supabase query error in verify-otp:', sbErr);
+      console.warn('Supabase query error in verify-otp api handler:', sbErr);
     }
 
     // 2. Check in-memory store fallback

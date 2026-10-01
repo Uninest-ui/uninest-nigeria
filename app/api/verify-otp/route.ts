@@ -39,10 +39,11 @@ export async function POST(request: Request) {
   try {
     const body = await request.json().catch(() => ({}));
     const email = (body.email || '').trim().toLowerCase();
-    const enteredOtp = (body.otp || body.code || '').trim();
+    const rawOtp = (body.otp || body.code || '').toString();
+    const enteredOtp = rawOtp.replace(/[\s-]/g, '').trim();
 
     if (!email || !enteredOtp) {
-      return new Response(JSON.stringify({ error: 'Email and OTP are required' }), {
+      return new Response(JSON.stringify({ error: 'Email and 6-digit OTP are required' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
       });
@@ -58,16 +59,19 @@ export async function POST(request: Request) {
         .select('*')
         .eq('email', email)
         .order('created_at', { ascending: false })
-        .limit(1);
+        .limit(5);
 
       if (!error && data && data.length > 0) {
-        const record = data[0];
-        const storedCode = record?.code || record?.otp;
-        if (storedCode && String(storedCode).trim() === enteredOtp) {
-          isMatch = true;
-          try {
-            await supabase.from('otp_codes').delete().eq('email', email);
-          } catch (delErr) {}
+        for (const record of data) {
+          const storedCode = (record?.code || record?.otp || '').toString().trim();
+          const isExpired = record?.expires_at ? new Date(record.expires_at).getTime() < Date.now() : false;
+          if (!isExpired && storedCode === enteredOtp) {
+            isMatch = true;
+            try {
+              await supabase.from('otp_codes').delete().eq('email', email);
+            } catch (delErr) {}
+            break;
+          }
         }
       }
     } catch (sbErr) {

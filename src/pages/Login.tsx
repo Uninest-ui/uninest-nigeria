@@ -78,7 +78,7 @@ export const Login: React.FC<{ onLoginSuccess?: (user: any) => void }> = ({ onLo
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanEmail = email.trim().toLowerCase();
-    const cleanOtp = otp.trim();
+    const cleanOtp = otp.replace(/[\s-]/g, '').trim();
 
     if (!cleanOtp || cleanOtp.length < 6) {
       setError('Please enter the complete 6-digit code sent to your email.');
@@ -98,13 +98,13 @@ export const Login: React.FC<{ onLoginSuccess?: (user: any) => void }> = ({ onLo
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Invalid or expired OTP code.');
+        throw new Error(data.error || 'Invalid or expired OTP code. Please check your email or click Resend.');
       }
 
       const userData = {
         email: cleanEmail,
         name: cleanEmail.split('@')[0],
-        role: 'student',
+        role: (cleanEmail === 'amaechihellis@gmail.com' || cleanEmail === 'admin@uninest.com') ? 'admin' : 'student',
         university: 'Nigerian University',
         verified: true,
       };
@@ -112,7 +112,7 @@ export const Login: React.FC<{ onLoginSuccess?: (user: any) => void }> = ({ onLo
       if (onLoginSuccess) {
         onLoginSuccess(userData);
       }
-      navigate('/student/dashboard');
+      navigate('/');
     } catch (err: any) {
       setError(err.message || 'OTP verification failed. Please try again.');
     } finally {

@@ -1,7 +1,6 @@
 import { Resend } from 'resend';
 import { createClient } from '@supabase/supabase-js';
 
-// Fallback in-memory OTP cache in case Supabase otp_codes table has not been created yet
 declare global {
   var __OTP_STORE__: Map<string, { code: string; expiresAt: number }> | undefined;
 }
@@ -62,13 +61,13 @@ export default async function handler(req: any, res: any) {
       expiresAt: Date.now() + 10 * 60 * 1000,
     });
 
-    // 3. Send OTP via Resend API using RESEND_API_KEY from env
+    // 3. Send OTP via Resend API using noreply@uninestnigeria.com.ng
     const resendApiKey = process.env.RESEND_API_KEY;
     if (resendApiKey) {
       try {
         const resend = new Resend(resendApiKey);
-        await resend.emails.send({
-          from: 'UniNest <onboarding@resend.dev>',
+        const { data: resendData, error: resendError } = await resend.emails.send({
+          from: 'UniNest <noreply@uninestnigeria.com.ng>',
           to: cleanEmail,
           subject: `Your UniNest code is ${otp}`,
           html: `
@@ -87,6 +86,12 @@ export default async function handler(req: any, res: any) {
             </div>
           `,
         });
+
+        if (resendError) {
+          console.warn('Resend send email warning:', resendError);
+        } else {
+          console.log('Resend email sent successfully:', resendData);
+        }
       } catch (emailErr: any) {
         console.warn('Resend send email warning:', emailErr?.message || emailErr);
       }
@@ -98,17 +103,21 @@ export default async function handler(req: any, res: any) {
     try {
       const supabase = getSupabaseClient();
       const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
-      await supabase
+      const record = {
+        email: cleanEmail,
+        code: otp,
+        otp: otp,
+        created_at: new Date().toISOString(),
+        expires_at: expiresAt,
+      };
+
+      const { error: upsertErr } = await supabase
         .from('otp_codes')
-        .upsert([
-          {
-            email: cleanEmail,
-            code: otp,
-            otp: otp,
-            created_at: new Date().toISOString(),
-            expires_at: expiresAt,
-          }
-        ], { onConflict: 'email' });
+        .upsert([record], { onConflict: 'email' });
+
+      if (upsertErr) {
+        await supabase.from('otp_codes').insert([record]);
+      }
     } catch (dbErr: any) {
       console.warn('Supabase otp_codes save warning:', dbErr?.message);
     }

@@ -51,22 +51,22 @@ export async function POST(request: Request) {
       });
     }
 
-    // 1. Generate 6-digit OTP
+    // 1. Generate 6-digit numeric OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-    // 2. Save in in-memory fallback
+    // 2. Save in in-memory fallback store
     globalThis.__OTP_STORE__?.set(email, {
       code: otp,
       expiresAt: Date.now() + 10 * 60 * 1000,
     });
 
-    // 3. Send OTP via Resend API using RESEND_API_KEY from env
+    // 3. Send OTP via Resend API using noreply@uninestnigeria.com.ng
     const resendApiKey = process.env.RESEND_API_KEY;
     if (resendApiKey) {
       try {
         const resend = new Resend(resendApiKey);
-        await resend.emails.send({
-          from: 'UniNest <onboarding@resend.dev>',
+        const { data: resendData, error: resendError } = await resend.emails.send({
+          from: 'UniNest <noreply@uninestnigeria.com.ng>',
           to: email,
           subject: `Your UniNest code is ${otp}`,
           html: `
@@ -85,6 +85,12 @@ export async function POST(request: Request) {
             </div>
           `,
         });
+
+        if (resendError) {
+          console.warn('Resend send email warning:', resendError);
+        } else {
+          console.log('Resend email sent successfully:', resendData);
+        }
       } catch (emailErr: any) {
         console.warn('Resend email send error:', emailErr?.message || emailErr);
       }
@@ -92,21 +98,26 @@ export async function POST(request: Request) {
       console.warn('RESEND_API_KEY is not defined in environment variables. OTP generated:', otp);
     }
 
-    // 4. Store OTP in Supabase table otp_codes
+    // 4. Store OTP in Supabase table otp_codes (with onConflict upsert & insert fallback)
     try {
       const supabase = getSupabaseClient();
       const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
-      await supabase
+      const record = {
+        email,
+        code: otp,
+        otp: otp,
+        created_at: new Date().toISOString(),
+        expires_at: expiresAt,
+      };
+
+      const { error: upsertErr } = await supabase
         .from('otp_codes')
-        .upsert([
-          {
-            email,
-            code: otp,
-            otp: otp,
-            created_at: new Date().toISOString(),
-            expires_at: expiresAt,
-          }
-        ], { onConflict: 'email' });
+        .upsert([record], { onConflict: 'email' });
+
+      if (upsertErr) {
+        // Fallback to plain insert if table does not have a unique constraint on email
+        await supabase.from('otp_codes').insert([record]);
+      }
     } catch (dbErr: any) {
       console.warn('Supabase otp_codes save warning:', dbErr?.message);
     }

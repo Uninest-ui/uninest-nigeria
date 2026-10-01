@@ -564,7 +564,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
       return;
     }
 
-    const cleanInputCode = otpCode.trim();
+    const cleanInputCode = otpCode.replace(/[\s-]/g, '').trim();
     if (!cleanInputCode) {
       setOtpError('Please enter the verification code sent to your email.');
       setOtpLoading(false);
