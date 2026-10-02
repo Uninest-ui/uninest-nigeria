@@ -35,11 +35,18 @@ import {
   Eye,
   EyeOff,
   Pencil,
-  Sliders
+  Sliders,
+  Loader2
 } from 'lucide-react';
 import { STSSavingsAccount, UniNestUser, StudentGift, UniNestRewardToken } from '../types';
 import { SavingsGoalChart } from './SavingsGoalChart';
-import { getStudentSTSWalletNumber, findStudentBySTSWallet, KNOWN_STS_STUDENTS, StudentWalletDirectoryEntry } from '../utils/walletUtils';
+import { 
+  getStudentSTSWalletNumber, 
+  findStudentBySTSWallet, 
+  lookupStudentBySTSWalletAsync, 
+  fetchRealVerifiedStudentsFromDB, 
+  StudentWalletDirectoryEntry 
+} from '../utils/walletUtils';
 import { OfficialBankPaymentCard } from './OfficialBankPaymentCard';
 import { getOfficialPaymentConfig } from '../utils/paymentConfig';
 
@@ -213,39 +220,116 @@ export const STSSavingsTab: React.FC<STSSavingsTabProps> = ({
   });
   const [tokenClaimSuccess, setTokenClaimSuccess] = useState<string | null>(null);
 
+  // Real DB student lookup & quick-select state
+  const [realVerifiedStudents, setRealVerifiedStudents] = useState<StudentWalletDirectoryEntry[]>([]);
+  const [isSearchingPeer, setIsSearchingPeer] = useState(false);
+  const [peerNotFound, setPeerNotFound] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    fetchRealVerifiedStudentsFromDB().then((students) => {
+      if (isMounted) {
+        setRealVerifiedStudents(students);
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const handleCopyMyWallet = () => {
     navigator.clipboard.writeText(mySTSWalletNumber);
     setCopiedMyWallet(true);
     setTimeout(() => setCopiedMyWallet(false), 2500);
   };
 
-  const handleSelectPeerWallet = (walletNum: string) => {
+  const handleSelectPeerWallet = async (walletNum: string) => {
     setRecipientWalletNumber(walletNum);
-    const peer = findStudentBySTSWallet(walletNum);
-    if (peer) {
-      setResolvedPeer(peer);
-      setRecipientEmail(peer.email);
-      setRecipientName(peer.name);
-      setRecipientSchool(peer.university);
-      setGiftError(null);
-    } else {
+    setIsSearchingPeer(true);
+    setPeerNotFound(false);
+    try {
+      const peer = await lookupStudentBySTSWalletAsync(walletNum);
+      if (peer) {
+        setResolvedPeer(peer);
+        setRecipientEmail(peer.email);
+        setRecipientName(peer.name);
+        setRecipientSchool(peer.university);
+        setGiftError(null);
+        setPeerNotFound(false);
+      } else {
+        setResolvedPeer(null);
+        setPeerNotFound(true);
+      }
+    } catch {
       setResolvedPeer(null);
+      setPeerNotFound(true);
+    } finally {
+      setIsSearchingPeer(false);
     }
   };
 
   const handleWalletInputChange = (val: string) => {
     setRecipientWalletNumber(val);
-    const peer = findStudentBySTSWallet(val);
-    if (peer) {
-      setResolvedPeer(peer);
-      setRecipientEmail(peer.email);
-      setRecipientName(peer.name);
-      setRecipientSchool(peer.university);
-      setGiftError(null);
-    } else {
+    const clean = val.trim();
+    const digits = clean.replace(/\D/g, '');
+
+    if (digits.length < 4 && clean.length < 4) {
       setResolvedPeer(null);
+      setPeerNotFound(false);
+      setIsSearchingPeer(false);
     }
   };
+
+  useEffect(() => {
+    const clean = recipientWalletNumber.trim();
+    const digits = clean.replace(/\D/g, '');
+
+    if (digits.length < 4 && clean.length < 4) {
+      setResolvedPeer(null);
+      setPeerNotFound(false);
+      setIsSearchingPeer(false);
+      return;
+    }
+
+    let isCurrent = true;
+    setIsSearchingPeer(true);
+    setPeerNotFound(false);
+
+    const timer = setTimeout(async () => {
+      try {
+        const peer = await lookupStudentBySTSWalletAsync(recipientWalletNumber);
+        if (!isCurrent) return;
+
+        if (peer) {
+          setResolvedPeer(peer);
+          setRecipientEmail(peer.email);
+          setRecipientName(peer.name);
+          setRecipientSchool(peer.university);
+          setGiftError(null);
+          setPeerNotFound(false);
+        } else {
+          setResolvedPeer(null);
+          setPeerNotFound(true);
+          setRecipientName('');
+          setRecipientEmail('');
+          setRecipientSchool('');
+        }
+      } catch (err) {
+        if (!isCurrent) return;
+        setResolvedPeer(null);
+        setPeerNotFound(true);
+      } finally {
+        if (isCurrent) {
+          setIsSearchingPeer(false);
+        }
+      }
+    }, 350);
+
+    return () => {
+      isCurrent = false;
+      clearTimeout(timer);
+    };
+  }, [recipientWalletNumber]);
 
   // Sign-Out Clearance Payout State (Clear Face Photo Verification)
   const [showSignOutModal, setShowSignOutModal] = useState(false);
@@ -2435,25 +2519,34 @@ export const STSSavingsTab: React.FC<STSSavingsTabProps> = ({
                   </span>
                 </div>
                 <p className="text-[10px] text-[#0A1931]/70 leading-relaxed">
-                  Enter student&apos;s 8-digit STS Number (e.g. <strong>STS-9034-4429</strong> or <strong>90344429</strong>). Their verified name, campus, and contact details will appear automatically.
+                  Enter student&apos;s 8-digit STS Number (e.g. <strong>9926-2545</strong> or <strong>STS-9926-2545</strong>). Their verified name, campus, and contact details will appear automatically.
                 </p>
                 <div className="relative">
                   <input
                     type="text"
                     value={recipientWalletNumber}
                     onChange={(e) => handleWalletInputChange(e.target.value)}
-                    placeholder="e.g. STS-9034-4429 or 90344429"
-                    className="w-full pl-3 pr-20 py-2 rounded-xl border border-[#0A1931]/20 bg-white font-mono text-xs font-black text-[#0A1931] focus:ring-2 focus:ring-[#FF6A00] focus:outline-none tracking-wider"
+                    placeholder="e.g. 9926-2545 or STS-9926-2545"
+                    className="w-full pl-3 pr-24 py-2 rounded-xl border border-[#0A1931]/20 bg-white font-mono text-xs font-black text-[#0A1931] focus:ring-2 focus:ring-[#FF6A00] focus:outline-none tracking-wider"
                   />
-                  {resolvedPeer && (
+                  {isSearchingPeer ? (
+                    <div className="absolute right-2 top-2 px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[10px] font-semibold flex items-center gap-1">
+                      <Loader2 className="w-3 h-3 animate-spin text-[#FF6A00]" /> Searching...
+                    </div>
+                  ) : resolvedPeer ? (
                     <div className="absolute right-2 top-2 px-2 py-0.5 rounded-md bg-emerald-600 text-white text-[10px] font-bold flex items-center gap-1 shadow-2xs">
                       <Check className="w-3 h-3" /> Verified
                     </div>
-                  )}
+                  ) : null}
                 </div>
 
                 {/* Instant Verified Recipient Preview Card */}
-                {resolvedPeer ? (
+                {isSearchingPeer ? (
+                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 text-xs flex items-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin text-[#FF6A00] shrink-0" />
+                    <span>Searching Supabase for STS record...</span>
+                  </div>
+                ) : resolvedPeer ? (
                   <div className="p-3 rounded-xl bg-emerald-50/95 border border-emerald-300 text-emerald-950 animate-in fade-in slide-in-from-top-1 duration-200">
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-2">
@@ -2486,34 +2579,41 @@ export const STSSavingsTab: React.FC<STSSavingsTabProps> = ({
                       </div>
                     </div>
                   </div>
+                ) : peerNotFound ? (
+                  <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 flex items-center gap-2 animate-in fade-in duration-150">
+                    <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                    <span className="font-bold">STS Number not found</span>
+                  </div>
                 ) : recipientWalletNumber.length >= 4 ? (
-                  <div className="p-2 rounded-xl bg-amber-50 border border-amber-200 text-[10px] text-amber-800 flex items-center gap-1.5">
-                    <AlertCircle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                    <span>Enter full 8-digit STS number (e.g. STS-9034-4429 or 90344429) to automatically fetch recipient info.</span>
+                  <div className="p-2 rounded-xl bg-slate-50 border border-slate-200 text-[10px] text-slate-600 flex items-center gap-1.5">
+                    <AlertCircle className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                    <span>Enter full 8-digit STS number (e.g. 9926-2545 or STS-9926-2545) to look up recipient in Supabase.</span>
                   </div>
                 ) : null}
                 
-                {/* Quick Peer Chips */}
-                <div className="pt-1">
-                  <span className="text-[10px] text-[#0A1931]/60 font-semibold block mb-1">Quick-select verified students:</span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {KNOWN_STS_STUDENTS.slice(0, 4).map((peer) => (
-                      <button
-                        key={peer.stsWalletNumber}
-                        type="button"
-                        onClick={() => handleSelectPeerWallet(peer.stsWalletNumber)}
-                        className={`px-2 py-1 rounded-lg text-[10px] font-bold border transition flex items-center gap-1 cursor-pointer ${
-                          recipientWalletNumber === peer.stsWalletNumber
-                            ? 'bg-[#FF6A00] text-white border-[#FF6A00] shadow-xs'
-                            : 'bg-white text-[#0A1931] border-[#0A1931]/20 hover:border-[#FF6A00]'
-                        }`}
-                      >
-                        <span>{peer.name.split(' ')[0]}</span>
-                        <span className="font-mono text-[9px] opacity-80">({peer.stsWalletNumber})</span>
-                      </button>
-                    ))}
+                {/* Quick Peer Chips - only shown if real verified students exist in DB */}
+                {realVerifiedStudents.length > 0 && (
+                  <div className="pt-1">
+                    <span className="text-[10px] text-[#0A1931]/60 font-semibold block mb-1">Quick-select verified students:</span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {realVerifiedStudents.slice(0, 4).map((peer) => (
+                        <button
+                          key={peer.stsWalletNumber}
+                          type="button"
+                          onClick={() => handleSelectPeerWallet(peer.stsWalletNumber)}
+                          className={`px-2 py-1 rounded-lg text-[10px] font-bold border transition flex items-center gap-1 cursor-pointer ${
+                            recipientWalletNumber === peer.stsWalletNumber
+                              ? 'bg-[#FF6A00] text-white border-[#FF6A00] shadow-xs'
+                              : 'bg-white text-[#0A1931] border-[#0A1931]/20 hover:border-[#FF6A00]'
+                          }`}
+                        >
+                          <span>{peer.name.split(' ')[0]}</span>
+                          <span className="font-mono text-[9px] opacity-80">({peer.stsWalletNumber})</span>
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -2532,7 +2632,7 @@ export const STSSavingsTab: React.FC<STSSavingsTabProps> = ({
                     type="text"
                     value={recipientName}
                     onChange={(e) => setRecipientName(e.target.value)}
-                    placeholder="e.g. Ebiere Tonye"
+                    placeholder="e.g. Student Full Name"
                     required
                     className="w-full px-2.5 py-1.5 rounded-xl border border-[#0A1931]/20 text-xs focus:ring-2 focus:ring-[#FF6A00] focus:outline-none text-[#0A1931] bg-white font-medium"
                   />
@@ -2553,7 +2653,7 @@ export const STSSavingsTab: React.FC<STSSavingsTabProps> = ({
                     type="text"
                     value={recipientEmail}
                     onChange={(e) => setRecipientEmail(e.target.value)}
-                    placeholder="e.g. ebiere@campus.edu"
+                    placeholder="e.g. student@campus.edu"
                     required
                     className="w-full px-2.5 py-1.5 rounded-xl border border-[#0A1931]/20 text-xs focus:ring-2 focus:ring-[#FF6A00] focus:outline-none text-[#0A1931] bg-white font-medium"
                   />
