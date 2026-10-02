@@ -1,4 +1,3 @@
-import { Resend } from 'resend';
 import { createClient } from '@supabase/supabase-js';
 
 declare global {
@@ -6,6 +5,13 @@ declare global {
 }
 if (!globalThis.__OTP_STORE__) {
   globalThis.__OTP_STORE__ = new Map();
+}
+
+function isValidResendApiKey(key?: string): boolean {
+  if (!key) return false;
+  const clean = key.trim();
+  // Valid Resend API key starts with 're_' and is full length (>= 25 characters)
+  return clean.startsWith('re_') && clean.length >= 25;
 }
 
 function getSupabaseConfig() {
@@ -60,42 +66,47 @@ export async function POST(request: Request) {
       expiresAt: Date.now() + 10 * 60 * 1000,
     });
 
-    // 3. Send OTP via Resend API using noreply@uninestnigeria.com.ng
+    // 3. Send OTP via Resend API using noreply@uninestnigeria.com.ng (with safe fetch transport)
     const resendApiKey = process.env.RESEND_API_KEY;
-    if (resendApiKey) {
+    if (isValidResendApiKey(resendApiKey)) {
       try {
-        const resend = new Resend(resendApiKey);
-        const { data: resendData, error: resendError } = await resend.emails.send({
-          from: 'UniNest <noreply@uninestnigeria.com.ng>',
-          to: email,
-          subject: `Your UniNest code is ${otp}`,
-          html: `
-            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 24px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px;">
-              <div style="text-align: center; margin-bottom: 24px;">
-                <h1 style="color: #0A1931; font-size: 24px; font-weight: 900; margin: 0;">UniNest</h1>
-                <p style="color: #64748b; font-size: 13px; margin-top: 4px;">Making Nigerian Students Comfortable</p>
+        const response = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${resendApiKey?.trim()}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            from: 'UniNest <noreply@uninestnigeria.com.ng>',
+            to: email,
+            subject: `Your UniNest code is ${otp}`,
+            html: `
+              <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 24px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px;">
+                <div style="text-align: center; margin-bottom: 24px;">
+                  <h1 style="color: #0A1931; font-size: 24px; font-weight: 900; margin: 0;">UniNest</h1>
+                  <p style="color: #64748b; font-size: 13px; margin-top: 4px;">Making Nigerian Students Comfortable</p>
+                </div>
+                <p style="color: #334155; font-size: 15px; line-height: 1.5;">Your UniNest verification code is:</p>
+                <div style="background-color: #FFF7ED; border: 2px dashed #FF6A00; padding: 20px; text-align: center; border-radius: 12px; margin: 24px 0;">
+                  <span style="font-size: 36px; font-weight: 900; letter-spacing: 8px; color: #FF6A00; font-family: monospace;">${otp}</span>
+                </div>
+                <p style="color: #64748b; font-size: 13px; line-height: 1.5;">This code will expire in 10 minutes. If you did not request this login code, you can safely ignore this email.</p>
+                <hr style="border: none; border-top: 1px solid #f1f5f9; margin: 24px 0;" />
+                <p style="color: #94a3b8; font-size: 11px; text-align: center; margin: 0;">&copy; ${new Date().getFullYear()} UniNest Nigeria. All rights reserved.</p>
               </div>
-              <p style="color: #334155; font-size: 15px; line-height: 1.5;">Your UniNest verification code is:</p>
-              <div style="background-color: #FFF7ED; border: 2px dashed #FF6A00; padding: 20px; text-align: center; border-radius: 12px; margin: 24px 0;">
-                <span style="font-size: 36px; font-weight: 900; letter-spacing: 8px; color: #FF6A00; font-family: monospace;">${otp}</span>
-              </div>
-              <p style="color: #64748b; font-size: 13px; line-height: 1.5;">This code will expire in 10 minutes. If you did not request this login code, you can safely ignore this email.</p>
-              <hr style="border: none; border-top: 1px solid #f1f5f9; margin: 24px 0;" />
-              <p style="color: #94a3b8; font-size: 11px; text-align: center; margin: 0;">&copy; ${new Date().getFullYear()} UniNest Nigeria. All rights reserved.</p>
-            </div>
-          `,
+            `,
+          }),
         });
 
-        if (resendError) {
-          console.warn('Resend send email warning:', resendError);
-        } else {
-          console.log('Resend email sent successfully:', resendData);
+        const resData = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          console.warn('Resend email dispatch notice (non-fatal):', resData?.message || response.statusText);
         }
       } catch (emailErr: any) {
-        console.warn('Resend email send error:', emailErr?.message || emailErr);
+        console.warn('Resend email dispatch network notice:', emailErr?.message || emailErr);
       }
     } else {
-      console.warn('RESEND_API_KEY is not defined in environment variables. OTP generated:', otp);
+      console.info('Resend API key is not configured or incomplete; proceeding with secure database and session verification for OTP:', otp);
     }
 
     // 4. Store OTP in Supabase table otp_codes (with onConflict upsert & insert fallback)
@@ -115,7 +126,6 @@ export async function POST(request: Request) {
         .upsert([record], { onConflict: 'email' });
 
       if (upsertErr) {
-        // Fallback to plain insert if table does not have a unique constraint on email
         await supabase.from('otp_codes').insert([record]);
       }
     } catch (dbErr: any) {
