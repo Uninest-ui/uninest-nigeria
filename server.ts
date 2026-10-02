@@ -11,7 +11,8 @@ const __dirname = path.dirname(__filename);
 
 async function startServer() {
   const app = express();
-  const PORT = Number(process.env.PORT) || 3000;
+  // AI Studio Dev server must strictly run on port 3000
+  const PORT = 3000;
   const isProduction = process.env.NODE_ENV === 'production';
 
   app.use(express.json());
@@ -35,6 +36,16 @@ async function startServer() {
     }
   });
 
+  app.post('/api/forgot-password', async (req: Request, res: Response) => {
+    try {
+      const forgotPasswordHandler = (await import('./api/forgot-password.js')).default;
+      await forgotPasswordHandler(req, res);
+    } catch (err: any) {
+      console.error('Error handling /api/forgot-password:', err);
+      res.status(500).json({ error: err.message || 'Internal server error' });
+    }
+  });
+
   // Health check
   app.get('/api/health', (_req: Request, res: Response) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -43,7 +54,10 @@ async function startServer() {
   if (!isProduction) {
     const { createServer } = await import('vite');
     const vite = await createServer({
-      server: { middlewareMode: true },
+      server: { 
+        middlewareMode: true,
+        hmr: false,
+      },
       appType: 'custom',
     });
 
@@ -67,8 +81,12 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
+  const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`UniNest Full-Stack Server running on http://0.0.0.0:${PORT}`);
+  });
+
+  server.on('error', (err: any) => {
+    console.error('Server listen error:', err);
   });
 }
 
