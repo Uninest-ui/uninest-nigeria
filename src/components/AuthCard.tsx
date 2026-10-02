@@ -1686,16 +1686,32 @@ export const AuthCard: React.FC<AuthCardProps> = ({
             </div>
 
             {/* Email Dispatch Notice */}
-            <div className="p-3.5 rounded-2xl bg-amber-50/90 border border-amber-200/80 flex items-start gap-3 text-xs text-amber-950">
-              <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-700 flex items-center justify-center shrink-0">
-                <Mail className="w-4 h-4" />
+            <div className="p-3.5 rounded-2xl bg-amber-50/90 border border-amber-200/80 flex items-start justify-between gap-3 text-xs text-amber-950">
+              <div className="flex items-start gap-2.5 min-w-0">
+                <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-700 flex items-center justify-center shrink-0">
+                  <Mail className="w-4 h-4" />
+                </div>
+                <div className="space-y-0.5 min-w-0">
+                  <p className="font-bold text-slate-900 text-xs">Verification PIN Sent to Email</p>
+                  <p className="text-[11px] text-slate-600 leading-relaxed">
+                    A 6-digit verification code was dispatched to <strong className="text-slate-900">{pendingSignupUser?.email}</strong>.
+                  </p>
+                  {generatedOtp && (
+                    <p className="text-[11px] text-[#0A1931] font-semibold pt-1">
+                      PIN Code: <span className="font-mono text-sm font-black text-[#FF6A00] tracking-widest">{generatedOtp}</span>
+                    </p>
+                  )}
+                </div>
               </div>
-              <div className="space-y-0.5 min-w-0">
-                <p className="font-bold text-slate-900 text-xs">Verification PIN Sent to Email</p>
-                <p className="text-[11px] text-slate-600 leading-relaxed">
-                  A 6-digit verification code has been dispatched to <strong className="text-slate-900">{pendingSignupUser?.email}</strong>. Please check your inbox and spam folder.
-                </p>
-              </div>
+              {generatedOtp && (
+                <button
+                  type="button"
+                  onClick={() => setOtpCode(generatedOtp)}
+                  className="px-2.5 py-1.5 rounded-lg bg-[#FF6A00] hover:bg-[#E55E00] text-white text-[11px] font-bold shadow-2xs shrink-0 cursor-pointer"
+                >
+                  Auto-fill
+                </button>
+              )}
             </div>
 
             {otpError && (

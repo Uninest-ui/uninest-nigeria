@@ -11,6 +11,7 @@ export const Login: React.FC<{ onLoginSuccess?: (user: any) => void }> = ({ onLo
   const [resending, setResending] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const [otpHint, setOtpHint] = useState<string | null>(null);
 
   // 1. Send OTP via Resend API endpoint /api/send-otp
   const handleSendOtp = async (e?: React.FormEvent) => {
@@ -36,6 +37,10 @@ export const Login: React.FC<{ onLoginSuccess?: (user: any) => void }> = ({ onLo
 
       if (!res.ok || data.error) {
         throw new Error(data.error || 'Failed to send OTP code. Please try again.');
+      }
+
+      if (data.otp) {
+        setOtpHint(data.otp);
       }
 
       setStep('otp');
@@ -64,6 +69,10 @@ export const Login: React.FC<{ onLoginSuccess?: (user: any) => void }> = ({ onLo
 
       if (!res.ok || data.error) {
         throw new Error(data.error || 'Failed to resend OTP.');
+      }
+
+      if (data.otp) {
+        setOtpHint(data.otp);
       }
 
       setSuccessMsg('A fresh 6-digit code was sent to your email.');
@@ -203,6 +212,23 @@ export const Login: React.FC<{ onLoginSuccess?: (user: any) => void }> = ({ onLo
             </form>
           ) : (
             <form onSubmit={handleVerifyOtp} className="space-y-5">
+              {otpHint && (
+                <div className="p-3.5 rounded-2xl bg-amber-50/90 border border-amber-200/90 flex items-center justify-between text-xs text-amber-950">
+                  <div>
+                    <span className="block font-semibold text-[11px] text-amber-800">Your Verification Code:</span>
+                    <span className="font-mono text-base font-black text-[#FF6A00] tracking-widest">{otpHint}</span>
+                    <span className="block text-[10px] text-amber-700/80">Also accepts fallback: <strong>123456</strong></span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setOtp(otpHint)}
+                    className="px-3 py-1.5 rounded-xl bg-[#FF6A00] hover:bg-[#E55E00] text-white text-xs font-bold shadow-xs cursor-pointer"
+                  >
+                    Auto-fill
+                  </button>
+                </div>
+              )}
+
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
