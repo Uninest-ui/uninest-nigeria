@@ -11,8 +11,20 @@ const __dirname = path.dirname(__filename);
 
 async function startServer() {
   const app = express();
-  // AI Studio Dev server must strictly run on port 3000
-  const PORT = 3000;
+
+  // Parse command line arguments or default to port 3000
+  let PORT = 3000;
+  const portArgIndex = process.argv.indexOf('--port');
+  if (portArgIndex !== -1 && process.argv[portArgIndex + 1]) {
+    PORT = parseInt(process.argv[portArgIndex + 1], 10) || 3000;
+  }
+
+  let HOST = '0.0.0.0';
+  const hostArgIndex = process.argv.indexOf('--host');
+  if (hostArgIndex !== -1 && process.argv[hostArgIndex + 1]) {
+    HOST = process.argv[hostArgIndex + 1] || '0.0.0.0';
+  }
+
   const isProduction = process.env.NODE_ENV === 'production';
 
   app.use(express.json());
@@ -53,10 +65,12 @@ async function startServer() {
 
   if (!isProduction) {
     const { createServer } = await import('vite');
+    // Disable WebSocket server and HMR completely to prevent port 24678 collisions
     const vite = await createServer({
       server: { 
         middlewareMode: true,
-        hmr: false,
+        hmr: { server: null, port: 0 },
+        ws: false,
       },
       appType: 'custom',
     });
@@ -81,8 +95,8 @@ async function startServer() {
     });
   }
 
-  const server = app.listen(PORT, '0.0.0.0', () => {
-    console.log(`UniNest Full-Stack Server running on http://0.0.0.0:${PORT}`);
+  const server = app.listen(PORT, HOST, () => {
+    console.log(`UniNest Full-Stack Server running on http://${HOST}:${PORT}`);
   });
 
   server.on('error', (err: any) => {
