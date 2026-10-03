@@ -152,14 +152,33 @@ export const STSSavingsTab: React.FC<STSSavingsTabProps> = ({
   const [showGiftModal, setShowGiftModal] = useState(false);
   const [recipientEmail, setRecipientEmail] = useState('');
   const [recipientName, setRecipientName] = useState('');
-  const [recipientSchool, setRecipientSchool] = useState('Niger Delta University (NDU)');
-  const [giftAmount, setGiftAmount] = useState('5000');
+  const [recipientSchool, setRecipientSchool] = useState('');
+  const [giftAmount, setGiftAmount] = useState('');
   const [giftOccasion, setGiftOccasion] = useState('Exam Handouts & Photocopy 📚');
-  const [giftMessage, setGiftMessage] = useState('Best of luck with your semester tests! Enjoy lunch on me.');
+  const [giftMessage, setGiftMessage] = useState('');
   const [giftSuccess, setGiftSuccess] = useState<string | null>(null);
   const [giftError, setGiftError] = useState<string | null>(null);
   const [recipientWalletNumber, setRecipientWalletNumber] = useState('');
   const [resolvedPeer, setResolvedPeer] = useState<StudentWalletDirectoryEntry | null>(null);
+
+  // Helper to reset gifting form completely (clears any lingering input)
+  const resetGiftForm = () => {
+    setRecipientName('');
+    setRecipientEmail('');
+    setRecipientSchool('');
+    setGiftAmount('');
+    setGiftMessage('');
+    setRecipientWalletNumber('');
+    setResolvedPeer(null);
+    setGiftError(null);
+    setGiftSuccess(null);
+    setGiftPayerBank('');
+    setGiftPayerName(safeUser.name || '');
+    setPeerNotFound(false);
+    setIsSearchingPeer(false);
+    setGiftOccasion('Exam Handouts & Photocopy 📚');
+    setGiftFundingMethod('balance');
+  };
 
   // Current Student STS Account Number (used to receive gifts to gift account)
   const mySTSWalletNumber = account?.stsAccountNumber || getStudentSTSWalletNumber(safeUser.email, safeUser.phone);
@@ -204,7 +223,7 @@ export const STSSavingsTab: React.FC<STSSavingsTabProps> = ({
   const paymentConfig = getOfficialPaymentConfig();
   const [giftFundingMethod, setGiftFundingMethod] = useState<'balance' | 'bank_escrow'>('balance');
   const [giftPayerName, setGiftPayerName] = useState(safeUser.name || '');
-  const [giftPayerBank, setGiftPayerBank] = useState('United Bank for Africa (UBA)');
+  const [giftPayerBank, setGiftPayerBank] = useState('');
   const [giftEscrowRef, setGiftEscrowRef] = useState(() => `ESCROW-GIFT-${Math.floor(100000 + Math.random() * 900000)}`);
   const [copiedEscrowAccount, setCopiedEscrowAccount] = useState(false);
   const [copiedEscrowRef, setCopiedEscrowRef] = useState(false);
@@ -650,9 +669,7 @@ export const STSSavingsTab: React.FC<STSSavingsTabProps> = ({
 
     setShowPinModal(false);
     setShowGiftModal(false);
-    setRecipientName('');
-    setRecipientEmail('');
-    setRecipientWalletNumber('');
+    resetGiftForm();
     setGiftEscrowRef(`ESCROW-GIFT-${Math.floor(100000 + Math.random() * 900000)}`);
     setTimeout(() => setGiftSuccess(null), 8000);
   };
@@ -2316,7 +2333,10 @@ export const STSSavingsTab: React.FC<STSSavingsTabProps> = ({
             <div className="flex items-center justify-between border-b border-slate-100 p-4 bg-white shrink-0 sticky top-0 z-10">
               <button
                 type="button"
-                onClick={() => setShowGiftModal(false)}
+                onClick={() => {
+                  resetGiftForm();
+                  setShowGiftModal(false);
+                }}
                 id="btn-gift-modal-back"
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-black transition cursor-pointer border border-slate-200 shadow-2xs"
               >
@@ -2331,7 +2351,10 @@ export const STSSavingsTab: React.FC<STSSavingsTabProps> = ({
 
               <button
                 type="button"
-                onClick={() => setShowGiftModal(false)}
+                onClick={() => {
+                  resetGiftForm();
+                  setShowGiftModal(false);
+                }}
                 id="btn-gift-modal-close"
                 className="p-1.5 rounded-xl text-gray-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer transition"
                 title="Close"
@@ -2486,7 +2509,7 @@ export const STSSavingsTab: React.FC<STSSavingsTabProps> = ({
                         type="text"
                         value={giftPayerName}
                         onChange={(e) => setGiftPayerName(e.target.value)}
-                        placeholder="e.g. Chief Tari Tonye / Sponsor"
+                        placeholder="Enter depositor / payer full name"
                         required={giftFundingMethod === 'bank_escrow'}
                         className="w-full px-2.5 py-1.5 rounded-xl border border-slate-300 text-xs bg-white focus:ring-2 focus:ring-[#FF6A00] focus:outline-none"
                       />
@@ -2499,7 +2522,7 @@ export const STSSavingsTab: React.FC<STSSavingsTabProps> = ({
                         type="text"
                         value={giftPayerBank}
                         onChange={(e) => setGiftPayerBank(e.target.value)}
-                        placeholder="e.g. GTBank, Zenith, OPay"
+                        placeholder="e.g. GTBank, Zenith, Access, OPay"
                         className="w-full px-2.5 py-1.5 rounded-xl border border-slate-300 text-xs bg-white focus:ring-2 focus:ring-[#FF6A00] focus:outline-none"
                       />
                     </div>
@@ -2632,7 +2655,7 @@ export const STSSavingsTab: React.FC<STSSavingsTabProps> = ({
                     type="text"
                     value={recipientName}
                     onChange={(e) => setRecipientName(e.target.value)}
-                    placeholder="e.g. Student Full Name"
+                    placeholder="Enter recipient student full name"
                     required
                     className="w-full px-2.5 py-1.5 rounded-xl border border-[#0A1931]/20 text-xs focus:ring-2 focus:ring-[#FF6A00] focus:outline-none text-[#0A1931] bg-white font-medium"
                   />
@@ -2653,7 +2676,7 @@ export const STSSavingsTab: React.FC<STSSavingsTabProps> = ({
                     type="text"
                     value={recipientEmail}
                     onChange={(e) => setRecipientEmail(e.target.value)}
-                    placeholder="e.g. student@campus.edu"
+                    placeholder="Enter recipient email or phone"
                     required
                     className="w-full px-2.5 py-1.5 rounded-xl border border-[#0A1931]/20 text-xs focus:ring-2 focus:ring-[#FF6A00] focus:outline-none text-[#0A1931] bg-white font-medium"
                   />
@@ -2677,7 +2700,7 @@ export const STSSavingsTab: React.FC<STSSavingsTabProps> = ({
                     value={recipientSchool}
                     onChange={(e) => setRecipientSchool(e.target.value)}
                     list="campus-school-datalist"
-                    placeholder="e.g. Niger Delta University (NDU)"
+                    placeholder="Select or enter campus / university"
                     required
                     className="w-full px-2.5 py-1.5 rounded-xl border border-[#0A1931]/20 text-xs focus:ring-2 focus:ring-[#FF6A00] focus:outline-none bg-white text-[#0A1931] font-medium"
                   />
@@ -2702,6 +2725,7 @@ export const STSSavingsTab: React.FC<STSSavingsTabProps> = ({
                     min="500"
                     max={giftFundingMethod === 'balance' ? giftAccountBalance : undefined}
                     step="500"
+                    placeholder="Enter gift amount (min ₦500)"
                     required
                     className="w-full px-2.5 py-1.5 rounded-xl border border-[#0A1931]/20 text-xs font-bold focus:ring-2 focus:ring-[#FF6A00] focus:outline-none text-[#0A1931]"
                   />
@@ -2739,7 +2763,7 @@ export const STSSavingsTab: React.FC<STSSavingsTabProps> = ({
                   rows={2}
                   value={giftMessage}
                   onChange={(e) => setGiftMessage(e.target.value)}
-                  placeholder="Encourage your fellow student..."
+                  placeholder="Add a personal message or note for the recipient (optional)..."
                   className="w-full p-2 rounded-xl border border-[#0A1931]/20 text-xs focus:ring-2 focus:ring-[#FF6A00] focus:outline-none text-[#0A1931]"
                 />
               </div>
@@ -2752,7 +2776,10 @@ export const STSSavingsTab: React.FC<STSSavingsTabProps> = ({
               <div className="flex items-center justify-between gap-2 pt-1 border-t border-[#0A1931]/10">
                 <button
                   type="button"
-                  onClick={() => setShowGiftModal(false)}
+                  onClick={() => {
+                    resetGiftForm();
+                    setShowGiftModal(false);
+                  }}
                   className="px-3.5 py-1.5 rounded-xl bg-[#0A1931]/5 hover:bg-[#0A1931]/10 text-[#0A1931] text-xs font-bold transition flex items-center gap-1 cursor-pointer"
                 >
                   <ArrowLeft className="w-3 h-3" />
@@ -2766,15 +2793,15 @@ export const STSSavingsTab: React.FC<STSSavingsTabProps> = ({
                   {giftFundingMethod === 'bank_escrow' ? (
                     <>
                       <Building2 className="w-3.5 h-3.5 text-white" />
-                      <span>Process Escrow Gift (₦{Number(giftAmount || 0).toLocaleString()})</span>
+                      <span>Process Escrow Gift {Number(giftAmount) > 0 ? `(₦${Number(giftAmount).toLocaleString()})` : ''}</span>
                     </>
                   ) : (
                     <>
                       <Key className="w-3.5 h-3.5 text-white" />
                       <span>
                         {!hasCustomPin
-                          ? `Create 4-Digit PIN & Transfer (₦${Number(giftAmount || 0).toLocaleString()})`
-                          : `Authorize with 4-Digit PIN (₦${Number(giftAmount || 0).toLocaleString()})`}
+                          ? `Create 4-Digit PIN & Transfer ${Number(giftAmount) > 0 ? `(₦${Number(giftAmount).toLocaleString()})` : ''}`
+                          : `Authorize with 4-Digit PIN ${Number(giftAmount) > 0 ? `(₦${Number(giftAmount).toLocaleString()})` : ''}`}
                       </span>
                     </>
                   )}
