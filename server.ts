@@ -28,6 +28,7 @@ async function startServer() {
   const isProduction = process.env.NODE_ENV === 'production';
 
   app.use(express.json());
+  app.use(express.static(path.resolve(__dirname, 'public')));
 
   // API Routes
   app.post('/api/send-otp', async (req: Request, res: Response) => {
@@ -65,29 +66,15 @@ async function startServer() {
 
   if (!isProduction) {
     const { createServer } = await import('vite');
-    // Disable WebSocket server and HMR completely to prevent port 24678 collisions
     const vite = await createServer({
       server: { 
         middlewareMode: true,
-        hmr: { server: null, port: 0 },
-        ws: false,
+        hmr: false,
       },
-      appType: 'custom',
+      appType: 'spa',
     });
 
     app.use(vite.middlewares);
-
-    app.use('*', async (req: Request, res: Response, next) => {
-      const url = req.originalUrl;
-      try {
-        let template = fs.readFileSync(path.resolve(__dirname, 'index.html'), 'utf-8');
-        template = await vite.transformIndexHtml(url, template);
-        res.status(200).set({ 'Content-Type': 'text/html' }).end(template);
-      } catch (e: any) {
-        vite.ssrFixStacktrace(e);
-        next(e);
-      }
-    });
   } else {
     app.use(express.static(path.resolve(__dirname, 'dist')));
     app.get('*', (_req: Request, res: Response) => {
