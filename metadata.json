@@ -1,6 +1,6 @@
 {
   "name": "UniNest",
-  "description": "UniNestNigeria - Save for sign out and get lots of gifts and money for life after school. Disciplined student target savings.",
+  "description": "UniNestNigeria - Save for sign out and get lots of gifts and money for life after school. Disciplined student target savings, project work, campus jobs, and lodge market orders.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
