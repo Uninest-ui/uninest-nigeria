@@ -26,6 +26,43 @@
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
     body { font-family: 'Plus Jakarta Sans', sans-serif; }
     .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+    /* Strict Night View Styling: Eliminate washed-out gradients & enforce deep obsidian dark mode */
+    html.dark, html.dark body {
+      background-color: #020617 !important;
+      color: #f8fafc !important;
+    }
+    html.dark header {
+      background-color: rgba(2, 6, 23, 0.95) !important;
+      border-color: #1e293b !important;
+    }
+    html.dark section,
+    html.dark .hero-section,
+    html.dark #services,
+    html.dark #sts-savings,
+    html.dark #testimonials,
+    html.dark #faq {
+      background: #020617 !important;
+      background-color: #020617 !important;
+      background-image: none !important;
+      border-color: #1e293b !important;
+    }
+    html.dark .testimony-slide,
+    html.dark #calculator,
+    html.dark .faq-item {
+      background: #0f172a !important;
+      background-color: #0f172a !important;
+      background-image: none !important;
+      border-color: #1e293b !important;
+    }
+    html.dark footer {
+      background-color: #020617 !important;
+      border-color: #1e293b !important;
+    }
+    html.dark #mobile-menu {
+      background-color: #020617 !important;
+      border-color: #1e293b !important;
+    }
   </style>
 </head>
 <body class="bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100 min-h-screen flex flex-col transition-colors duration-300">
@@ -152,7 +189,7 @@
   </header>
 
   <!-- Hero Section -->
-  <section id="hero" class="relative overflow-hidden pt-8 pb-16 lg:pt-14 lg:pb-24 border-b border-slate-200 bg-gradient-to-b from-amber-50/70 via-white to-slate-50/80 dark:bg-slate-950 dark:border-slate-800 transition-colors duration-300">
+  <section id="hero" class="hero-section relative overflow-hidden pt-8 pb-16 lg:pt-14 lg:pb-24 border-b border-slate-200 bg-gradient-to-b from-amber-50/70 via-white to-slate-50/80 dark:bg-none dark:bg-slate-950 dark:border-slate-800 transition-colors duration-300">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative">
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center">
         <!-- Copy Column -->
