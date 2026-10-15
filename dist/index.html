@@ -1,29 +1,314 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>UniNest - making Nigerian students comfortable</title>
-    <meta name="description" content="UniNest - making Nigerian students comfortable. STS Save Till Sign-Out available to Bayelsa State universities and Abia State University (ABSU) students, student gifting accounts, campus marketplace with escrow protection and WhatsApp order confirmation, verified vendor dashboard, and digital student wallet." />
-    <meta property="og:title" content="UniNest - making Nigerian students comfortable" />
-    <meta property="og:description" content="UniNest - making Nigerian students comfortable. STS Save Till Sign-Out available to Bayelsa State universities and Abia State University (ABSU) students, student gifting accounts, campus marketplace with escrow protection and WhatsApp order confirmation, verified vendor dashboard, and digital student wallet." />
-    <meta property="og:type" content="website" />
-    <meta name="twitter:card" content="summary_large_image" />
-    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
-    <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-    <link rel="manifest" href="/site.webmanifest" />
-    <meta name="theme-color" content="#0A1931" />
-    <meta name="apple-mobile-web-app-title" content="UniNest" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <script type="module" crossorigin src="/assets/index-K-qkMVKC.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-C0pcsqfn.css">
-  </head>
-  <body class="bg-white text-slate-900 font-sans antialiased">
-    <div id="root"></div>
-  </body>
-</html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UniNestNigeria • Save For Sign Out & Life After School</title>
+  <meta name="description" content="UniNestNigeria - Save for sign out and get lots of gifts and money for life after school. Disciplined student target savings.">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            orange: {
+              500: '#f97316',
+              600: '#ea580c',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+  </style>
+</head>
+<body class="bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100 min-h-screen flex flex-col transition-colors duration-300">
 
+  <!-- Day View / Night View Navbar -->
+  <header class="sticky top-0 z-40 bg-white/90 dark:bg-slate-950/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors duration-300">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-lg bg-orange-500 flex items-center justify-center font-black text-white text-sm shadow-md">
+          U
+        </div>
+        <span class="font-extrabold text-base tracking-tight text-slate-900 dark:text-white">
+          UniNest<span class="text-orange-500">Nigeria</span>
+        </span>
+      </div>
+
+      <nav class="hidden md:flex items-center gap-6 text-xs font-semibold text-slate-600 dark:text-slate-300">
+        <a href="#hero" class="hover:text-orange-500 transition">Home</a>
+        <a href="#services" class="hover:text-orange-500 transition text-orange-500 font-bold">Services</a>
+        <a href="#sts-savings" class="hover:text-orange-500 transition">Save for Sign Out</a>
+        <a href="#calculator" class="hover:text-orange-500 transition">Target Calculator (Years)</a>
+        <a href="mailto:uninest42@gmail.com" class="hover:text-orange-500 transition">Contact Desk</a>
+      </nav>
+
+      <!-- Day View / Night View Mode Toggle -->
+      <button id="theme-toggle" type="button" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-900 text-xs font-bold text-slate-800 dark:text-slate-200 shadow-xs hover:border-orange-500 transition">
+        <span id="theme-icon">☀️</span>
+        <span id="theme-text">Day View</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section id="hero" class="relative overflow-hidden pt-8 pb-16 lg:pt-14 lg:pb-24 border-b border-slate-200 bg-gradient-to-b from-amber-50/70 via-white to-slate-50/80 dark:bg-slate-950 dark:border-slate-800 transition-colors duration-300">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center">
+        <!-- Copy Column -->
+        <div class="lg:col-span-7 space-y-6 text-center lg:text-left">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-orange-50 dark:bg-slate-800 border border-orange-200 dark:border-slate-700 text-orange-700 dark:text-orange-400 text-xs font-semibold">
+            <span>🛡️</span>
+            <span>UniNestNigeria • Verified Student Motion Desk</span>
+          </div>
+
+          <!-- Exact requested headline caption -->
+          <h1 class="text-3xl sm:text-5xl font-black text-slate-950 dark:text-white tracking-tight leading-[1.15]">
+            Save for sign out and get <span class="text-orange-500">lots of gifts and money</span> for life after school.
+          </h1>
+
+          <p class="text-sm sm:text-base text-slate-600 dark:text-slate-300 max-w-xl mx-auto lg:mx-0 leading-relaxed">
+            Build disciplined target savings across your university years for sign-out week celebrations, graduation gifts, and a solid financial cushion for life after school. Dispatched directly to our verified WhatsApp desk with zero stress.
+          </p>
+
+          <div class="pt-2 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3">
+            <a href="#calculator" class="w-full sm:w-auto px-6 py-3.5 rounded-lg bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs tracking-wide uppercase flex items-center justify-center gap-2 shadow-lg shadow-orange-500/25">
+              <span>Start Savings Plan</span>
+              <span>→</span>
+            </a>
+            <a href="#calculator" class="w-full sm:w-auto px-6 py-3.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 font-bold text-xs tracking-wide uppercase flex items-center justify-center gap-2">
+              <span>Calculate Target (Years)</span>
+            </a>
+          </div>
+
+          <div class="pt-4 flex flex-wrap items-center justify-center lg:justify-start gap-2.5 text-xs text-slate-500 dark:text-slate-400 font-medium">
+            <span>🎁 Sign Out Gifts & Bonuses</span>
+            <span>·</span>
+            <span>💰 Protected 70% Milestones</span>
+            <span>·</span>
+            <span>📱 Instant WhatsApp Desk</span>
+          </div>
+        </div>
+
+        <!-- Image Column: Reverted back to previous single authentic picture -->
+        <div class="lg:col-span-5 relative">
+          <div class="relative rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl">
+            <div class="relative w-full h-96 sm:h-[460px] overflow-hidden bg-slate-950">
+              <img src="/images/nigerian_grad_student_1791764442665.jpg" alt="Radiant Nigerian female student celebrating graduation with cash and gift box" class="w-full h-full object-cover object-center">
+            </div>
+          </div>
+          <div class="mt-3 text-center text-xs text-slate-500 dark:text-slate-400">
+            <span>Authentic Nigerian student graduation milestone with UniNestNigeria</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Core Services Section -->
+  <section id="services" class="py-16 bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 transition-colors duration-300">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-2xl mx-auto mb-12">
+        <span class="inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-orange-500/10 text-orange-500 border border-orange-500/20 mb-2">Campus Services</span>
+        <h2 class="text-2xl sm:text-3xl font-black text-slate-950 dark:text-white">Our Core Student Services</h2>
+        <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1">Four essential solutions designed to solve financial, academic, and hostel challenges for Nigerian students.</p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <!-- 1. Sts program -->
+        <div class="p-6 rounded-2xl border border-orange-300 dark:border-orange-500/40 bg-orange-50/40 dark:bg-slate-900 shadow-sm flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-2xl">💰</span>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-orange-500/10 text-orange-500 uppercase">Core Program</span>
+            </div>
+            <h3 class="text-base font-black text-slate-950 dark:text-white">Sts program</h3>
+            <p class="text-xs text-slate-600 dark:text-slate-400 mt-2 leading-relaxed">Save for sign out and get lots of gifts and money for life after school, off-campus lodges, and tuition with structured milestone discipline.</p>
+          </div>
+          <div class="mt-5 pt-3 border-t border-orange-200 dark:border-slate-800">
+            <a href="#calculator" class="w-full py-2.5 px-3 rounded-lg bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs uppercase flex items-center justify-center gap-1.5 transition">
+              <span>Start STS Program</span>
+              <span>→</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- 2. Project work -->
+        <div class="p-6 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 shadow-sm flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-2xl">📚</span>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-500 uppercase">Academic Support</span>
+            </div>
+            <h3 class="text-base font-black text-slate-950 dark:text-white">Project work</h3>
+            <p class="text-xs text-slate-600 dark:text-slate-400 mt-2 leading-relaxed">Final year thesis, Chapters 1-5 methodology writeups, SPSS data analysis, plagiarism clearance, and defense coaching.</p>
+          </div>
+          <div class="mt-5 pt-3 border-t border-slate-200 dark:border-slate-800">
+            <a href="https://wa.me/2349039847154?text=Hello%20UniNest%20Academic%20Desk!%20I%20need%20help%20with%20my%20final%20year%20Project%20Work." target="_blank" class="w-full py-2.5 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs uppercase flex items-center justify-center gap-1.5 transition">
+              <span>Request Project Work</span>
+              <span>→</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- 3. Per time and full time student jobs -->
+        <div class="p-6 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 shadow-sm flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-2xl">💼</span>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-500/10 text-blue-500 uppercase">Campus Income</span>
+            </div>
+            <h3 class="text-base font-black text-slate-950 dark:text-white">Per time and full time student jobs</h3>
+            <p class="text-xs text-slate-600 dark:text-slate-400 mt-2 leading-relaxed">Flexible campus gigs, home lesson tutoring, and full-time graduate opportunities designed around university lectures.</p>
+          </div>
+          <div class="mt-5 pt-3 border-t border-slate-200 dark:border-slate-800">
+            <a href="https://wa.me/2349039847154?text=Hello%20UniNest%20Desk!%20I%20am%20interested%20in%20Per%20time%20and%20full%20time%20student%20jobs." target="_blank" class="w-full py-2.5 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs uppercase flex items-center justify-center gap-1.5 transition">
+              <span>Explore Student Jobs</span>
+              <span>→</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- 4. Market order -->
+        <div class="p-6 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 shadow-sm flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-2xl">🛒</span>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-purple-500/10 text-purple-500 uppercase">Lodge Delivery</span>
+            </div>
+            <h3 class="text-base font-black text-slate-950 dark:text-white">Market order</h3>
+            <p class="text-xs text-slate-600 dark:text-slate-400 mt-2 leading-relaxed">Campus runner market orders. Cooking gas refills, mattresses, fans, foodstuffs, and study essentials delivered to your lodge door.</p>
+          </div>
+          <div class="mt-5 pt-3 border-t border-slate-200 dark:border-slate-800">
+            <a href="https://wa.me/2349039847154?text=Hello%20UniNest%20Desk!%20I%20want%20to%20place%20a%20campus%20Market%20order%20for%20lodge%20delivery." target="_blank" class="w-full py-2.5 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs uppercase flex items-center justify-center gap-1.5 transition">
+              <span>Place Market Order</span>
+              <span>→</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive Savings Calculator & Rules (Duration in YEARS) -->
+  <section id="sts-savings" class="py-16 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 transition-colors duration-300">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6">
+      <div class="text-center mb-10">
+        <h2 class="text-2xl sm:text-3xl font-black text-slate-950 dark:text-white">Save For Sign Out & Life After School</h2>
+        <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1">Set your schedule in years, lock your target, and send directly to WhatsApp desk 09039847154.</p>
+      </div>
+
+      <!-- Calculator Box -->
+      <div id="calculator" class="p-6 sm:p-8 rounded-2xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 shadow-xl">
+        <div class="flex justify-between items-center text-xs font-semibold mb-2">
+          <span>Target Amount:</span>
+          <span id="calc-display" class="text-base font-bold text-orange-500 font-mono">₦200,000</span>
+        </div>
+        <input id="calc-range" type="range" min="50000" max="1000000" step="10000" value="200000" class="w-full accent-orange-500 h-2 bg-slate-200 dark:bg-slate-800 rounded-lg cursor-pointer">
+
+        <div class="mt-5">
+          <div class="flex justify-between items-center text-xs font-semibold mb-2">
+            <span>Duration (Years):</span>
+            <span id="year-display" class="text-sm font-bold text-orange-500 font-mono">1 Year</span>
+          </div>
+          <input id="year-range" type="range" min="1" max="5" step="1" value="1" class="w-full accent-orange-500 h-2 bg-slate-200 dark:bg-slate-800 rounded-lg cursor-pointer">
+          <div class="flex justify-between text-[10px] text-slate-400 mt-1 font-mono">
+            <span>1 Year</span>
+            <span>2 Years</span>
+            <span>3 Years</span>
+            <span>4 Years</span>
+            <span>5 Years</span>
+          </div>
+        </div>
+
+        <div class="mt-6 p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex justify-around text-center text-xs">
+          <div>
+            <span class="text-slate-500 block text-[10px]">Weekly Deposit</span>
+            <span id="weekly-display" class="font-bold text-slate-900 dark:text-white font-mono text-sm">₦3,847</span>
+          </div>
+          <div>
+            <span class="text-slate-500 block text-[10px]">Monthly Deposit</span>
+            <span id="monthly-display" class="font-bold text-slate-900 dark:text-white font-mono text-sm">₦16,667</span>
+          </div>
+          <div>
+            <span class="text-slate-500 block text-[10px]">70% Unlock Threshold</span>
+            <span id="unlock-display" class="font-bold text-emerald-500 font-mono text-sm">₦140,000</span>
+          </div>
+        </div>
+
+        <div class="mt-5 text-center">
+          <a id="wa-btn" href="https://wa.me/2349039847154?text=Hello%20UniNestNigeria%20Desk!%20I%20want%20to%20start%20STS%20sign-out%20target%20savings." target="_blank" class="inline-flex items-center gap-2 py-3 px-6 rounded-lg bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs uppercase shadow-md">
+            <span>Send Target to WhatsApp Desk</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="mt-auto py-8 bg-slate-100 dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-400 text-center">
+    <p>© 2026 UniNestNigeria • Email: <a href="mailto:uninest42@gmail.com" class="text-orange-500 hover:underline">uninest42@gmail.com</a> • Desk: 09039847154</p>
+  </footer>
+
+  <!-- Theme and Calculator Scripts -->
+  <script>
+    // Theme toggle
+    const toggleBtn = document.getElementById('theme-toggle');
+    const themeIcon = document.getElementById('theme-icon');
+    const themeText = document.getElementById('theme-text');
+    let isDark = false;
+
+    toggleBtn.addEventListener('click', () => {
+      isDark = !isDark;
+      if (isDark) {
+        document.documentElement.classList.add('dark');
+        themeIcon.textContent = '🌙';
+        themeText.textContent = 'Night View';
+      } else {
+        document.documentElement.classList.remove('dark');
+        themeIcon.textContent = '☀️';
+        themeText.textContent = 'Day View';
+      }
+    });
+
+    // Calculator in Years
+    const calcRange = document.getElementById('calc-range');
+    const yearRange = document.getElementById('year-range');
+    const calcDisplay = document.getElementById('calc-display');
+    const yearDisplay = document.getElementById('year-display');
+    const weeklyDisplay = document.getElementById('weekly-display');
+    const monthlyDisplay = document.getElementById('monthly-display');
+    const unlockDisplay = document.getElementById('unlock-display');
+    const waBtn = document.getElementById('wa-btn');
+
+    function updateCalc() {
+      const target = Number(calcRange.value);
+      const years = Number(yearRange.value);
+
+      calcDisplay.textContent = `₦${target.toLocaleString()}`;
+      yearDisplay.textContent = `${years} ${years === 1 ? 'Year' : 'Years'}`;
+
+      const weekly = Math.ceil(target / (years * 52));
+      const monthly = Math.ceil(target / (years * 12));
+      const unlock = Math.ceil(target * 0.7);
+
+      weeklyDisplay.textContent = `₦${weekly.toLocaleString()}`;
+      monthlyDisplay.textContent = `₦${monthly.toLocaleString()}`;
+      unlockDisplay.textContent = `₦${unlock.toLocaleString()}`;
+
+      const waText = encodeURIComponent(`Hello UniNestNigeria Desk! I am applying for STS target savings. Target: ₦${target.toLocaleString()} over ${years} Year(s). Weekly: ₦${weekly.toLocaleString()}.`);
+      waBtn.href = `https://wa.me/2349039847154?text=${waText}`;
+    }
+
+    calcRange.addEventListener('input', updateCalc);
+    yearRange.addEventListener('input', updateCalc);
+    updateCalc();
+  </script>
+</body>
+</html>
