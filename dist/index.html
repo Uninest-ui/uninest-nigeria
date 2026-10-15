@@ -817,6 +817,28 @@
 
   <!--Start of Tawk.to Script-->
   <script type="text/javascript">
+  // Guard against cross-origin iframe telemetry errors from Tawk.to in sandboxed environments
+  (function() {
+    window.addEventListener('error', function(e) {
+      if (e && (e.filename && e.filename.indexOf('tawk.to') !== -1 || (e.message && e.message.indexOf('Tawk') !== -1))) {
+        e.stopImmediatePropagation();
+        e.preventDefault();
+        return true;
+      }
+    }, true);
+
+    var origConsoleError = console.error;
+    console.error = function() {
+      for (var i = 0; i < arguments.length; i++) {
+        var arg = arguments[i];
+        if (typeof arg === 'string' && (arg.indexOf('[Tawk/Logger]') !== -1 || arg.indexOf('Tawk') !== -1)) {
+          return;
+        }
+      }
+      return origConsoleError.apply(console, arguments);
+    };
+  })();
+
   var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
   (function(){
   var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
