@@ -24,11 +24,61 @@ async function startServer() {
 
   const isProduction = process.env.NODE_ENV === 'production';
 
+  app.use(express.json());
+  app.use(express.urlencoded({ extended: true }));
   app.use(express.static(path.resolve(__dirname, 'public')));
 
-  // Health check
+  // CORS and standard security headers
+  app.use((_req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    if (_req.method === 'OPTIONS') {
+      res.sendStatus(200);
+      return;
+    }
+    next();
+  });
+
+  // Re-connected Backend API Routes
+  app.post('/api/send-otp', async (req: Request, res: Response) => {
+    try {
+      const handler = (await import('./api/send-otp.js')).default;
+      await handler(req, res);
+    } catch (err: any) {
+      console.error('Error handling /api/send-otp:', err);
+      res.status(500).json({ error: err.message || 'Internal server error' });
+    }
+  });
+
+  app.post('/api/verify-otp', async (req: Request, res: Response) => {
+    try {
+      const handler = (await import('./api/verify-otp.js')).default;
+      await handler(req, res);
+    } catch (err: any) {
+      console.error('Error handling /api/verify-otp:', err);
+      res.status(500).json({ error: err.message || 'Internal server error' });
+    }
+  });
+
+  app.post('/api/forgot-password', async (req: Request, res: Response) => {
+    try {
+      const handler = (await import('./api/forgot-password.js')).default;
+      await handler(req, res);
+    } catch (err: any) {
+      console.error('Error handling /api/forgot-password:', err);
+      res.status(500).json({ error: err.message || 'Internal server error' });
+    }
+  });
+
+  // Health and Domain Diagnostics
   app.get('/api/health', (_req: Request, res: Response) => {
-    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+    res.json({ 
+      status: 'ok', 
+      app: 'UniNest Nigeria',
+      domain: 'uninestnigeria.com.ng',
+      timestamp: new Date().toISOString() 
+    });
   });
 
   if (!isProduction) {
@@ -50,7 +100,7 @@ async function startServer() {
   }
 
   const server = app.listen(PORT, HOST, () => {
-    console.log(`UniNest Static Frontend running on http://${HOST}:${PORT}`);
+    console.log(`UniNest Server running on http://${HOST}:${PORT}`);
   });
 
   server.on('error', (err: any) => {
