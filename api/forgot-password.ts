@@ -52,40 +52,63 @@ export default async function handler(req: any, res: any) {
 
     const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
 
-    const resendApiKey = process.env.RESEND_API_KEY;
-    if (isValidResendApiKey(resendApiKey)) {
+    const resendApiKey = (process.env.RESEND_API_KEY || '').trim();
+    if (resendApiKey && resendApiKey.startsWith('re_') && resendApiKey.length >= 10) {
       try {
-        const response = await fetch('https://api.resend.com/emails', {
+        const emailHtml = `
+          <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 24px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px;">
+            <div style="text-align: center; margin-bottom: 24px;">
+              <h1 style="color: #0A1931; font-size: 24px; font-weight: 900; margin: 0;">UniNest</h1>
+              <p style="color: #64748b; font-size: 13px; margin-top: 4px;">Making Nigerian Students Comfortable</p>
+            </div>
+            <p style="color: #334155; font-size: 15px; line-height: 1.5;">You requested a password reset. Your verification code is:</p>
+            <div style="background-color: #FFF7ED; border: 2px dashed #FF6A00; padding: 20px; text-align: center; border-radius: 12px; margin: 24px 0;">
+              <span style="font-size: 36px; font-weight: 900; letter-spacing: 8px; color: #FF6A00; font-family: monospace;">${resetCode}</span>
+            </div>
+            <p style="color: #64748b; font-size: 13px; line-height: 1.5;">This code will expire in 10 minutes. If you did not request this password reset, please ignore this email.</p>
+            <hr style="border: none; border-top: 1px solid #f1f5f9; margin: 24px 0;" />
+            <p style="color: #94a3b8; font-size: 11px; text-align: center; margin: 0;">&copy; ${new Date().getFullYear()} UniNest Nigeria. All rights reserved.</p>
+          </div>
+        `;
+
+        let response = await fetch('https://api.resend.com/emails', {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${resendApiKey?.trim()}`,
+            'Authorization': `Bearer ${resendApiKey}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
             from: 'UniNest <noreply@uninestnigeria.com.ng>',
             to: cleanEmail,
             subject: `UniNest Password Reset Code: ${resetCode}`,
-            html: `
-              <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 24px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px;">
-                <div style="text-align: center; margin-bottom: 24px;">
-                  <h1 style="color: #0A1931; font-size: 24px; font-weight: 900; margin: 0;">UniNest</h1>
-                  <p style="color: #64748b; font-size: 13px; margin-top: 4px;">Making Nigerian Students Comfortable</p>
-                </div>
-                <p style="color: #334155; font-size: 15px; line-height: 1.5;">You requested a password reset. Your verification code is:</p>
-                <div style="background-color: #FFF7ED; border: 2px dashed #FF6A00; padding: 20px; text-align: center; border-radius: 12px; margin: 24px 0;">
-                  <span style="font-size: 36px; font-weight: 900; letter-spacing: 8px; color: #FF6A00; font-family: monospace;">${resetCode}</span>
-                </div>
-                <p style="color: #64748b; font-size: 13px; line-height: 1.5;">This code will expire in 10 minutes. If you did not request this password reset, please ignore this email.</p>
-                <hr style="border: none; border-top: 1px solid #f1f5f9; margin: 24px 0;" />
-                <p style="color: #94a3b8; font-size: 11px; text-align: center; margin: 0;">&copy; ${new Date().getFullYear()} UniNest Nigeria. All rights reserved.</p>
-              </div>
-            `,
+            html: emailHtml,
           }),
         });
 
-        const resData = await response.json().catch(() => ({}));
+        let resData = await response.json().catch(() => ({}));
+
+        if (!response.ok && (resData?.message?.includes('not verified') || response.status === 403)) {
+          console.warn('Resend custom domain unverified, retrying with onboarding@resend.dev fallback...');
+          response = await fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${resendApiKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              from: 'UniNest <onboarding@resend.dev>',
+              to: cleanEmail,
+              subject: `UniNest Password Reset Code: ${resetCode}`,
+              html: emailHtml,
+            }),
+          });
+          resData = await response.json().catch(() => ({}));
+        }
+
         if (!response.ok) {
           console.warn('Resend email dispatch notice (non-fatal):', resData?.message || response.statusText);
+        } else {
+          console.log('Resend reset email successfully dispatched to:', cleanEmail, 'id:', resData?.id);
         }
       } catch (emailErr: any) {
         console.warn('Resend email dispatch network notice:', emailErr?.message || emailErr);
