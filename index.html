@@ -195,8 +195,7 @@
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center">
         <!-- Copy Column -->
         <div class="lg:col-span-7 space-y-6 text-center lg:text-left">
-          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-orange-50 dark:bg-slate-800 border border-orange-200 dark:border-slate-700 text-orange-700 dark:text-orange-400 text-xs font-semibold">
-            <img src="/logo.png" alt="UniNest" class="w-4 h-4 object-contain inline-block" />
+          <div class="inline-flex items-center px-3 py-1 rounded-md bg-orange-50 dark:bg-slate-800 border border-orange-200 dark:border-slate-700 text-orange-700 dark:text-orange-400 text-xs font-semibold">
             <span>UniNestNigeria • Verified Student Motion Desk</span>
           </div>
 
@@ -338,11 +337,14 @@
 
       <!-- Calculator Box -->
       <div id="calculator" class="p-6 sm:p-8 rounded-2xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 shadow-xl">
-        <div class="flex justify-between items-center text-xs font-semibold mb-2">
-          <span>Target Amount:</span>
-          <span id="calc-display" class="text-base font-bold text-orange-500 font-mono">₦200,000</span>
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-2">
+          <span class="text-xs font-semibold text-slate-700 dark:text-slate-300">Target Amount (Type or Slide):</span>
+          <div class="flex items-center gap-1">
+            <span class="text-sm font-bold text-orange-500 font-mono">₦</span>
+            <input id="calc-input" type="number" min="10000" max="100000000" step="5000" value="200000" class="w-32 px-2.5 py-1 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-bold font-mono text-sm focus:ring-2 focus:ring-orange-500 focus:outline-none text-right">
+          </div>
         </div>
-        <input id="calc-range" type="range" min="50000" max="1000000" step="10000" value="200000" class="w-full accent-orange-500 h-2 bg-slate-200 dark:bg-slate-800 rounded-lg cursor-pointer">
+        <input id="calc-range" type="range" min="50000" max="2000000" step="10000" value="200000" class="w-full accent-orange-500 h-2 bg-slate-200 dark:bg-slate-800 rounded-lg cursor-pointer">
 
         <div class="mt-5">
           <div class="flex justify-between items-center text-xs font-semibold mb-2">
@@ -411,13 +413,8 @@
           </div>
 
           <div>
-            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Primary Target Purpose *</label>
-            <select id="sts-purpose" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-orange-500 focus:outline-none">
-              <option value="Sign-Out Week Celebration & Post-School Cushion">Sign-Out Week Celebration & Post-School Cushion</option>
-              <option value="Off-Campus Lodge Rent & Setup">Off-Campus Lodge Rent & Setup</option>
-              <option value="Final Year Tuition & Project Funding">Final Year Tuition & Project Funding</option>
-              <option value="Sign-Out Gifts, Frames & Celebratory Bonus Package">Sign-Out Gifts, Frames & Celebratory Bonus Package</option>
-            </select>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Primary Savings Target (Write your own target) *</label>
+            <input type="text" id="sts-purpose" required placeholder="e.g., Sign-Out Week celebration & post-school cushion, laptop, lodge rent, car..." class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-orange-500 focus:outline-none">
           </div>
 
           <div class="pt-3 text-center">
@@ -811,33 +808,40 @@
       });
     });
 
-    // 3. Target Calculator (Years Duration)
+    // 3. Target Calculator (Years Duration & Custom Target)
     const calcRange = document.getElementById('calc-range');
+    const calcInput = document.getElementById('calc-input');
     const yearRange = document.getElementById('year-range');
-    const calcDisplay = document.getElementById('calc-display');
     const yearDisplay = document.getElementById('year-display');
     const weeklyDisplay = document.getElementById('weekly-display');
     const monthlyDisplay = document.getElementById('monthly-display');
     const unlockDisplay = document.getElementById('unlock-display');
 
-    function updateCalc() {
-      const target = Number(calcRange.value);
+    function updateCalc(source) {
+      let target = Number(calcRange.value);
+      if (source === 'input' && calcInput) {
+        target = Number(calcInput.value) || 0;
+        calcRange.value = target;
+      } else if (calcInput) {
+        calcInput.value = target;
+      }
+
       const years = Number(yearRange.value);
 
-      calcDisplay.textContent = `₦${target.toLocaleString()}`;
       yearDisplay.textContent = `${years} ${years === 1 ? 'Year' : 'Years'}`;
 
-      const weekly = Math.ceil(target / (years * 52));
-      const monthly = Math.ceil(target / (years * 12));
-      const unlock = Math.ceil(target * 0.7);
+      const weekly = target > 0 ? Math.ceil(target / (years * 52)) : 0;
+      const monthly = target > 0 ? Math.ceil(target / (years * 12)) : 0;
+      const unlock = target > 0 ? Math.ceil(target * 0.7) : 0;
 
       weeklyDisplay.textContent = `₦${weekly.toLocaleString()}`;
       monthlyDisplay.textContent = `₦${monthly.toLocaleString()}`;
       unlockDisplay.textContent = `₦${unlock.toLocaleString()}`;
     }
 
-    calcRange.addEventListener('input', updateCalc);
-    yearRange.addEventListener('input', updateCalc);
+    if (calcRange) calcRange.addEventListener('input', () => updateCalc('range'));
+    if (calcInput) calcInput.addEventListener('input', () => updateCalc('input'));
+    if (yearRange) yearRange.addEventListener('input', () => updateCalc('range'));
     updateCalc();
 
     // STS Online Form Submission to WhatsApp +2349039847154
@@ -849,12 +853,12 @@
         const phone = document.getElementById('sts-phone').value.trim();
         const school = document.getElementById('sts-school').value.trim();
         const level = document.getElementById('sts-level').value;
-        const purpose = document.getElementById('sts-purpose').value;
-        const target = Number(calcRange.value);
+        const purpose = document.getElementById('sts-purpose').value.trim();
+        const target = calcInput ? (Number(calcInput.value) || Number(calcRange.value)) : Number(calcRange.value);
         const years = Number(yearRange.value);
-        const weekly = Math.ceil(target / (years * 52));
-        const monthly = Math.ceil(target / (years * 12));
-        const unlock = Math.ceil(target * 0.7);
+        const weekly = target > 0 ? Math.ceil(target / (years * 52)) : 0;
+        const monthly = target > 0 ? Math.ceil(target / (years * 12)) : 0;
+        const unlock = target > 0 ? Math.ceil(target * 0.7) : 0;
 
         const msg = 
 `🎓 *UNINEST NIGERIA - STS SAVINGS APPLICATION*
