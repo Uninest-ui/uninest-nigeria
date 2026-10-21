@@ -49,7 +49,8 @@
     }
     html.dark .testimony-slide,
     html.dark #calculator,
-    html.dark .faq-item {
+    html.dark .faq-item,
+    html.dark .modal-card {
       background: #0f172a !important;
       background-color: #0f172a !important;
       background-image: none !important;
@@ -128,7 +129,7 @@
         <a href="#calculator" class="hover:text-orange-500 transition">Target Calculator</a>
         <a href="#testimonials" class="hover:text-orange-500 transition">Student Stories</a>
         <a href="#faq" class="hover:text-orange-500 transition">FAQ</a>
-        <a href="https://wa.me/2349039847154?text=Hello%20UniNest%20Desk!%20I%20have%20an%20inquiry." target="_blank" class="hover:text-orange-500 transition">WhatsApp Desk</a>
+        <button type="button" data-open-modal="inquiry" class="hover:text-orange-500 transition cursor-pointer">WhatsApp Desk</button>
       </nav>
 
       <!-- Right Controls: Day/Night Theme Toggle + Mobile Menu Button -->
@@ -165,25 +166,25 @@
           <span>💰</span>
           <span>STS Sign-Out Savings</span>
         </a>
-        <a href="#project-work" class="mobile-nav-link flex items-center gap-2.5 p-2 rounded-lg bg-emerald-50/60 dark:bg-slate-900 border border-emerald-200/60 dark:border-slate-800 text-xs font-bold text-slate-900 dark:text-white">
+        <button type="button" data-open-modal="project-work" class="mobile-nav-link text-left flex items-center gap-2.5 p-2 rounded-lg bg-emerald-50/60 dark:bg-slate-900 border border-emerald-200/60 dark:border-slate-800 text-xs font-bold text-slate-900 dark:text-white cursor-pointer">
           <span>📚</span>
           <span>Project Work Desk</span>
-        </a>
-        <a href="#student-jobs" class="mobile-nav-link flex items-center gap-2.5 p-2 rounded-lg bg-blue-50/60 dark:bg-slate-900 border border-blue-200/60 dark:border-slate-800 text-xs font-bold text-slate-900 dark:text-white">
+        </button>
+        <button type="button" data-open-modal="student-jobs" class="mobile-nav-link text-left flex items-center gap-2.5 p-2 rounded-lg bg-blue-50/60 dark:bg-slate-900 border border-blue-200/60 dark:border-slate-800 text-xs font-bold text-slate-900 dark:text-white cursor-pointer">
           <span>💼</span>
           <span>Student Jobs (Gigs & Full-Time)</span>
-        </a>
-        <a href="#market-orders" class="mobile-nav-link flex items-center gap-2.5 p-2 rounded-lg bg-purple-50/60 dark:bg-slate-900 border border-purple-200/60 dark:border-slate-800 text-xs font-bold text-slate-900 dark:text-white">
+        </button>
+        <button type="button" data-open-modal="market-orders" class="mobile-nav-link text-left flex items-center gap-2.5 p-2 rounded-lg bg-purple-50/60 dark:bg-slate-900 border border-purple-200/60 dark:border-slate-800 text-xs font-bold text-slate-900 dark:text-white cursor-pointer">
           <span>🛒</span>
           <span>Market Order & Lodge Delivery</span>
-        </a>
+        </button>
       </div>
 
       <div class="pt-2">
-        <a href="https://wa.me/2349039847154?text=Hello%20UniNest%20Desk!%20I%20want%20to%20connect%20with%20a%20campus%20representative." target="_blank" class="w-full py-2.5 px-4 rounded-lg bg-orange-500 text-white font-bold text-xs uppercase flex items-center justify-center gap-2 shadow-sm">
+        <button type="button" data-open-modal="inquiry" class="w-full py-2.5 px-4 rounded-lg bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs uppercase flex items-center justify-center gap-2 shadow-sm cursor-pointer">
           <span>Connect with WhatsApp Desk (09039847154)</span>
           <span>→</span>
-        </a>
+        </button>
       </div>
     </div>
   </header>
@@ -264,7 +265,7 @@
           </div>
           <div class="mt-5 pt-3 border-t border-orange-200 dark:border-slate-800">
             <a href="#calculator" class="w-full py-2.5 px-3 rounded-lg bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs uppercase flex items-center justify-center gap-1.5 transition">
-              <span>Start STS Program</span>
+              <span>Fill STS Savings Form Online</span>
               <span>→</span>
             </a>
           </div>
@@ -281,10 +282,10 @@
             <p class="text-xs text-slate-600 dark:text-slate-400 mt-2 leading-relaxed">Final year thesis, Chapters 1-5 methodology writeups, SPSS data analysis, plagiarism clearance, and defense coaching.</p>
           </div>
           <div class="mt-5 pt-3 border-t border-slate-200 dark:border-slate-800">
-            <a href="https://wa.me/2349039847154?text=Hello%20UniNest%20Academic%20Desk!%20I%20need%20help%20with%20my%20final%20year%20Project%20Work." target="_blank" class="w-full py-2.5 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs uppercase flex items-center justify-center gap-1.5 transition">
-              <span>Request Project Work</span>
+            <button type="button" data-open-modal="project-work" class="w-full py-2.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase flex items-center justify-center gap-1.5 transition cursor-pointer">
+              <span>Fill Online Form & Send to WhatsApp</span>
               <span>→</span>
-            </a>
+            </button>
           </div>
         </div>
 
@@ -299,10 +300,10 @@
             <p class="text-xs text-slate-600 dark:text-slate-400 mt-2 leading-relaxed">Flexible campus gigs, home lesson tutoring, and full-time graduate opportunities designed around university lectures.</p>
           </div>
           <div class="mt-5 pt-3 border-t border-slate-200 dark:border-slate-800">
-            <a href="https://wa.me/2349039847154?text=Hello%20UniNest%20Desk!%20I%20am%20interested%20in%20Per%20time%20and%20full%20time%20student%20jobs." target="_blank" class="w-full py-2.5 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs uppercase flex items-center justify-center gap-1.5 transition">
-              <span>Explore Student Jobs</span>
+            <button type="button" data-open-modal="student-jobs" class="w-full py-2.5 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs uppercase flex items-center justify-center gap-1.5 transition cursor-pointer">
+              <span>Fill Job Application Online</span>
               <span>→</span>
-            </a>
+            </button>
           </div>
         </div>
 
@@ -317,10 +318,10 @@
             <p class="text-xs text-slate-600 dark:text-slate-400 mt-2 leading-relaxed">Campus runner market orders. Cooking gas refills, mattresses, fans, foodstuffs, and study essentials delivered to your lodge door.</p>
           </div>
           <div class="mt-5 pt-3 border-t border-slate-200 dark:border-slate-800">
-            <a href="https://wa.me/2349039847154?text=Hello%20UniNest%20Desk!%20I%20want%20to%20place%20a%20campus%20Market%20order%20for%20lodge%20delivery." target="_blank" class="w-full py-2.5 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs uppercase flex items-center justify-center gap-1.5 transition">
-              <span>Place Market Order</span>
+            <button type="button" data-open-modal="market-orders" class="w-full py-2.5 px-3 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs uppercase flex items-center justify-center gap-1.5 transition cursor-pointer">
+              <span>Fill Order Form Online</span>
               <span>→</span>
-            </a>
+            </button>
           </div>
         </div>
       </div>
@@ -373,11 +374,62 @@
           </div>
         </div>
 
-        <div class="mt-5 text-center">
-          <a id="wa-btn" href="https://wa.me/2349039847154?text=Hello%20UniNestNigeria%20Desk!%20I%20want%20to%20start%20STS%20sign-out%20target%20savings." target="_blank" class="inline-flex items-center gap-2 py-3 px-6 rounded-lg bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs uppercase shadow-md">
-            <span>Send Target to WhatsApp Desk</span>
-          </a>
-        </div>
+        <!-- Online STS Savings Registration Form Fields -->
+        <form id="sts-form" class="mt-6 pt-5 border-t border-slate-200 dark:border-slate-800 space-y-4 text-left">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="inline-block w-2 h-2 rounded-full bg-orange-500 animate-pulse"></span>
+            <span class="text-xs font-bold uppercase tracking-wider text-orange-500">Step 2: Complete Your Online Student Profile</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Your Full Name *</label>
+              <input type="text" id="sts-name" required placeholder="e.g., Emeka Johnson" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-orange-500 focus:outline-none">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">WhatsApp Phone Number *</label>
+              <input type="tel" id="sts-phone" required placeholder="e.g., 08012345678" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-orange-500 focus:outline-none">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Institution / University *</label>
+              <input type="text" id="sts-school" required placeholder="e.g., NDU, UNILAG, BMU, FUO" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-orange-500 focus:outline-none">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Current Academic Level *</label>
+              <select id="sts-level" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-orange-500 focus:outline-none">
+                <option value="100 Level (Freshman)">100 Level</option>
+                <option value="200 Level">200 Level</option>
+                <option value="300 Level">300 Level</option>
+                <option value="400 Level">400 Level</option>
+                <option value="500 Level (Final Year)">500 Level / Final Year</option>
+                <option value="Postgraduate / Master's">Postgraduate / Master's</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Primary Target Purpose *</label>
+            <select id="sts-purpose" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-orange-500 focus:outline-none">
+              <option value="Sign-Out Week Celebration & Post-School Cushion">Sign-Out Week Celebration & Post-School Cushion</option>
+              <option value="Off-Campus Lodge Rent & Setup">Off-Campus Lodge Rent & Setup</option>
+              <option value="Final Year Tuition & Project Funding">Final Year Tuition & Project Funding</option>
+              <option value="Sign-Out Gifts, Frames & Celebratory Bonus Package">Sign-Out Gifts, Frames & Celebratory Bonus Package</option>
+            </select>
+          </div>
+
+          <div class="pt-3 text-center">
+            <button type="submit" class="w-full py-3.5 px-6 rounded-lg bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs uppercase flex items-center justify-center gap-2 shadow-lg shadow-orange-500/25 transition cursor-pointer">
+              <span>Send Savings Plan to WhatsApp Desk (+2349039847154)</span>
+              <span>→</span>
+            </button>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-2">
+              🔒 Form auto-formats your selected schedule and dispatches directly to official WhatsApp Desk: <strong class="text-slate-800 dark:text-slate-200">+2349039847154</strong>
+            </p>
+          </div>
+        </form>
       </div>
     </div>
   </section>
@@ -638,6 +690,78 @@
     </div>
   </footer>
 
+  <!-- Unified Online Application Modal for WhatsApp Desk (+2349039847154) -->
+  <div id="service-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-sm transition-opacity duration-300">
+    <div class="modal-card relative w-full max-w-xl max-h-[92vh] overflow-y-auto rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl p-6 sm:p-8 transition-colors">
+      
+      <!-- Close button -->
+      <button id="modal-close-btn" type="button" class="absolute top-4 right-4 w-8 h-8 rounded-full border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-orange-500 hover:border-orange-500 flex items-center justify-center transition cursor-pointer" aria-label="Close modal">
+        ✕
+      </button>
+
+      <!-- Modal Header -->
+      <div class="mb-5 pr-8">
+        <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-orange-500/10 text-orange-500 border border-orange-500/20 mb-2" id="modal-badge">
+          <span>Campus Desk Service</span>
+        </div>
+        <h3 id="modal-title" class="text-xl sm:text-2xl font-black text-slate-950 dark:text-white">Online Application</h3>
+        <p id="modal-subtitle" class="text-xs text-slate-600 dark:text-slate-400 mt-1">Please fill out this form. All details will be formatted and securely dispatched directly to WhatsApp: <strong class="text-orange-500">+2349039847154</strong>.</p>
+      </div>
+
+      <!-- Modal Form -->
+      <form id="modal-dynamic-form" class="space-y-4">
+        <!-- Common Contact Fields -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Full Name *</label>
+            <input type="text" id="modal-name" required placeholder="e.g., Somtochukwu Adebayo" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-orange-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">WhatsApp Phone Number *</label>
+            <input type="tel" id="modal-phone" required placeholder="e.g., 08012345678" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-orange-500 focus:outline-none">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Institution / University *</label>
+            <input type="text" id="modal-school" required placeholder="e.g., NDU, UNILAG, BMU, FUO" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-orange-500 focus:outline-none">
+          </div>
+          <div>
+            <label id="modal-label-dept" class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Department / Faculty *</label>
+            <input type="text" id="modal-dept" required placeholder="e.g., Economics, Science" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-orange-500 focus:outline-none">
+          </div>
+        </div>
+
+        <!-- Dynamic Container for Service Specific Inputs -->
+        <div id="service-specific-fields" class="space-y-3.5">
+          <!-- Populated by JavaScript based on service -->
+        </div>
+
+        <!-- Submit Button -->
+        <div class="pt-2">
+          <button type="submit" id="modal-submit-btn" class="w-full py-3.5 px-6 rounded-lg bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs uppercase flex items-center justify-center gap-2 shadow-lg shadow-orange-500/25 transition cursor-pointer">
+            <span id="modal-submit-text">Send Form to WhatsApp (+2349039847154)</span>
+            <span>→</span>
+          </button>
+          <div class="flex items-center justify-center gap-2 mt-2.5 text-[11px] text-slate-500 dark:text-slate-400">
+            <span>🔒 Direct to Official Verified Desk:</span>
+            <span class="font-bold text-orange-500">+2349039847154</span>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-24 opacity-0 pointer-events-none transition-all duration-300 max-w-sm p-4 rounded-xl bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-2xl border border-slate-800 dark:border-slate-200 flex items-center gap-3">
+    <span class="text-xl">✅</span>
+    <div class="text-xs">
+      <p class="font-bold" id="toast-title">Form Completed!</p>
+      <p class="text-slate-400 dark:text-slate-600" id="toast-msg">Connecting to UniNest WhatsApp (+2349039847154)...</p>
+    </div>
+  </div>
+
   <!-- Theme, Calculator, Slider, FAQ & Mobile Menu Scripts -->
   <script>
     // 1. Day / Night Theme Toggle
@@ -695,7 +819,6 @@
     const weeklyDisplay = document.getElementById('weekly-display');
     const monthlyDisplay = document.getElementById('monthly-display');
     const unlockDisplay = document.getElementById('unlock-display');
-    const waBtn = document.getElementById('wa-btn');
 
     function updateCalc() {
       const target = Number(calcRange.value);
@@ -711,14 +834,49 @@
       weeklyDisplay.textContent = `₦${weekly.toLocaleString()}`;
       monthlyDisplay.textContent = `₦${monthly.toLocaleString()}`;
       unlockDisplay.textContent = `₦${unlock.toLocaleString()}`;
-
-      const waText = encodeURIComponent(`Hello UniNestNigeria Desk! I am applying for STS target savings. Target: ₦${target.toLocaleString()} over ${years} Year(s). Weekly: ₦${weekly.toLocaleString()}.`);
-      waBtn.href = `https://wa.me/2349039847154?text=${waText}`;
     }
 
     calcRange.addEventListener('input', updateCalc);
     yearRange.addEventListener('input', updateCalc);
     updateCalc();
+
+    // STS Online Form Submission to WhatsApp +2349039847154
+    const stsForm = document.getElementById('sts-form');
+    if (stsForm) {
+      stsForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const name = document.getElementById('sts-name').value.trim();
+        const phone = document.getElementById('sts-phone').value.trim();
+        const school = document.getElementById('sts-school').value.trim();
+        const level = document.getElementById('sts-level').value;
+        const purpose = document.getElementById('sts-purpose').value;
+        const target = Number(calcRange.value);
+        const years = Number(yearRange.value);
+        const weekly = Math.ceil(target / (years * 52));
+        const monthly = Math.ceil(target / (years * 12));
+        const unlock = Math.ceil(target * 0.7);
+
+        const msg = 
+`🎓 *UNINEST NIGERIA - STS SAVINGS APPLICATION*
+━━━━━━━━━━━━━━━━━━━━
+👤 *Student Name:* ${name}
+📱 *WhatsApp Contact:* ${phone}
+🏫 *Institution / Campus:* ${school}
+📚 *Current Level:* ${level}
+🎯 *Target Purpose:* ${purpose}
+
+💰 *Target Amount:* ₦${target.toLocaleString()}
+⏳ *Duration:* ${years} ${years === 1 ? 'Year' : 'Years'}
+📅 *Monthly Contribution:* ₦${monthly.toLocaleString()}
+💵 *Weekly Contribution:* ₦${weekly.toLocaleString()}
+🛡️ *70% Unlock Threshold:* ₦${unlock.toLocaleString()}
+🎁 *Eligible Benefits:* Sign-Out Cash Box, Customized Frame & Milestone Celebration
+━━━━━━━━━━━━━━━━━━━━
+Hello UniNest Desk, I have completed my STS savings registration form online. Please activate my milestone savings record!`;
+
+        dispatchToWhatsApp(msg, "STS Savings Form Submitted!", "Opening WhatsApp (+2349039847154)...");
+      });
+    }
 
     // 4. Testimony Slider Logic
     const slides = document.querySelectorAll('.testimony-slide');
@@ -813,6 +971,287 @@
         }
       });
     });
+
+    // 6. Toast Notification Helper
+    const toast = document.getElementById('toast');
+    const toastTitle = document.getElementById('toast-title');
+    const toastMsg = document.getElementById('toast-msg');
+    let toastTimeout;
+
+    function showToast(title, msg) {
+      if (!toast) return;
+      if (toastTimeout) clearTimeout(toastTimeout);
+      toastTitle.textContent = title;
+      toastMsg.textContent = msg;
+      toast.classList.remove('opacity-0', 'translate-y-24', 'pointer-events-none');
+      toast.classList.add('opacity-100', 'translate-y-0');
+      toastTimeout = setTimeout(() => {
+        toast.classList.remove('opacity-100', 'translate-y-0');
+        toast.classList.add('opacity-0', 'translate-y-24', 'pointer-events-none');
+      }, 4500);
+    }
+
+    function dispatchToWhatsApp(message, successTitle, successMsg) {
+      showToast(successTitle || "Form Received!", successMsg || "Connecting to WhatsApp Desk (+2349039847154)...");
+      const url = `https://wa.me/2349039847154?text=${encodeURIComponent(message)}`;
+      setTimeout(() => {
+        window.open(url, '_blank');
+      }, 500);
+    }
+
+    // 7. Dynamic Online Service Modal Controller (Dispatched to +2349039847154)
+    const serviceModal = document.getElementById('service-modal');
+    const modalCloseBtn = document.getElementById('modal-close-btn');
+    const modalBadge = document.getElementById('modal-badge');
+    const modalTitle = document.getElementById('modal-title');
+    const modalSubtitle = document.getElementById('modal-subtitle');
+    const modalDynamicForm = document.getElementById('modal-dynamic-form');
+    const serviceSpecificFields = document.getElementById('service-specific-fields');
+    const modalLabelDept = document.getElementById('modal-label-dept');
+    let activeServiceType = 'project-work';
+
+    const serviceConfigs = {
+      'project-work': {
+        badge: 'Academic Support Desk',
+        title: 'Project Work Order Form',
+        subtitle: 'Fill out your research and thesis details. Our academic desk will review and reply with immediate pricing & timelines.',
+        deptLabel: 'Department / Faculty *',
+        deptPlaceholder: 'e.g., Economics, Microbiology, Law, Engineering',
+        renderFields: () => `
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Degree / Academic Level *</label>
+            <select id="field-degree" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-orange-500 focus:outline-none">
+              <option value="Undergraduate (B.Sc / B.A / B.Eng)">Undergraduate (B.Sc / B.A / B.Eng)</option>
+              <option value="Polytechnic (HND / ND)">Polytechnic (HND / ND)</option>
+              <option value="Postgraduate (M.Sc / MBA / PGD)">Postgraduate (M.Sc / MBA / PGD)</option>
+              <option value="Doctorate (Ph.D)">Doctorate (Ph.D)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Approved Project / Thesis Topic *</label>
+            <input type="text" id="field-topic" required placeholder="e.g., Impact of Electronic Banking on Small Businesses in Port Harcourt" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-orange-500 focus:outline-none">
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Assistance Needed *</label>
+              <select id="field-scope" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-orange-500 focus:outline-none">
+                <option value="Full Project Writeup (Chapters 1 - 5 Complete & Methodology)">Full Project (Chapters 1-5 Complete)</option>
+                <option value="Chapter 3 Research Methodology Only">Chapter 3 Methodology Only</option>
+                <option value="SPSS / STATA / Python Data Analysis & Charts">SPSS / Data Analysis Only</option>
+                <option value="Plagiarism Clearance / Turnitin Zero Similarity">Plagiarism Clearance (Turnitin)</option>
+                <option value="Defense PowerPoint Presentation & Mock Coaching">Defense Presentation Coaching</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Target Submission Deadline *</label>
+              <input type="text" id="field-deadline" required placeholder="e.g., 2 Weeks, Within 10 Days" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-orange-500 focus:outline-none">
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Special Supervisor Guidelines (Optional)</label>
+            <textarea id="field-notes" rows="2" placeholder="e.g., Supervisor requires APA 7th edition referencing and 150 sampled questionnaires..." class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-orange-500 focus:outline-none"></textarea>
+          </div>
+        `,
+        buildMessage: (data) => `📚 *UNINEST ACADEMIC DESK - PROJECT WORK ORDER*
+━━━━━━━━━━━━━━━━━━━━
+👤 *Student Name:* ${data.name}
+📱 *WhatsApp Contact:* ${data.phone}
+🏫 *Institution:* ${data.school}
+🎓 *Department:* ${data.dept}
+🏅 *Degree Level:* ${document.getElementById('field-degree')?.value || 'B.Sc'}
+📝 *Project Topic:* ${document.getElementById('field-topic')?.value || 'Not specified'}
+🔍 *Assistance Needed:* ${document.getElementById('field-scope')?.value || 'Full Writeup'}
+⏰ *Target Deadline:* ${document.getElementById('field-deadline')?.value || 'Flexible'}
+📋 *Supervisor Notes:* ${document.getElementById('field-notes')?.value || 'None'}
+━━━━━━━━━━━━━━━━━━━━
+Hello UniNest Academic Desk, I have completed my project work request form online. Please review my topic and assign a research specialist!`
+      },
+
+      'student-jobs': {
+        badge: 'Campus Income Desk',
+        title: 'Student Jobs Application Form',
+        subtitle: 'Apply for flexible campus tutoring, logistics gigs, or graduate roles designed around your academic schedule.',
+        deptLabel: 'Department & Current Level *',
+        deptPlaceholder: 'e.g., Nursing Science (300L), Graduate',
+        renderFields: () => `
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Desired Job Role / Category *</label>
+            <select id="field-role" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-orange-500 focus:outline-none">
+              <option value="Home Lesson / Secondary School Tutoring (Maths/Science/English)">Home Lesson Tutoring (Maths, Science, English)</option>
+              <option value="Campus Delivery Runner & Market Logistics">Campus Delivery Runner & Logistics</option>
+              <option value="Event Ushering, Protocol & Hospitality">Event Ushering & Protocol</option>
+              <option value="Tech / Graphic Design / Social Media Management">Tech, Design & Social Media</option>
+              <option value="Sales / Brand Ambassador / On-Campus Marketing">Sales / Brand Ambassador</option>
+              <option value="Full-Time Graduate Opportunity">Full-Time Graduate Role</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Weekly Availability *</label>
+            <select id="field-avail" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-orange-500 focus:outline-none">
+              <option value="Weekends Only (Saturdays & Sundays)">Weekends Only (Sat & Sun)</option>
+              <option value="Evenings / After Lecture Hours">Evenings / After Lectures</option>
+              <option value="Part-Time Flexible (2-3 Days Weekly)">Part-Time Flexible (2-3 Days/Week)</option>
+              <option value="Full-Time (Post-Graduation / NYSC)">Full-Time (Post-Graduation / NYSC)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Summary of Skills / Past Experience *</label>
+            <textarea id="field-skills" required rows="2" placeholder="e.g., Taught science subjects at preparatory lesson, strong communication, bike mobility on campus..." class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-orange-500 focus:outline-none"></textarea>
+          </div>
+        `,
+        buildMessage: (data) => `💼 *UNINEST JOBS DESK - STUDENT APPLICATION*
+━━━━━━━━━━━━━━━━━━━━
+👤 *Applicant Name:* ${data.name}
+📱 *WhatsApp Contact:* ${data.phone}
+🏫 *Campus / Location:* ${data.school}
+🎓 *Discipline / Level:* ${data.dept}
+🏷️ *Desired Role:* ${document.getElementById('field-role')?.value || 'Tutoring'}
+⏱️ *Availability:* ${document.getElementById('field-avail')?.value || 'Weekends'}
+💡 *Skills & Summary:* ${document.getElementById('field-skills')?.value || 'Ready and available'}
+━━━━━━━━━━━━━━━━━━━━
+Hello UniNest Jobs Desk, I have completed my student job application online. Please connect me with verified student jobs and gigs on my campus!`
+      },
+
+      'market-orders': {
+        badge: 'Lodge Delivery Desk',
+        title: 'Lodge Market Order & Delivery Form',
+        subtitle: 'Order cooking gas refills, groceries, foodstuffs, and lodge essentials delivered directly to your doorstep.',
+        deptLabel: 'Off-Campus Lodge Name & Room *',
+        deptPlaceholder: 'e.g., Divine Grace Lodge, Room 14, Main Gate',
+        renderFields: () => `
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Items to Deliver (List Items & Quantities) *</label>
+            <textarea id="field-items" required rows="3" placeholder="e.g., 6kg Gas Cylinder Refill, 1 Carton Indomie (Super Pack), 1 Crate Eggs, 2kg Detergent, 5L Cooking Oil..." class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-orange-500 focus:outline-none"></textarea>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Delivery Urgency *</label>
+              <select id="field-urgency" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-orange-500 focus:outline-none">
+                <option value="Urgent - Within 45 to 60 Minutes">Urgent (Within 45-60 Mins)</option>
+                <option value="Today (Anytime before 6:00 PM)">Today (Before 6 PM)</option>
+                <option value="Scheduled Evening Delivery (6 PM - 8 PM)">Evening Delivery (6 PM - 8 PM)</option>
+                <option value="Tomorrow Morning">Tomorrow Morning</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Brand Preferences / Special Instructions</label>
+              <input type="text" id="field-notes" placeholder="e.g., Hungryman size, Golden Penny oil" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-orange-500 focus:outline-none">
+            </div>
+          </div>
+        `,
+        buildMessage: (data) => `🛒 *UNINEST LODGE DELIVERY - CAMPUS MARKET ORDER*
+━━━━━━━━━━━━━━━━━━━━
+👤 *Student Name:* ${data.name}
+📱 *WhatsApp Contact:* ${data.phone}
+🏫 *University / Campus:* ${data.school}
+🏠 *Lodge Address:* ${data.dept}
+📦 *Items to Deliver:*
+${document.getElementById('field-items')?.value || 'Items requested'}
+⚡ *Urgency:* ${document.getElementById('field-urgency')?.value || 'Urgent'}
+📝 *Special Notes:* ${document.getElementById('field-notes')?.value || 'None'}
+━━━━━━━━━━━━━━━━━━━━
+Hello UniNest Campus Runner, I have placed my market delivery order online. Please confirm delivery runner availability and cost estimate!`
+      },
+
+      'inquiry': {
+        badge: 'General Student Support',
+        title: 'UniNest Desk Online Inquiry',
+        subtitle: 'Connect with a campus representative on WhatsApp (+2349039847154) for any questions, hostel setups, or campus partnerships.',
+        deptLabel: 'Department / Level *',
+        deptPlaceholder: 'e.g., 300L Political Science, NDU',
+        renderFields: () => `
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Service of Interest *</label>
+            <select id="field-service-type" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-orange-500 focus:outline-none">
+              <option value="STS Target Savings & Sign-Out Week">STS Target Savings & Sign-Out Week</option>
+              <option value="Final Year Project Work / Chapters">Final Year Project Work / Chapters</option>
+              <option value="Student Jobs (Per-Time / Full-Time)">Student Jobs (Per-Time / Full-Time)</option>
+              <option value="Lodge Market Order & Delivery">Lodge Market Order & Delivery</option>
+              <option value="Campus Brand Ambassador Program">Campus Brand Ambassador Program</option>
+              <option value="General Question / Other">General Question / Other</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">How can we assist you? *</label>
+            <textarea id="field-inquiry" required rows="3" placeholder="Please describe your question or campus request..." class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-orange-500 focus:outline-none"></textarea>
+          </div>
+        `,
+        buildMessage: (data) => `💬 *UNINEST NIGERIA - ONLINE GENERAL INQUIRY*
+━━━━━━━━━━━━━━━━━━━━
+👤 *Student Name:* ${data.name}
+📱 *WhatsApp Contact:* ${data.phone}
+🏫 *Institution:* ${data.school}
+🎓 *Department / Level:* ${data.dept}
+📌 *Service:* ${document.getElementById('field-service-type')?.value || 'General'}
+❓ *Inquiry Message:*
+${document.getElementById('field-inquiry')?.value || 'Hello, I have an inquiry.'}
+━━━━━━━━━━━━━━━━━━━━
+Hello UniNest Desk, I submitted an online inquiry form. Please connect me with a student support desk representative!`
+      }
+    };
+
+    function openModal(serviceType) {
+      if (!serviceModal) return;
+      const config = serviceConfigs[serviceType] || serviceConfigs['inquiry'];
+      activeServiceType = serviceType;
+
+      modalBadge.textContent = config.badge;
+      modalTitle.textContent = config.title;
+      modalSubtitle.textContent = config.subtitle;
+      modalLabelDept.textContent = config.deptLabel;
+      document.getElementById('modal-dept').placeholder = config.deptPlaceholder;
+      serviceSpecificFields.innerHTML = config.renderFields();
+
+      serviceModal.classList.remove('hidden');
+      document.body.classList.add('overflow-hidden');
+    }
+
+    function closeModal() {
+      if (!serviceModal) return;
+      serviceModal.classList.add('hidden');
+      document.body.classList.remove('overflow-hidden');
+    }
+
+    if (modalCloseBtn) modalCloseBtn.addEventListener('click', closeModal);
+    if (serviceModal) {
+      serviceModal.addEventListener('click', (e) => {
+        if (e.target === serviceModal) closeModal();
+      });
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && serviceModal && !serviceModal.classList.contains('hidden')) {
+        closeModal();
+      }
+    });
+
+    // Attach click listeners to all elements with data-open-modal
+    document.querySelectorAll('[data-open-modal]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const type = btn.getAttribute('data-open-modal');
+        openModal(type);
+      });
+    });
+
+    // Modal Form Submission Handler
+    if (modalDynamicForm) {
+      modalDynamicForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const config = serviceConfigs[activeServiceType] || serviceConfigs['inquiry'];
+        
+        const data = {
+          name: document.getElementById('modal-name').value.trim(),
+          phone: document.getElementById('modal-phone').value.trim(),
+          school: document.getElementById('modal-school').value.trim(),
+          dept: document.getElementById('modal-dept').value.trim(),
+        };
+
+        const msg = config.buildMessage(data);
+        closeModal();
+        dispatchToWhatsApp(msg, "Online Application Submitted!", "Connecting to WhatsApp Desk (+2349039847154)...");
+      });
+    }
   </script>
 
   <!--Start of Tawk.to Script-->
