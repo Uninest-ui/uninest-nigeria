@@ -314,7 +314,7 @@
               <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-purple-500/10 text-purple-500 uppercase">Lodge Delivery</span>
             </div>
             <h3 class="text-base font-black text-slate-950 dark:text-white">Market order</h3>
-            <p class="text-xs text-slate-600 dark:text-slate-400 mt-2 leading-relaxed">Campus runner market orders. Cooking gas refills, mattresses, fans, foodstuffs, and study essentials delivered to your lodge door.</p>
+            <p class="text-xs text-slate-600 dark:text-slate-400 mt-2 leading-relaxed">Campus runner market orders. Cooking gas refills, foodstuffs, mattresses, provisions, and study essentials delivered within 2-7 days to fit your budget.</p>
           </div>
           <div class="mt-5 pt-3 border-t border-slate-200 dark:border-slate-800">
             <button type="button" data-open-modal="market-orders" class="w-full py-2.5 px-3 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs uppercase flex items-center justify-center gap-1.5 transition cursor-pointer">
@@ -1117,44 +1117,52 @@ Hello UniNest Jobs Desk, I have completed my student job application online. Ple
       },
 
       'market-orders': {
-        badge: 'Lodge Delivery Desk',
-        title: 'Lodge Market Order & Delivery Form',
-        subtitle: 'Order cooking gas refills, groceries, foodstuffs, and lodge essentials delivered directly to your doorstep.',
-        deptLabel: 'Off-Campus Lodge Name & Room *',
+        badge: 'Lodge & Campus Delivery Desk',
+        title: 'Lodge Market Order Form',
+        subtitle: 'Fill out your order details. Standard campus delivery is 2 - 7 days to fit your budget. Dispatched directly to WhatsApp (+2349039847154).',
+        deptLabel: 'Hostel / Lodge Location (Optional)',
         deptPlaceholder: 'e.g., Divine Grace Lodge, Room 14, Main Gate',
         renderFields: () => `
           <div>
-            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Items to Deliver (List Items & Quantities) *</label>
-            <textarea id="field-items" required rows="3" placeholder="e.g., 6kg Gas Cylinder Refill, 1 Carton Indomie (Super Pack), 1 Crate Eggs, 2kg Detergent, 5L Cooking Oil..." class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-orange-500 focus:outline-none"></textarea>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Items and Quantities *</label>
+            <textarea id="field-items" required rows="3" placeholder="List all items and their quantities (e.g., 6kg Gas Cylinder Refill, 1 Carton Indomie, 1 Crate Eggs, 2kg Detergent, 5L Cooking Oil, Provisions...)" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-orange-500 focus:outline-none"></textarea>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div>
-              <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Delivery Urgency *</label>
-              <select id="field-urgency" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-orange-500 focus:outline-none">
-                <option value="Urgent - Within 45 to 60 Minutes">Urgent (Within 45-60 Mins)</option>
-                <option value="Today (Anytime before 6:00 PM)">Today (Before 6 PM)</option>
-                <option value="Scheduled Evening Delivery (6 PM - 8 PM)">Evening Delivery (6 PM - 8 PM)</option>
-                <option value="Tomorrow Morning">Tomorrow Morning</option>
+              <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Delivery Duration (2 - 7 Days) *</label>
+              <select id="field-delivery-duration" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-orange-500 focus:outline-none">
+                <option value="2 - 3 Days Delivery">2 - 3 Days Delivery</option>
+                <option value="3 - 5 Days Delivery">3 - 5 Days Delivery</option>
+                <option value="5 - 7 Days Delivery">5 - 7 Days Delivery</option>
+                <option value="Standard 2 - 7 Days Window">Standard 2 - 7 Days Window</option>
               </select>
             </div>
             <div>
-              <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Brand Preferences / Special Instructions</label>
-              <input type="text" id="field-notes" placeholder="e.g., Hungryman size, Golden Penny oil" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-orange-500 focus:outline-none">
+              <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Your Budget (₦) *</label>
+              <div class="relative">
+                <span class="absolute left-3 top-2.5 text-xs font-bold text-orange-500 font-mono">₦</span>
+                <input type="text" id="field-budget" required placeholder="e.g., 20,000 or 45,000" class="w-full pl-7 pr-3 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-mono font-bold focus:ring-2 focus:ring-orange-500 focus:outline-none">
+              </div>
             </div>
           </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Brand Preferences / Special Instructions (Optional)</label>
+            <input type="text" id="field-notes" placeholder="e.g., Hungryman size, Golden Penny cooking oil" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-orange-500 focus:outline-none">
+          </div>
         `,
-        buildMessage: (data) => `🛒 *UNINEST LODGE DELIVERY - CAMPUS MARKET ORDER*
+        buildMessage: (data) => `🛒 *UNINEST MARKET ORDER & LODGE DELIVERY*
 ━━━━━━━━━━━━━━━━━━━━
-👤 *Student Name:* ${data.name}
-📱 *WhatsApp Contact:* ${data.phone}
-🏫 *University / Campus:* ${data.school}
-🏠 *Lodge Address:* ${data.dept}
-📦 *Items to Deliver:*
+👤 *Student / Customer:* ${data.name}
+📱 *WhatsApp Number:* ${data.phone}
+🏫 *University:* ${data.school}
+🏠 *Hostel / Lodge Location:* ${data.dept || 'On-campus'}
+📦 *Items and Quantities:*
 ${document.getElementById('field-items')?.value || 'Items requested'}
-⚡ *Urgency:* ${document.getElementById('field-urgency')?.value || 'Urgent'}
+⏱️ *Delivery Duration:* ${document.getElementById('field-delivery-duration')?.value || '2 - 7 Days'}
+💰 *Your Budget:* ₦${document.getElementById('field-budget')?.value || 'Flexible'}
 📝 *Special Notes:* ${document.getElementById('field-notes')?.value || 'None'}
 ━━━━━━━━━━━━━━━━━━━━
-Hello UniNest Campus Runner, I have placed my market delivery order online. Please confirm delivery runner availability and cost estimate!`
+Hello UniNest Campus Runner, I have placed my market delivery order online. Please review my items, budget, and confirm dispatch schedule within 2 - 7 days!`
       },
 
       'inquiry': {
