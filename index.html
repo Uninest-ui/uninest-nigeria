@@ -64,6 +64,41 @@
       background-color: #020617 !important;
       border-color: #1e293b !important;
     }
+
+    /* Welcome Flash Card Overlay & Swipe Deck */
+    @keyframes flashcardBackdropIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes flashcardDeckIn {
+      from { opacity: 0; transform: translateY(18px) scale(0.96); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .flashcard-backdrop-enter {
+      animation: flashcardBackdropIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .flashcard-deck-enter {
+      animation: flashcardDeckIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .flashcard-surface-uba {
+      background: linear-gradient(135deg, #0b1120 0%, #1c1222 52%, #5c0c14 100%) !important;
+    }
+    .flashcard-surface-gift {
+      background: linear-gradient(135deg, #431407 0%, #9a3412 45%, #ea580c 100%) !important;
+    }
+    #flashcard-track {
+      touch-action: pan-y;
+      will-change: transform;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .flashcard-backdrop-enter,
+      .flashcard-deck-enter {
+        animation: none !important;
+      }
+      #flashcard-track {
+        transition: none !important;
+      }
+    }
   </style>
 </head>
 <body class="bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100 min-h-screen flex flex-col transition-colors duration-300">
@@ -120,7 +155,7 @@
               <span class="text-xl">🛒</span>
               <div>
                 <p class="font-bold text-xs text-slate-900 dark:text-white">Market Order</p>
-                <p class="text-[11px] text-slate-500 dark:text-slate-400">Campus gas refills, fans & lodge delivery</p>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400">Phone & computer gadgets, perfumes & birthday cakes</p>
               </div>
             </a>
           </div>
@@ -223,7 +258,7 @@
             <span>·</span>
             <span>💰 Protected 70% Milestones</span>
             <span>·</span>
-            <span>📱 Instant WhatsApp Desk: 09039847154</span>
+            <button type="button" id="reopen-flashcard-hero" class="text-orange-600 dark:text-orange-400 font-bold hover:underline cursor-pointer">💳 STS Account & Free Gift Card</button>
           </div>
         </div>
 
@@ -314,7 +349,7 @@
               <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-purple-500/10 text-purple-500 uppercase">Lodge Delivery</span>
             </div>
             <h3 class="text-base font-black text-slate-950 dark:text-white">Market order</h3>
-            <p class="text-xs text-slate-600 dark:text-slate-400 mt-2 leading-relaxed">Campus runner market orders. Cooking gas refills, foodstuffs, mattresses, provisions, and study essentials delivered within 2-7 days to fit your budget.</p>
+            <p class="text-xs text-slate-600 dark:text-slate-400 mt-2 leading-relaxed">Campus runner market orders. Phone and computer gadgets, perfumes, birthday cakes, mattresses, provisions, and study essentials delivered within 2-7 days to fit your budget.</p>
           </div>
           <div class="mt-5 pt-3 border-t border-slate-200 dark:border-slate-800">
             <button type="button" data-open-modal="market-orders" class="w-full py-2.5 px-3 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs uppercase flex items-center justify-center gap-1.5 transition cursor-pointer">
@@ -536,7 +571,7 @@
                 <span class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">Lodge Market Order</span>
               </div>
               <p class="text-sm sm:text-base text-slate-800 dark:text-slate-200 italic leading-relaxed">
-                “During heavy exam week I ran out of gas and needed foodstuffs. One WhatsApp message to UniNest desk and a verified campus runner delivered my 6kg cylinder and groceries straight to my lodge door at Amassoma in under 45 minutes!”
+                “During exam week I needed a fast phone charger, a computer gadget for my laptop, plus a birthday cake and perfume surprise for my roommate. One WhatsApp message to UniNest desk and a verified campus runner delivered everything straight to my lodge door at Amassoma!”
               </p>
             </div>
             <div class="mt-6 pt-4 border-t border-purple-200/60 dark:border-slate-800 flex items-center justify-between">
@@ -648,7 +683,7 @@
         <!-- Question 6 -->
         <div class="faq-item rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 overflow-hidden shadow-xs">
           <button type="button" class="faq-question w-full p-5 text-left flex items-center justify-between gap-4 font-bold text-sm sm:text-base text-slate-900 dark:text-white cursor-pointer hover:text-orange-500 transition">
-            <span>How do I order gas, mattresses, or foodstuffs to my campus lodge?</span>
+            <span>How do I order phone & computer gadgets, perfumes, or birthday cakes to my campus lodge?</span>
             <span class="faq-icon text-lg text-orange-500 font-bold transition-transform duration-300">+</span>
           </button>
           <div class="faq-answer hidden px-5 pb-5 text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed border-t border-slate-100 dark:border-slate-900 pt-3">
@@ -686,6 +721,179 @@
       </div>
     </div>
   </footer>
+
+  <!-- Welcome Swipeable Flash Card Overlay (Appears Immediately on Entry) -->
+  <div id="welcome-flashcard-modal" role="dialog" aria-modal="true" aria-label="UniNest Nigeria STS Account and Free Gift Flash Cards" class="flashcard-backdrop-enter fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-5 bg-slate-950/80 backdrop-blur-md">
+    <div class="flashcard-deck-enter relative w-full max-w-lg max-h-[94vh] overflow-y-auto rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl p-4 sm:p-6">
+
+      <!-- Top Bar: Switcher Tabs + Close -->
+      <div class="flex items-center justify-between gap-2 mb-4">
+        <div class="inline-flex items-center p-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700" role="tablist" aria-label="Flash card selector">
+          <button type="button" id="fc-tab-0" role="tab" aria-selected="true" class="px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-bold bg-white dark:bg-slate-950 text-slate-900 dark:text-white shadow-xs transition cursor-pointer whitespace-nowrap">
+            01 · STS Account
+          </button>
+          <button type="button" id="fc-tab-1" role="tab" aria-selected="false" class="px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition cursor-pointer whitespace-nowrap">
+            02 · Free Gift
+          </button>
+        </div>
+
+        <button id="fc-close-btn" type="button" class="w-9 h-9 rounded-full border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-orange-500 hover:border-orange-500 flex items-center justify-center font-bold text-sm transition cursor-pointer shrink-0" aria-label="Close flash cards">
+          ✕
+        </button>
+      </div>
+
+      <!-- Swipeable Viewport -->
+      <div id="flashcard-viewport" class="relative overflow-hidden rounded-2xl select-none">
+        <div id="flashcard-track" class="flex transition-transform duration-300 ease-out" style="transform: translate3d(0%, 0, 0);">
+
+          <!-- FLASH CARD 1: UBA / 2150445461 / Stephen Stanley / STS program -->
+          <div class="w-full shrink-0">
+            <div class="flashcard-surface-uba relative overflow-hidden rounded-2xl p-5 sm:p-7 text-white border border-white/15 shadow-xl min-h-[340px] sm:min-h-[360px] flex flex-col justify-between">
+              <!-- Subtle Geometric Ambient Glow -->
+              <div class="pointer-events-none absolute -top-20 -right-20 w-56 h-56 rounded-full bg-red-500/20 blur-2xl"></div>
+              <div class="pointer-events-none absolute -bottom-24 -left-16 w-56 h-56 rounded-full bg-orange-500/15 blur-2xl"></div>
+
+              <!-- Card Header: Bank & Program -->
+              <div class="relative flex items-start justify-between gap-3">
+                <div>
+                  <p class="text-[11px] font-semibold tracking-wide text-amber-300/95">UniNestNigeria Official Account</p>
+                  <h2 class="text-xl sm:text-2xl font-black tracking-tight text-white mt-0.5">STS program</h2>
+                </div>
+                <div class="flex flex-col items-end">
+                  <div class="px-3 py-1.5 rounded-lg bg-[#D91E2A] text-white font-black text-sm tracking-wider shadow-md border border-white/20">
+                    UBA
+                  </div>
+                  <span class="text-[10px] text-slate-300 mt-1 font-medium">United Bank for Africa</span>
+                </div>
+              </div>
+
+              <!-- Card Center: Account Number + Copy + Chip -->
+              <div class="relative my-5 p-4 rounded-xl bg-white/10 backdrop-blur-sm border border-white/15">
+                <div class="flex items-center justify-between gap-2 mb-1.5">
+                  <span class="text-[11px] font-semibold text-slate-300">Account Number</span>
+                  <!-- Gold EMV Chip SVG -->
+                  <svg class="w-8 h-6 text-amber-300/90" viewBox="0 0 36 26" fill="none" aria-hidden="true">
+                    <rect x="1" y="1" width="34" height="24" rx="4" stroke="currentColor" stroke-width="1.5" fill="rgba(251,191,36,0.16)"/>
+                    <path d="M1 9H12M24 9H35M1 17H12M24 17H35M12 1V25M24 1V25" stroke="currentColor" stroke-width="1.2"/>
+                  </svg>
+                </div>
+
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                  <span id="fc-account-number" class="font-mono tabular-nums text-2xl sm:text-3xl font-extrabold tracking-widest text-white select-all">2150445461</span>
+                  <button type="button" id="fc-copy-acct-btn" class="px-3 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs transition cursor-pointer shrink-0 flex items-center gap-1.5 shadow-sm">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                    </svg>
+                    <span id="fc-copy-label">Copy</span>
+                  </button>
+                </div>
+
+                <div class="mt-3 pt-3 border-t border-white/15 flex items-center justify-between gap-2">
+                  <div>
+                    <span class="block text-[10px] text-slate-300">Account Name</span>
+                    <span class="text-sm sm:text-base font-extrabold text-white tracking-tight">Stephen Stanley</span>
+                  </div>
+                  <div class="text-right">
+                    <span class="block text-[10px] text-slate-300">Program</span>
+                    <span class="text-xs sm:text-sm font-bold text-amber-300">STS program</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Card 1 Footer Actions -->
+              <div class="relative flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+                <a href="https://wa.me/2349039847154?text=Hello%20UniNest%20Desk%2C%20I%20want%20to%20confirm%20a%20deposit%20for%20the%20STS%20program%20to%20UBA%202150445461%20(Stephen%20Stanley)." target="_blank" rel="noopener noreferrer" class="flex-1 py-2.5 px-4 rounded-xl bg-white text-slate-950 hover:bg-amber-50 font-extrabold text-xs text-center transition shadow-md whitespace-nowrap">
+                  Confirm STS Payment →
+                </a>
+                <button type="button" id="fc-to-gift-btn" class="py-2.5 px-4 rounded-xl bg-orange-500 hover:bg-orange-400 text-white font-extrabold text-xs transition cursor-pointer whitespace-nowrap flex items-center justify-center gap-1.5 shadow-md">
+                  <span>Swipe for Free Gift</span>
+                  <span>→</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- FLASH CARD 2: Buy from us and get a free gift from us -->
+          <div class="w-full shrink-0">
+            <div class="flashcard-surface-gift relative overflow-hidden rounded-2xl p-5 sm:p-7 text-white border border-white/20 shadow-xl min-h-[340px] sm:min-h-[360px] flex flex-col justify-between">
+              <!-- Warm Radiant Glow -->
+              <div class="pointer-events-none absolute -top-20 -right-16 w-60 h-60 rounded-full bg-amber-300/25 blur-2xl"></div>
+              <div class="pointer-events-none absolute -bottom-24 -left-16 w-56 h-56 rounded-full bg-yellow-400/20 blur-2xl"></div>
+
+              <!-- Card Header -->
+              <div class="relative flex items-start justify-between gap-3">
+                <div>
+                  <p class="text-[11px] font-semibold tracking-wide text-amber-200">UniNestNigeria Campus Market</p>
+                  <h2 class="text-2xl sm:text-[26px] font-black tracking-tight leading-tight text-white mt-1" style="text-wrap: balance;">
+                    Buy from us and get a free gift from us!
+                  </h2>
+                </div>
+                <!-- Crisp Wrapped Gift SVG Icon -->
+                <div class="w-12 h-12 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center shrink-0 shadow-inner">
+                  <svg class="w-7 h-7 text-amber-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/>
+                  </svg>
+                </div>
+              </div>
+
+              <!-- Card Center: Offer Details -->
+              <div class="relative my-5 p-4 rounded-xl bg-black/20 backdrop-blur-sm border border-white/15 space-y-2.5">
+                <p class="text-xs sm:text-sm text-amber-50 leading-relaxed font-medium">
+                  Shop <strong class="text-white">phone &amp; computer gadgets</strong>, <strong class="text-white">perfumes</strong>, and <strong class="text-white">birthday cakes</strong> with UniNestNigeria — qualifying &amp; selected purchases come with a special <strong class="text-amber-300">free gift</strong>!
+                </p>
+                <div class="pt-2 border-t border-white/15 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-amber-100 font-semibold">
+                  <span>🎁 Free Gifts on Selected Orders</span>
+                  <span aria-hidden="true">·</span>
+                  <span>🚚 2–7 Days Lodge Delivery</span>
+                  <span aria-hidden="true">·</span>
+                  <span>💳 Fits Your Budget</span>
+                </div>
+              </div>
+
+              <!-- Card 2 Footer Actions -->
+              <div class="relative flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+                <button type="button" id="fc-order-gift-btn" class="flex-1 py-2.5 px-4 rounded-xl bg-white text-orange-700 hover:bg-amber-50 font-extrabold text-xs transition cursor-pointer whitespace-nowrap shadow-md">
+                  Buy From Us Now →
+                </button>
+                <button type="button" id="fc-back-sts-btn" class="py-2.5 px-4 rounded-xl bg-black/25 hover:bg-black/35 border border-white/20 text-white font-bold text-xs transition cursor-pointer whitespace-nowrap">
+                  ← STS Account
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Bottom Deck Controls: Prev / Dots + Swipe Cue / Next / Enter Site -->
+      <div class="mt-4 flex items-center justify-between gap-2">
+        <button type="button" id="fc-prev-btn" class="w-9 h-9 rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:border-orange-500 hover:text-orange-500 flex items-center justify-center font-bold transition cursor-pointer" aria-label="Previous flash card">
+          ‹
+        </button>
+
+        <div class="flex flex-col items-center gap-1">
+          <div class="flex items-center gap-2" id="fc-dots">
+            <button type="button" data-fc-index="0" class="w-6 h-2.5 rounded-full bg-orange-500 transition-all cursor-pointer" aria-label="Show STS Payment Card"></button>
+            <button type="button" data-fc-index="1" class="w-2.5 h-2.5 rounded-full bg-slate-300 dark:bg-slate-700 transition-all cursor-pointer" aria-label="Show Free Gift Card"></button>
+          </div>
+          <span id="fc-swipe-hint" class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Swipe card left or right</span>
+        </div>
+
+        <button type="button" id="fc-next-btn" class="w-9 h-9 rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:border-orange-500 hover:text-orange-500 flex items-center justify-center font-bold transition cursor-pointer" aria-label="Next flash card">
+          ›
+        </button>
+      </div>
+
+      <div class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
+        <button type="button" id="fc-start-sts-link" class="font-bold text-orange-600 dark:text-orange-400 hover:underline cursor-pointer">
+          Go to STS Calculator →
+        </button>
+        <button type="button" id="fc-dismiss-btn" class="font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white cursor-pointer">
+          Enter Website
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- Unified Online Application Modal for WhatsApp Desk (+2349039847154) -->
   <div id="service-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-sm transition-opacity duration-300">
@@ -751,7 +959,7 @@
   </div>
 
   <!-- Toast Notification -->
-  <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-24 opacity-0 pointer-events-none transition-all duration-300 max-w-sm p-4 rounded-xl bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-2xl border border-slate-800 dark:border-slate-200 flex items-center gap-3">
+  <div id="toast" class="fixed bottom-6 right-6 z-[70] transform translate-y-24 opacity-0 pointer-events-none transition-all duration-300 max-w-sm p-4 rounded-xl bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-2xl border border-slate-800 dark:border-slate-200 flex items-center gap-3">
     <span class="text-xl">✅</span>
     <div class="text-xs">
       <p class="font-bold" id="toast-title">Form Completed!</p>
@@ -1125,7 +1333,7 @@ Hello UniNest Jobs Desk, I have completed my student job application online. Ple
         renderFields: () => `
           <div>
             <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Items and Quantities *</label>
-            <textarea id="field-items" required rows="3" placeholder="List all items and their quantities (e.g., 6kg Gas Cylinder Refill, 1 Carton Indomie, 1 Crate Eggs, 2kg Detergent, 5L Cooking Oil, Provisions...)" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-orange-500 focus:outline-none"></textarea>
+            <textarea id="field-items" required rows="3" placeholder="List all items and their quantities (e.g., 1 Power Bank, 1 Laptop Charger, 2 Perfumes, 1 Chocolate Birthday Cake, Phone Accessories...)" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-orange-500 focus:outline-none"></textarea>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div>
@@ -1147,7 +1355,7 @@ Hello UniNest Jobs Desk, I have completed my student job application online. Ple
           </div>
           <div>
             <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Brand Preferences / Special Instructions (Optional)</label>
-            <input type="text" id="field-notes" placeholder="e.g., Hungryman size, Golden Penny cooking oil" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-orange-500 focus:outline-none">
+            <input type="text" id="field-notes" placeholder="e.g., Oraimo 20,000mAh, Lattafa perfume, Happy Birthday message on cake" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-orange-500 focus:outline-none">
           </div>
         `,
         buildMessage: (data) => `🛒 *UNINEST MARKET ORDER & LODGE DELIVERY*
@@ -1264,6 +1472,255 @@ Hello UniNest Desk, I submitted an online inquiry form. Please connect me with a
         dispatchToWhatsApp(msg, "Online Application Submitted!", "Connecting to WhatsApp Desk (+2349039847154)...");
       });
     }
+
+    // 8. Welcome Swipeable Flash Card Controller (Appears Immediately on Entry)
+    (function initWelcomeFlashcards() {
+      const fcModal = document.getElementById('welcome-flashcard-modal');
+      const fcViewport = document.getElementById('flashcard-viewport');
+      const fcTrack = document.getElementById('flashcard-track');
+      const fcTab0 = document.getElementById('fc-tab-0');
+      const fcTab1 = document.getElementById('fc-tab-1');
+      const fcDots = document.querySelectorAll('#fc-dots button');
+      const fcPrevBtn = document.getElementById('fc-prev-btn');
+      const fcNextBtn = document.getElementById('fc-next-btn');
+      const fcCloseBtn = document.getElementById('fc-close-btn');
+      const fcDismissBtn = document.getElementById('fc-dismiss-btn');
+      const fcToGiftBtn = document.getElementById('fc-to-gift-btn');
+      const fcBackStsBtn = document.getElementById('fc-back-sts-btn');
+      const fcOrderGiftBtn = document.getElementById('fc-order-gift-btn');
+      const fcStartStsLink = document.getElementById('fc-start-sts-link');
+      const fcCopyBtn = document.getElementById('fc-copy-acct-btn');
+      const fcCopyLabel = document.getElementById('fc-copy-label');
+      const fcSwipeHint = document.getElementById('fc-swipe-hint');
+      const reopenHeroBtn = document.getElementById('reopen-flashcard-hero');
+
+      if (!fcModal || !fcTrack) return;
+
+      let activeCard = 0;
+      const totalCards = 2;
+
+      // Lock background scroll on immediate entry while flashcard is open
+      document.body.classList.add('overflow-hidden');
+
+      function updateCardUI(index) {
+        if (index < 0) index = 0;
+        if (index >= totalCards) index = totalCards - 1;
+        activeCard = index;
+
+        fcTrack.style.transition = 'transform 300ms cubic-bezier(0.16, 1, 0.3, 1)';
+        fcTrack.style.transform = `translate3d(${-activeCard * 100}%, 0, 0)`;
+
+        // Update tabs
+        if (fcTab0 && fcTab1) {
+          const activeTabClasses = ['bg-white', 'dark:bg-slate-950', 'text-slate-900', 'dark:text-white', 'shadow-xs'];
+          const inactiveTabClasses = ['text-slate-600', 'dark:text-slate-300'];
+          if (activeCard === 0) {
+            fcTab0.classList.add(...activeTabClasses);
+            fcTab0.classList.remove(...inactiveTabClasses);
+            fcTab0.setAttribute('aria-selected', 'true');
+            fcTab1.classList.remove(...activeTabClasses);
+            fcTab1.classList.add(...inactiveTabClasses);
+            fcTab1.setAttribute('aria-selected', 'false');
+          } else {
+            fcTab1.classList.add(...activeTabClasses);
+            fcTab1.classList.remove(...inactiveTabClasses);
+            fcTab1.setAttribute('aria-selected', 'true');
+            fcTab0.classList.remove(...activeTabClasses);
+            fcTab0.classList.add(...inactiveTabClasses);
+            fcTab0.setAttribute('aria-selected', 'false');
+          }
+        }
+
+        // Update pagination dots
+        fcDots.forEach((dot, i) => {
+          if (i === activeCard) {
+            dot.classList.remove('w-2.5', 'bg-slate-300', 'dark:bg-slate-700');
+            dot.classList.add('w-6', 'bg-orange-500');
+          } else {
+            dot.classList.remove('w-6', 'bg-orange-500');
+            dot.classList.add('w-2.5', 'bg-slate-300', 'dark:bg-slate-700');
+          }
+        });
+
+        if (fcSwipeHint) {
+          fcSwipeHint.textContent = activeCard === 0
+            ? 'Swipe left for Free Gift Offer'
+            : 'Swipe right for STS Account Details';
+        }
+      }
+
+      function closeFlashcards() {
+        fcModal.classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
+      }
+
+      function openFlashcards(startIndex) {
+        updateCardUI(typeof startIndex === 'number' ? startIndex : 0);
+        fcModal.classList.remove('hidden');
+        document.body.classList.add('overflow-hidden');
+      }
+
+      if (fcTab0) fcTab0.addEventListener('click', () => updateCardUI(0));
+      if (fcTab1) fcTab1.addEventListener('click', () => updateCardUI(1));
+      if (fcToGiftBtn) fcToGiftBtn.addEventListener('click', () => updateCardUI(1));
+      if (fcBackStsBtn) fcBackStsBtn.addEventListener('click', () => updateCardUI(0));
+
+      if (fcPrevBtn) fcPrevBtn.addEventListener('click', () => updateCardUI(activeCard === 0 ? 1 : 0));
+      if (fcNextBtn) fcNextBtn.addEventListener('click', () => updateCardUI(activeCard === 1 ? 0 : 1));
+
+      fcDots.forEach(dot => {
+        dot.addEventListener('click', () => updateCardUI(Number(dot.dataset.fcIndex)));
+      });
+
+      if (fcCloseBtn) fcCloseBtn.addEventListener('click', closeFlashcards);
+      if (fcDismissBtn) fcDismissBtn.addEventListener('click', closeFlashcards);
+
+      if (fcOrderGiftBtn) {
+        fcOrderGiftBtn.addEventListener('click', () => {
+          closeFlashcards();
+          openModal('market-orders');
+        });
+      }
+
+      if (fcStartStsLink) {
+        fcStartStsLink.addEventListener('click', () => {
+          closeFlashcards();
+          const calcEl = document.getElementById('calculator');
+          if (calcEl) calcEl.scrollIntoView({ behavior: 'smooth' });
+        });
+      }
+
+      if (reopenHeroBtn) {
+        reopenHeroBtn.addEventListener('click', () => openFlashcards(0));
+      }
+
+      fcModal.addEventListener('click', (e) => {
+        if (e.target === fcModal) closeFlashcards();
+      });
+
+      document.addEventListener('keydown', (e) => {
+        if (fcModal.classList.contains('hidden')) return;
+        if (e.key === 'Escape') closeFlashcards();
+        if (e.key === 'ArrowRight') updateCardUI(1);
+        if (e.key === 'ArrowLeft') updateCardUI(0);
+      });
+
+      // Copy UBA Account Number (2150445461)
+      if (fcCopyBtn) {
+        fcCopyBtn.addEventListener('click', () => {
+          const acct = '2150445461';
+          const finishCopy = () => {
+            if (fcCopyLabel) fcCopyLabel.textContent = 'Copied!';
+            showToast('Account Number Copied', '2150445461 (UBA • Stephen Stanley) copied to clipboard.');
+            setTimeout(() => {
+              if (fcCopyLabel) fcCopyLabel.textContent = 'Copy';
+            }, 2200);
+          };
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(acct).then(finishCopy).catch(() => finishCopy());
+          } else {
+            const ta = document.createElement('textarea');
+            ta.value = acct;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.select();
+            try { document.execCommand('copy'); } catch (_) {}
+            document.body.removeChild(ta);
+            finishCopy();
+          }
+        });
+      }
+
+      // Smooth Touch + Pointer Swipe Physics
+      if (fcViewport) {
+        let startX = 0;
+        let startY = 0;
+        let currentDeltaX = 0;
+        let isDragging = false;
+        let horizontalLocked = false;
+
+        function onStart(clientX, clientY, target) {
+          if (target && target.closest('button, a, input, select, textarea')) return;
+          startX = clientX;
+          startY = clientY;
+          currentDeltaX = 0;
+          isDragging = true;
+          horizontalLocked = false;
+        }
+
+        function onMove(clientX, clientY) {
+          if (!isDragging) return;
+          const dx = clientX - startX;
+          const dy = clientY - startY;
+
+          if (!horizontalLocked) {
+            if (Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy)) {
+              horizontalLocked = true;
+              fcTrack.style.transition = 'none';
+            } else if (Math.abs(dy) > 12) {
+              isDragging = false;
+              return;
+            } else {
+              return;
+            }
+          }
+
+          currentDeltaX = dx;
+          // Apply gentle edge resistance if dragging past first/last card
+          const width = fcViewport.offsetWidth || 400;
+          let percentOffset = (dx / width) * 100;
+          if ((activeCard === 0 && dx > 0) || (activeCard === totalCards - 1 && dx < 0)) {
+            percentOffset *= 0.3;
+          }
+          fcTrack.style.transform = `translate3d(${-activeCard * 100 + percentOffset}%, 0, 0)`;
+        }
+
+        function onEnd() {
+          if (!isDragging) return;
+          isDragging = false;
+          if (!horizontalLocked) return;
+
+          if (currentDeltaX < -45 && activeCard < totalCards - 1) {
+            updateCardUI(activeCard + 1);
+          } else if (currentDeltaX > 45 && activeCard > 0) {
+            updateCardUI(activeCard - 1);
+          } else {
+            updateCardUI(activeCard);
+          }
+        }
+
+        // Touch Events (Mobile Phones)
+        fcViewport.addEventListener('touchstart', (e) => {
+          if (e.touches.length === 1) {
+            onStart(e.touches[0].clientX, e.touches[0].clientY, e.target);
+          }
+        }, { passive: true });
+
+        fcViewport.addEventListener('touchmove', (e) => {
+          if (e.touches.length === 1) {
+            onMove(e.touches[0].clientX, e.touches[0].clientY);
+          }
+        }, { passive: true });
+
+        fcViewport.addEventListener('touchend', onEnd, { passive: true });
+        fcViewport.addEventListener('touchcancel', onEnd, { passive: true });
+
+        // Mouse Drag Events (Laptop / Desktop)
+        fcViewport.addEventListener('mousedown', (e) => {
+          if (e.button !== 0) return;
+          onStart(e.clientX, e.clientY, e.target);
+        });
+        window.addEventListener('mousemove', (e) => {
+          if (isDragging) onMove(e.clientX, e.clientY);
+        });
+        window.addEventListener('mouseup', () => {
+          if (isDragging) onEnd();
+        });
+      }
+
+      updateCardUI(0);
+    })();
   </script>
 
   <!--Start of Tawk.to Script-->
