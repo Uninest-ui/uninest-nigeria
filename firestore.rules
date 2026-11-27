@@ -1,0 +1,738 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global safety net: deny everything by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Health check document for testConnection() startup check
+    match /test/connection {
+      allow get: if true;
+      allow list: if false;
+      allow write: if false;
+    }
+
+    // ---------------- GLOBAL HELPERS ----------------
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isSuperAdmin() {
+      return isVerifiedUser() && request.auth.token.email == 'amaechihellis@gmail.com';
+    }
+
+    function isAdmin() {
+      return isSuperAdmin() || (isVerifiedUser() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidUnlockId(id) {
+      return id is string && id.size() >= 3 && id.size() <= 256 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidString(val, minLen, maxLen) {
+      return val is string && val.size() >= minLen && val.size() <= maxLen;
+    }
+
+    function isValidNonNegNumber(val) {
+      return (val is int || val is float) && val >= 0;
+    }
+
+    function isValidPosNumber(val) {
+      return (val is int || val is float) && val > 0;
+    }
+
+    // ---------------- VALIDATION BLUEPRINTS ----------------
+    function isValidAdminUser(data) {
+      return data.keys().hasAll(['uid', 'email', 'role', 'name', 'createdAt']) &&
+        data.keys().hasOnly(['uid', 'email', 'role', 'name', 'createdAt']) &&
+        isValidId(data.uid) &&
+        isValidString(data.email, 3, 150) &&
+        data.role in ['super_admin', 'vendor_admin', 'scout_admin', 'project_helper_admin'] &&
+        isValidString(data.name, 1, 120) &&
+        data.createdAt is timestamp;
+    }
+
+    function isValidPlatformStats(data) {
+      return data.keys().hasAll(['id', 'vendorAdminBalance', 'totalConfirmedOrders', 'updatedAt']) &&
+        data.keys().hasOnly(['id', 'vendorAdminBalance', 'totalConfirmedOrders', 'updatedAt']) &&
+        isValidId(data.id) &&
+        isValidNonNegNumber(data.vendorAdminBalance) &&
+        isValidNonNegNumber(data.totalConfirmedOrders) &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidVendor(data) {
+      return data.keys().hasAll(['id', 'name', 'university', 'location', 'isFeatured', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['id', 'ownerUid', 'name', 'university', 'location', 'shopTagline', 'avatar', 'isFeatured', 'featuredPlan', 'featuredUntil', 'createdAt', 'updatedAt']) &&
+        isValidId(data.id) &&
+        (!('ownerUid' in data) || isValidString(data.ownerUid, 0, 128)) &&
+        isValidString(data.name, 2, 120) &&
+        isValidString(data.university, 2, 120) &&
+        isValidString(data.location, 2, 160) &&
+        (!('shopTagline' in data) || isValidString(data.shopTagline, 0, 300)) &&
+        (!('avatar' in data) || isValidString(data.avatar, 0, 250000)) &&
+        data.isFeatured is bool &&
+        (!('featuredPlan' in data) || isValidString(data.featuredPlan, 0, 80)) &&
+        (!('featuredUntil' in data) || isValidString(data.featuredUntil, 0, 60)) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidProduct(data) {
+      return data.keys().hasAll(['id', 'vendorId', 'title', 'category', 'vendorPrice', 'price', 'image', 'description', 'status', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['id', 'vendorId', 'vendorOwnerUid', 'title', 'category', 'vendorPrice', 'price', 'image', 'description', 'status', 'createdAt', 'updatedAt']) &&
+        isValidId(data.id) &&
+        isValidId(data.vendorId) &&
+        (!('vendorOwnerUid' in data) || isValidString(data.vendorOwnerUid, 0, 128)) &&
+        isValidString(data.title, 2, 140) &&
+        data.category in ['Food', 'Cakes', 'Gadgets', 'Tailors & Cloths', 'Shoes'] &&
+        isValidPosNumber(data.vendorPrice) &&
+        isValidPosNumber(data.price) &&
+        isValidString(data.image, 1, 250000) &&
+        isValidString(data.description, 0, 600) &&
+        data.status in ['published', 'removed'] &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidOrder(data) {
+      return data.keys().hasAll(['id', 'buyerUid', 'productId', 'productTitle', 'vendorId', 'vendorName', 'qty', 'total', 'vendorShare', 'adminCommission', 'customerName', 'customerPhone', 'customerLocation', 'deliveryWindow', 'paymentRef', 'paymentStatus', 'createdDateLabel', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['id', 'batchId', 'buyerUid', 'productId', 'productTitle', 'vendorId', 'vendorName', 'vendorOwnerUid', 'qty', 'total', 'vendorShare', 'adminCommission', 'customerName', 'customerPhone', 'customerLocation', 'deliveryWindow', 'paymentRef', 'paymentStatus', 'createdDateLabel', 'createdAt', 'updatedAt']) &&
+        isValidId(data.id) &&
+        (!('batchId' in data) || isValidString(data.batchId, 0, 128)) &&
+        isValidId(data.buyerUid) &&
+        isValidId(data.productId) &&
+        isValidString(data.productTitle, 2, 140) &&
+        isValidId(data.vendorId) &&
+        isValidString(data.vendorName, 2, 120) &&
+        (!('vendorOwnerUid' in data) || isValidString(data.vendorOwnerUid, 0, 128)) &&
+        isValidPosNumber(data.qty) &&
+        isValidPosNumber(data.total) &&
+        isValidNonNegNumber(data.vendorShare) &&
+        isValidNonNegNumber(data.adminCommission) &&
+        isValidString(data.customerName, 2, 120) &&
+        isValidString(data.customerPhone, 6, 40) &&
+        isValidString(data.customerLocation, 2, 200) &&
+        isValidString(data.deliveryWindow, 2, 80) &&
+        isValidString(data.paymentRef, 2, 160) &&
+        data.paymentStatus in ['pending_confirmation', 'confirmed', 'rejected'] &&
+        isValidString(data.createdDateLabel, 1, 40) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidFeaturedRequest(data) {
+      return data.keys().hasAll(['id', 'requesterUid', 'vendorId', 'vendorName', 'plan', 'amount', 'method', 'status', 'dateLabel', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['id', 'requesterUid', 'vendorId', 'vendorName', 'plan', 'amount', 'method', 'paymentRef', 'status', 'dateLabel', 'createdAt', 'updatedAt']) &&
+        isValidId(data.id) &&
+        isValidId(data.requesterUid) &&
+        isValidId(data.vendorId) &&
+        isValidString(data.vendorName, 2, 120) &&
+        isValidString(data.plan, 2, 80) &&
+        isValidPosNumber(data.amount) &&
+        isValidString(data.method, 2, 80) &&
+        (!('paymentRef' in data) || isValidString(data.paymentRef, 0, 160)) &&
+        data.status in ['pending_confirmation', 'confirmed', 'rejected'] &&
+        isValidString(data.dateLabel, 1, 40) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidWithdrawal(data) {
+      return data.keys().hasAll(['id', 'requesterUid', 'vendorId', 'vendorName', 'amount', 'bank', 'status', 'createdDateLabel', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['id', 'requesterUid', 'vendorId', 'vendorName', 'location', 'amount', 'bank', 'status', 'createdDateLabel', 'createdAt', 'updatedAt']) &&
+        isValidId(data.id) &&
+        isValidId(data.requesterUid) &&
+        isValidId(data.vendorId) &&
+        isValidString(data.vendorName, 2, 120) &&
+        (!('location' in data) || isValidString(data.location, 0, 160)) &&
+        isValidPosNumber(data.amount) &&
+        isValidString(data.bank, 4, 180) &&
+        data.status in ['pending', 'approved', 'rejected'] &&
+        isValidString(data.createdDateLabel, 1, 40) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidProjectHelper(data) {
+      return data.keys().hasAll(['id', 'name', 'specialty', 'campus', 'photo', 'bio', 'maskedPhone', 'unlockFee', 'active', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['id', 'ownerUid', 'name', 'specialty', 'campus', 'photo', 'bio', 'maskedPhone', 'unlockFee', 'active', 'createdAt', 'updatedAt']) &&
+        isValidId(data.id) &&
+        (!('ownerUid' in data) || isValidString(data.ownerUid, 0, 128)) &&
+        isValidString(data.name, 2, 120) &&
+        isValidString(data.specialty, 2, 200) &&
+        isValidString(data.campus, 2, 120) &&
+        isValidString(data.photo, 1, 250000) &&
+        isValidString(data.bio, 0, 600) &&
+        isValidString(data.maskedPhone, 4, 40) &&
+        isValidPosNumber(data.unlockFee) &&
+        data.active is bool &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidHelperPrivateContact(data) {
+      return data.keys().hasAll(['id', 'phone', 'whatsapp', 'email', 'updatedAt']) &&
+        data.keys().hasOnly(['id', 'phone', 'whatsapp', 'email', 'updatedAt']) &&
+        isValidId(data.id) &&
+        isValidString(data.phone, 6, 40) &&
+        isValidString(data.whatsapp, 6, 30) &&
+        isValidString(data.email, 3, 150) &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidHelperUnlock(data) {
+      return data.keys().hasAll(['id', 'studentUid', 'helperId', 'helperName', 'studentName', 'studentPhone', 'paymentRef', 'amount', 'status', 'createdDateLabel', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['id', 'studentUid', 'helperId', 'helperName', 'studentName', 'studentPhone', 'paymentRef', 'amount', 'status', 'createdDateLabel', 'createdAt', 'updatedAt']) &&
+        isValidUnlockId(data.id) &&
+        isValidId(data.studentUid) &&
+        isValidId(data.helperId) &&
+        isValidString(data.helperName, 2, 120) &&
+        isValidString(data.studentName, 2, 120) &&
+        isValidString(data.studentPhone, 6, 40) &&
+        isValidString(data.paymentRef, 2, 160) &&
+        isValidPosNumber(data.amount) &&
+        data.status in ['pending_confirmation', 'confirmed', 'rejected'] &&
+        isValidString(data.createdDateLabel, 1, 40) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidPublicReview(data) {
+      return data.keys().hasAll(['id', 'targetId', 'authorUid', 'author', 'rating', 'text', 'dateLabel', 'createdAt']) &&
+        data.keys().hasOnly(['id', 'targetId', 'authorUid', 'author', 'rating', 'text', 'dateLabel', 'createdAt']) &&
+        isValidId(data.id) &&
+        isValidId(data.targetId) &&
+        isValidId(data.authorUid) &&
+        isValidString(data.author, 2, 80) &&
+        (data.rating is int || data.rating is float) && data.rating >= 1 && data.rating <= 5 &&
+        isValidString(data.text, 2, 1000) &&
+        isValidString(data.dateLabel, 1, 40) &&
+        data.createdAt is timestamp;
+    }
+
+    function isValidCampusScout(data) {
+      return data.keys().hasAll(['id', 'name', 'location', 'specialty', 'photo', 'bio', 'maskedPhone', 'unlockFee', 'jobsCompleted', 'active', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['id', 'ownerUid', 'name', 'location', 'specialty', 'photo', 'bio', 'maskedPhone', 'unlockFee', 'jobsCompleted', 'active', 'createdAt', 'updatedAt']) &&
+        isValidId(data.id) &&
+        (!('ownerUid' in data) || isValidString(data.ownerUid, 0, 128)) &&
+        isValidString(data.name, 2, 120) &&
+        isValidString(data.location, 2, 120) &&
+        isValidString(data.specialty, 2, 200) &&
+        isValidString(data.photo, 1, 250000) &&
+        isValidString(data.bio, 0, 600) &&
+        isValidString(data.maskedPhone, 4, 40) &&
+        isValidPosNumber(data.unlockFee) &&
+        isValidNonNegNumber(data.jobsCompleted) &&
+        data.active is bool &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidScoutPrivateContact(data) {
+      return data.keys().hasAll(['id', 'phone', 'whatsapp', 'updatedAt']) &&
+        data.keys().hasOnly(['id', 'phone', 'whatsapp', 'updatedAt']) &&
+        isValidId(data.id) &&
+        isValidString(data.phone, 6, 40) &&
+        isValidString(data.whatsapp, 6, 30) &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidScoutUnlock(data) {
+      return data.keys().hasAll(['id', 'studentUid', 'scoutId', 'scoutName', 'studentName', 'studentPhone', 'task', 'paymentRef', 'amount', 'status', 'createdDateLabel', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['id', 'studentUid', 'scoutId', 'scoutName', 'studentName', 'studentPhone', 'task', 'paymentRef', 'amount', 'status', 'createdDateLabel', 'createdAt', 'updatedAt']) &&
+        isValidUnlockId(data.id) &&
+        isValidId(data.studentUid) &&
+        isValidId(data.scoutId) &&
+        isValidString(data.scoutName, 2, 120) &&
+        isValidString(data.studentName, 2, 120) &&
+        isValidString(data.studentPhone, 6, 40) &&
+        isValidString(data.task, 2, 240) &&
+        isValidString(data.paymentRef, 2, 160) &&
+        isValidPosNumber(data.amount) &&
+        data.status in ['pending_confirmation', 'confirmed', 'rejected'] &&
+        isValidString(data.createdDateLabel, 1, 40) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidScoutBooking(data) {
+      return data.keys().hasAll(['id', 'fresherUid', 'fresherName', 'phone', 'university', 'faculty', 'task', 'preferredDate', 'paymentRef', 'amount', 'paymentStatus', 'status', 'createdDateLabel', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['id', 'fresherUid', 'fresherName', 'phone', 'university', 'faculty', 'task', 'preferredDate', 'notes', 'paymentRef', 'amount', 'assignedScoutId', 'assignedScoutOwnerUid', 'paymentStatus', 'status', 'createdDateLabel', 'createdAt', 'updatedAt']) &&
+        isValidId(data.id) &&
+        isValidId(data.fresherUid) &&
+        isValidString(data.fresherName, 2, 120) &&
+        isValidString(data.phone, 6, 40) &&
+        isValidString(data.university, 2, 120) &&
+        isValidString(data.faculty, 2, 160) &&
+        isValidString(data.task, 2, 200) &&
+        isValidString(data.preferredDate, 2, 80) &&
+        (!('notes' in data) || isValidString(data.notes, 0, 500)) &&
+        isValidString(data.paymentRef, 2, 160) &&
+        isValidPosNumber(data.amount) &&
+        (!('assignedScoutId' in data) || isValidString(data.assignedScoutId, 0, 128)) &&
+        (!('assignedScoutOwnerUid' in data) || isValidString(data.assignedScoutOwnerUid, 0, 128)) &&
+        data.paymentStatus in ['pending_confirmation', 'confirmed', 'rejected'] &&
+        data.status in ['pending_confirmation', 'paid_pending', 'assigned', 'completed', 'rejected'] &&
+        isValidString(data.createdDateLabel, 1, 40) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidScoutLedgerEntry(data) {
+      return data.keys().hasAll(['id', 'scoutId', 'dateLabel', 'amount', 'balanceAfter', 'channel', 'note', 'type', 'createdAt']) &&
+        data.keys().hasOnly(['id', 'scoutId', 'dateLabel', 'amount', 'balanceAfter', 'channel', 'note', 'type', 'createdAt']) &&
+        isValidId(data.id) &&
+        isValidId(data.scoutId) &&
+        isValidString(data.dateLabel, 1, 40) &&
+        isValidPosNumber(data.amount) &&
+        isValidNonNegNumber(data.balanceAfter) &&
+        isValidString(data.channel, 2, 80) &&
+        isValidString(data.note, 2, 200) &&
+        data.type in ['credit', 'debit'] &&
+        data.createdAt is timestamp;
+    }
+
+    function isValidPartnerAccount(data) {
+      return data.keys().hasAll(['id', 'role', 'name', 'loginName', 'code', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['id', 'ownerUid', 'role', 'name', 'loginName', 'code', 'location', 'university', 'helperId', 'avatar', 'balance', 'createdAt', 'updatedAt']) &&
+        isValidId(data.id) &&
+        (!('ownerUid' in data) || isValidString(data.ownerUid, 0, 128)) &&
+        data.role in ['vendor_admin', 'scout_admin', 'project_helper_admin', 'vendor', 'project_helper', 'scout'] &&
+        isValidString(data.name, 2, 120) &&
+        isValidString(data.loginName, 2, 60) &&
+        isValidString(data.code, 4, 60) &&
+        (!('location' in data) || isValidString(data.location, 0, 160)) &&
+        (!('university' in data) || isValidString(data.university, 0, 120)) &&
+        (!('helperId' in data) || isValidString(data.helperId, 0, 128)) &&
+        (!('avatar' in data) || isValidString(data.avatar, 0, 250000)) &&
+        (!('balance' in data) || isValidNonNegNumber(data.balance)) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidPartnerAuthLookup(data) {
+      return data.keys().hasAll(['id', 'accountId', 'role', 'name', 'updatedAt']) &&
+        data.keys().hasOnly(['id', 'accountId', 'role', 'name', 'location', 'university', 'helperId', 'updatedAt']) &&
+        isValidId(data.id) &&
+        isValidId(data.accountId) &&
+        data.role in ['vendor_admin', 'scout_admin', 'project_helper_admin', 'vendor', 'project_helper', 'scout'] &&
+        isValidString(data.name, 2, 120) &&
+        (!('location' in data) || isValidString(data.location, 0, 160)) &&
+        (!('university' in data) || isValidString(data.university, 0, 120)) &&
+        (!('helperId' in data) || isValidString(data.helperId, 0, 128)) &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidServiceSubmission(data) {
+      return data.keys().hasAll(['id', 'submitterUid', 'serviceType', 'assignedAdminRole', 'studentName', 'phone', 'school', 'summary', 'status', 'createdDateLabel', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['id', 'submitterUid', 'serviceType', 'assignedAdminRole', 'studentName', 'phone', 'school', 'departmentOrLevel', 'summary', 'status', 'createdDateLabel', 'createdAt', 'updatedAt']) &&
+        isValidId(data.id) &&
+        isValidId(data.submitterUid) &&
+        data.serviceType in ['sts', 'project-work', 'student-jobs', 'market-orders', 'inquiry'] &&
+        data.assignedAdminRole in ['vendor_admin', 'scout_admin', 'project_helper_admin'] &&
+        isValidString(data.studentName, 2, 120) &&
+        isValidString(data.phone, 6, 40) &&
+        isValidString(data.school, 2, 120) &&
+        (!('departmentOrLevel' in data) || isValidString(data.departmentOrLevel, 0, 160)) &&
+        isValidString(data.summary, 2, 800) &&
+        data.status in ['pending_review', 'confirmed', 'rejected'] &&
+        isValidString(data.createdDateLabel, 1, 40) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    // ---------------- COLLECTION RULES ----------------
+
+    // Admins Registry
+    match /admins/{adminId} {
+      allow get: if isVerifiedUser() && isValidId(adminId) && (isAdmin() || request.auth.uid == adminId);
+      allow list: if isSuperAdmin();
+      allow create: if isAdmin() && isValidId(adminId) && isValidAdminUser(incoming()) && incoming().createdAt == request.time;
+      allow update: if isAdmin() && isValidId(adminId) && isValidAdminUser(incoming()) &&
+        incoming().uid == existing().uid && incoming().createdAt == existing().createdAt;
+      allow delete: if isSuperAdmin() && isValidId(adminId);
+    }
+
+    // Platform Commission Summary
+    match /platform_stats/{statId} {
+      allow get: if isVerifiedUser() && isValidId(statId);
+      allow list: if isSuperAdmin();
+      allow create: if isAdmin() && isValidId(statId) && isValidPlatformStats(incoming()) && incoming().updatedAt == request.time;
+      allow update: if isAdmin() && isValidId(statId) && isValidPlatformStats(incoming()) &&
+        incoming().id == existing().id && incoming().updatedAt == request.time &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['vendorAdminBalance', 'totalConfirmedOrders', 'updatedAt']);
+      allow delete: if isSuperAdmin() && isValidId(statId);
+    }
+
+    // Vendors (Public Storefronts - Zero PII)
+    match /vendors/{vendorId} {
+      allow get: if isValidId(vendorId);
+      allow list: if true;
+      allow create: if isAdmin() && isValidId(vendorId) && isValidVendor(incoming()) && incoming().createdAt == request.time && incoming().updatedAt == request.time;
+      allow update: if isVerifiedUser() && isValidId(vendorId) && isValidVendor(incoming()) &&
+        incoming().id == existing().id && incoming().createdAt == existing().createdAt && incoming().updatedAt == request.time && (
+          isAdmin() ||
+          (existing().ownerUid == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['shopTagline', 'avatar', 'location', 'updatedAt']))
+        );
+      allow delete: if isAdmin() && isValidId(vendorId);
+    }
+
+    // Marketplace Products (Public Catalog)
+    match /products/{productId} {
+      allow get: if isValidId(productId);
+      allow list: if true;
+      allow create: if isVerifiedUser() && isValidId(productId) && isValidProduct(incoming()) &&
+        incoming().createdAt == request.time && incoming().updatedAt == request.time &&
+        exists(/databases/$(database)/documents/vendors/$(incoming().vendorId)) && (
+          isAdmin() ||
+          get(/databases/$(database)/documents/vendors/$(incoming().vendorId)).data.ownerUid == request.auth.uid
+        );
+      allow update: if isVerifiedUser() && isValidId(productId) && isValidProduct(incoming()) &&
+        incoming().id == existing().id && incoming().vendorId == existing().vendorId && incoming().createdAt == existing().createdAt && incoming().updatedAt == request.time && (
+          isAdmin() ||
+          (existing().vendorOwnerUid == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['title', 'category', 'vendorPrice', 'price', 'image', 'description', 'status', 'updatedAt']))
+        );
+      allow delete: if isVerifiedUser() && isValidId(productId) && (
+        isAdmin() || existing().vendorOwnerUid == request.auth.uid
+      );
+    }
+
+    // Marketplace Orders (Customer PII Protected + Admin Confirmation Gate)
+    match /orders/{orderId} {
+      allow get: if isVerifiedUser() && isValidId(orderId) && (
+        isAdmin() || existing().buyerUid == request.auth.uid || existing().vendorOwnerUid == request.auth.uid
+      );
+      allow list: if isVerifiedUser() && (
+        isSuperAdmin() || resource.data.buyerUid == request.auth.uid || resource.data.vendorOwnerUid == request.auth.uid
+      );
+      allow create: if isVerifiedUser() && isValidId(orderId) && isValidOrder(incoming()) &&
+        incoming().buyerUid == request.auth.uid &&
+        incoming().paymentStatus == 'pending_confirmation' &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        exists(/databases/$(database)/documents/vendors/$(incoming().vendorId));
+      allow update: if isVerifiedUser() && isValidId(orderId) && isValidOrder(incoming()) &&
+        incoming().id == existing().id && incoming().buyerUid == existing().buyerUid &&
+        incoming().vendorId == existing().vendorId && incoming().total == existing().total &&
+        incoming().vendorShare == existing().vendorShare && incoming().adminCommission == existing().adminCommission &&
+        incoming().createdAt == existing().createdAt && incoming().updatedAt == request.time && (
+          (isAdmin() && existing().paymentStatus == 'pending_confirmation' &&
+            incoming().paymentStatus in ['confirmed', 'rejected'] &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['paymentStatus', 'updatedAt'])) ||
+          (isSuperAdmin() && incoming().diff(existing()).affectedKeys().hasOnly(['paymentStatus', 'updatedAt']))
+        );
+      allow delete: if isSuperAdmin() && isValidId(orderId);
+    }
+
+    // Top Vendor Placement Boost Requests (Admin Confirmation Gate)
+    match /featured_requests/{reqId} {
+      allow get: if isVerifiedUser() && isValidId(reqId) && (isAdmin() || existing().requesterUid == request.auth.uid);
+      allow list: if isVerifiedUser() && (isSuperAdmin() || resource.data.requesterUid == request.auth.uid);
+      allow create: if isVerifiedUser() && isValidId(reqId) && isValidFeaturedRequest(incoming()) &&
+        incoming().requesterUid == request.auth.uid &&
+        incoming().status == 'pending_confirmation' &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        exists(/databases/$(database)/documents/vendors/$(incoming().vendorId)) && (
+          isAdmin() || get(/databases/$(database)/documents/vendors/$(incoming().vendorId)).data.ownerUid == request.auth.uid
+        );
+      allow update: if isVerifiedUser() && isValidId(reqId) && isValidFeaturedRequest(incoming()) &&
+        incoming().id == existing().id && incoming().requesterUid == existing().requesterUid &&
+        incoming().vendorId == existing().vendorId && incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        isAdmin() && existing().status == 'pending_confirmation' &&
+        incoming().status in ['confirmed', 'rejected'] &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']);
+      allow delete: if isSuperAdmin() && isValidId(reqId);
+    }
+
+    // Vendor Withdrawals (PII/Bank Info Protected)
+    match /withdrawals/{withdrawalId} {
+      allow get: if isVerifiedUser() && isValidId(withdrawalId) && (isAdmin() || existing().requesterUid == request.auth.uid);
+      allow list: if isVerifiedUser() && (isSuperAdmin() || resource.data.requesterUid == request.auth.uid);
+      allow create: if isVerifiedUser() && isValidId(withdrawalId) && isValidWithdrawal(incoming()) &&
+        incoming().requesterUid == request.auth.uid &&
+        incoming().status == 'pending' &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        exists(/databases/$(database)/documents/vendors/$(incoming().vendorId)) && (
+          isAdmin() || get(/databases/$(database)/documents/vendors/$(incoming().vendorId)).data.ownerUid == request.auth.uid
+        );
+      allow update: if isVerifiedUser() && isValidId(withdrawalId) && isValidWithdrawal(incoming()) &&
+        incoming().id == existing().id && incoming().requesterUid == existing().requesterUid &&
+        incoming().vendorId == existing().vendorId && incoming().amount == existing().amount &&
+        incoming().createdAt == existing().createdAt && incoming().updatedAt == request.time &&
+        isAdmin() && existing().status == 'pending' &&
+        incoming().status in ['approved', 'rejected'] &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']);
+      allow delete: if isSuperAdmin() && isValidId(withdrawalId);
+    }
+
+    // Project Helpers (Public Non-PII + Split Private Contact + Public Reviews)
+    match /project_helpers/{helperId} {
+      allow get: if isValidId(helperId);
+      allow list: if true;
+      allow create: if isAdmin() && isValidId(helperId) && isValidProjectHelper(incoming()) &&
+        incoming().createdAt == request.time && incoming().updatedAt == request.time;
+      allow update: if isVerifiedUser() && isValidId(helperId) && isValidProjectHelper(incoming()) &&
+        incoming().id == existing().id && incoming().createdAt == existing().createdAt && incoming().updatedAt == request.time && (
+          isAdmin() ||
+          (existing().ownerUid == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['specialty', 'bio', 'photo', 'updatedAt']))
+        );
+      allow delete: if isAdmin() && isValidId(helperId);
+
+      // Pillar 6: Protected direct phone/whatsapp/email unlocked ONLY after Admin confirms payment
+      match /private/{docId} {
+        allow get: if isVerifiedUser() && isValidId(helperId) && isValidId(docId) && (
+          isAdmin() ||
+          get(/databases/$(database)/documents/project_helpers/$(helperId)).data.ownerUid == request.auth.uid ||
+          (
+            exists(/databases/$(database)/documents/helper_unlocks/$(request.auth.uid + '__' + helperId)) &&
+            get(/databases/$(database)/documents/helper_unlocks/$(request.auth.uid + '__' + helperId)).data.status == 'confirmed'
+          )
+        );
+        allow list: if isSuperAdmin();
+        allow create, update: if isAdmin() && isValidId(helperId) && isValidId(docId) &&
+          isValidHelperPrivateContact(incoming()) && incoming().updatedAt == request.time;
+        allow delete: if isAdmin() && isValidId(helperId) && isValidId(docId);
+      }
+
+      // Verified Student Reviews Subcollection
+      match /reviews/{reviewId} {
+        allow get: if isValidId(helperId) && isValidId(reviewId);
+        allow list: if isValidId(helperId);
+        allow create: if isVerifiedUser() && isValidId(helperId) && isValidId(reviewId) &&
+          isValidPublicReview(incoming()) &&
+          incoming().targetId == helperId &&
+          incoming().authorUid == request.auth.uid &&
+          incoming().createdAt == request.time &&
+          exists(/databases/$(database)/documents/project_helpers/$(helperId));
+        allow update: if false;
+        allow delete: if isVerifiedUser() && isValidId(helperId) && isValidId(reviewId) && (
+          isAdmin() || existing().authorUid == request.auth.uid
+        );
+      }
+    }
+
+    // Helper Unlock Payment Submissions (Pending -> Confirmed by Project Helper Admin)
+    match /helper_unlocks/{unlockId} {
+      allow get: if isVerifiedUser() && isValidUnlockId(unlockId) && (
+        isAdmin() || existing().studentUid == request.auth.uid
+      );
+      allow list: if isVerifiedUser() && (
+        isSuperAdmin() || resource.data.studentUid == request.auth.uid
+      );
+      allow create: if isVerifiedUser() && isValidUnlockId(unlockId) && isValidHelperUnlock(incoming()) &&
+        unlockId == request.auth.uid + '__' + incoming().helperId &&
+        incoming().studentUid == request.auth.uid &&
+        incoming().status == 'pending_confirmation' &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        exists(/databases/$(database)/documents/project_helpers/$(incoming().helperId));
+      allow update: if isVerifiedUser() && isValidUnlockId(unlockId) && isValidHelperUnlock(incoming()) &&
+        incoming().id == existing().id && incoming().studentUid == existing().studentUid &&
+        incoming().helperId == existing().helperId && incoming().amount == existing().amount &&
+        incoming().createdAt == existing().createdAt && incoming().updatedAt == request.time && (
+          (isAdmin() && existing().status == 'pending_confirmation' &&
+            incoming().status in ['confirmed', 'rejected'] &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt'])) ||
+          (isSuperAdmin() && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt'])) ||
+          (existing().studentUid == request.auth.uid && existing().status == 'rejected' &&
+            incoming().status == 'pending_confirmation' &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['paymentRef', 'status', 'updatedAt']))
+        );
+      allow delete: if isSuperAdmin() && isValidUnlockId(unlockId);
+    }
+
+    // Campus Scouts (Public Non-PII + Split Private Contact + Reviews + Ledger)
+    match /scouts/{scoutId} {
+      allow get: if isValidId(scoutId);
+      allow list: if true;
+      allow create: if isAdmin() && isValidId(scoutId) && isValidCampusScout(incoming()) &&
+        incoming().createdAt == request.time && incoming().updatedAt == request.time;
+      allow update: if isVerifiedUser() && isValidId(scoutId) && isValidCampusScout(incoming()) &&
+        incoming().id == existing().id && incoming().createdAt == existing().createdAt && incoming().updatedAt == request.time && (
+          isAdmin() ||
+          (existing().ownerUid == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['bio', 'specialty', 'photo', 'updatedAt']))
+        );
+      allow delete: if isAdmin() && isValidId(scoutId);
+
+      // Protected direct phone/WhatsApp unlocked ONLY after Scouts Admin confirms payment
+      match /private/{docId} {
+        allow get: if isVerifiedUser() && isValidId(scoutId) && isValidId(docId) && (
+          isAdmin() ||
+          get(/databases/$(database)/documents/scouts/$(scoutId)).data.ownerUid == request.auth.uid ||
+          (
+            exists(/databases/$(database)/documents/scout_unlocks/$(request.auth.uid + '__' + scoutId)) &&
+            get(/databases/$(database)/documents/scout_unlocks/$(request.auth.uid + '__' + scoutId)).data.status == 'confirmed'
+          )
+        );
+        allow list: if isSuperAdmin();
+        allow create, update: if isAdmin() && isValidId(scoutId) && isValidId(docId) &&
+          isValidScoutPrivateContact(incoming()) && incoming().updatedAt == request.time;
+        allow delete: if isAdmin() && isValidId(scoutId) && isValidId(docId);
+      }
+
+      // Verified Fresher Reviews Subcollection
+      match /reviews/{reviewId} {
+        allow get: if isValidId(scoutId) && isValidId(reviewId);
+        allow list: if isValidId(scoutId);
+        allow create: if isVerifiedUser() && isValidId(scoutId) && isValidId(reviewId) &&
+          isValidPublicReview(incoming()) &&
+          incoming().targetId == scoutId &&
+          incoming().authorUid == request.auth.uid &&
+          incoming().createdAt == request.time &&
+          exists(/databases/$(database)/documents/scouts/$(scoutId));
+        allow update: if false;
+        allow delete: if isVerifiedUser() && isValidId(scoutId) && isValidId(reviewId) && (
+          isAdmin() || existing().authorUid == request.auth.uid
+        );
+      }
+
+      // Scout Payout & Earnings Ledger
+      match /ledger/{entryId} {
+        allow get: if isVerifiedUser() && isValidId(scoutId) && isValidId(entryId) && (
+          isAdmin() || get(/databases/$(database)/documents/scouts/$(scoutId)).data.ownerUid == request.auth.uid
+        );
+        allow list: if isVerifiedUser() && isValidId(scoutId) && isSuperAdmin();
+        allow create: if isAdmin() && isValidId(scoutId) && isValidId(entryId) &&
+          isValidScoutLedgerEntry(incoming()) &&
+          incoming().scoutId == scoutId &&
+          incoming().createdAt == request.time;
+        allow update: if false;
+        allow delete: if isSuperAdmin() && isValidId(scoutId) && isValidId(entryId);
+      }
+    }
+
+    // Scout Unlock Payment Submissions (Pending -> Confirmed by Scouts Admin)
+    match /scout_unlocks/{unlockId} {
+      allow get: if isVerifiedUser() && isValidUnlockId(unlockId) && (
+        isAdmin() || existing().studentUid == request.auth.uid
+      );
+      allow list: if isVerifiedUser() && (
+        isSuperAdmin() || resource.data.studentUid == request.auth.uid
+      );
+      allow create: if isVerifiedUser() && isValidUnlockId(unlockId) && isValidScoutUnlock(incoming()) &&
+        unlockId == request.auth.uid + '__' + incoming().scoutId &&
+        incoming().studentUid == request.auth.uid &&
+        incoming().status == 'pending_confirmation' &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        exists(/databases/$(database)/documents/scouts/$(incoming().scoutId));
+      allow update: if isVerifiedUser() && isValidUnlockId(unlockId) && isValidScoutUnlock(incoming()) &&
+        incoming().id == existing().id && incoming().studentUid == existing().studentUid &&
+        incoming().scoutId == existing().scoutId && incoming().amount == existing().amount &&
+        incoming().createdAt == existing().createdAt && incoming().updatedAt == request.time && (
+          (isAdmin() && existing().status == 'pending_confirmation' &&
+            incoming().status in ['confirmed', 'rejected'] &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt'])) ||
+          (isSuperAdmin() && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt'])) ||
+          (existing().studentUid == request.auth.uid && existing().status == 'rejected' &&
+            incoming().status == 'pending_confirmation' &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['paymentRef', 'task', 'status', 'updatedAt']))
+        );
+      allow delete: if isSuperAdmin() && isValidUnlockId(unlockId);
+    }
+
+    // Fresher Clearance Bookings (Pending -> Confirmed & Assigned by Scouts Admin)
+    match /scout_bookings/{bookingId} {
+      allow get: if isVerifiedUser() && isValidId(bookingId) && (
+        isAdmin() || existing().fresherUid == request.auth.uid || existing().assignedScoutOwnerUid == request.auth.uid
+      );
+      allow list: if isVerifiedUser() && (
+        isSuperAdmin() || resource.data.fresherUid == request.auth.uid || resource.data.assignedScoutOwnerUid == request.auth.uid
+      );
+      allow create: if isVerifiedUser() && isValidId(bookingId) && isValidScoutBooking(incoming()) &&
+        incoming().fresherUid == request.auth.uid &&
+        incoming().paymentStatus == 'pending_confirmation' &&
+        incoming().status == 'pending_confirmation' &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isVerifiedUser() && isValidId(bookingId) && isValidScoutBooking(incoming()) &&
+        incoming().id == existing().id && incoming().fresherUid == existing().fresherUid &&
+        incoming().amount == existing().amount && incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time && (
+          (isAdmin() && !(existing().status in ['completed', 'rejected']) &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['paymentStatus', 'status', 'assignedScoutId', 'assignedScoutOwnerUid', 'updatedAt'])) ||
+          (isSuperAdmin() && incoming().diff(existing()).affectedKeys().hasOnly(['paymentStatus', 'status', 'assignedScoutId', 'assignedScoutOwnerUid', 'updatedAt'])) ||
+          (existing().assignedScoutOwnerUid == request.auth.uid &&
+            existing().paymentStatus == 'confirmed' && existing().status == 'assigned' &&
+            incoming().status == 'completed' &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']))
+        );
+      allow delete: if isSuperAdmin() && isValidId(bookingId);
+    }
+
+    // Partner Accounts (Credentials & Balances Protected)
+    match /partner_accounts/{accountId} {
+      allow get: if isVerifiedUser() && isValidId(accountId) && (isAdmin() || existing().ownerUid == request.auth.uid);
+      allow list: if isVerifiedUser() && (isSuperAdmin() || resource.data.ownerUid == request.auth.uid);
+      allow create: if isAdmin() && isValidId(accountId) && isValidPartnerAccount(incoming()) &&
+        incoming().createdAt == request.time && incoming().updatedAt == request.time && (
+          isSuperAdmin() || !(incoming().role in ['vendor_admin', 'scout_admin', 'project_helper_admin'])
+        );
+      allow update: if isVerifiedUser() && isValidId(accountId) && isValidPartnerAccount(incoming()) &&
+        incoming().id == existing().id && incoming().role == existing().role &&
+        incoming().createdAt == existing().createdAt && incoming().updatedAt == request.time && (
+          isSuperAdmin() ||
+          (isAdmin() && !(existing().role in ['vendor_admin', 'scout_admin', 'project_helper_admin'])) ||
+          (existing().ownerUid == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['avatar', 'name', 'location', 'university', 'updatedAt']))
+        );
+      allow delete: if isSuperAdmin() && isValidId(accountId);
+    }
+
+    // Partner Auth Credential Lookup (Zero List Enumeration)
+    match /partner_auth/{authKey} {
+      allow get: if isVerifiedUser() && isValidId(authKey);
+      allow list: if isSuperAdmin();
+      allow create, update: if isValidId(authKey) && isValidPartnerAuthLookup(incoming()) &&
+        incoming().updatedAt == request.time && (
+          isSuperAdmin() ||
+          (isAdmin() && !(incoming().role in ['vendor_admin', 'scout_admin', 'project_helper_admin']))
+        );
+      allow delete: if isValidId(authKey) && (
+        isSuperAdmin() ||
+        (isAdmin() && !(existing().role in ['vendor_admin', 'scout_admin', 'project_helper_admin']))
+      );
+    }
+
+    // Service Form Submissions (STS, Project Work, Student Jobs, Custom Market Orders, Inquiries)
+    match /service_submissions/{subId} {
+      allow get: if isVerifiedUser() && isValidId(subId) && (isAdmin() || existing().submitterUid == request.auth.uid);
+      allow list: if isVerifiedUser() && (isSuperAdmin() || resource.data.submitterUid == request.auth.uid);
+      allow create: if isVerifiedUser() && isValidId(subId) && isValidServiceSubmission(incoming()) &&
+        incoming().submitterUid == request.auth.uid &&
+        incoming().status == 'pending_review' &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isVerifiedUser() && isValidId(subId) && isValidServiceSubmission(incoming()) &&
+        incoming().id == existing().id && incoming().submitterUid == existing().submitterUid &&
+        incoming().serviceType == existing().serviceType && incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        isAdmin() && existing().status == 'pending_review' &&
+        incoming().status in ['confirmed', 'rejected'] &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']);
+      allow delete: if isSuperAdmin() && isValidId(subId);
+    }
+  }
+}

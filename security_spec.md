@@ -1,24 +1,29 @@
-# Security Specification for UniNest Firestore
+# Security Specification for UniNestNigeria Firestore
 
 ## 1. Data Invariants
-1. A user document in `/users/{userId}` must correspond to a valid identifier string (`isValidId(userId)`).
-2. Users can create and read user profiles, but cannot arbitrarily tamper with or escalate admin privileges.
-3. Creation of user profiles requires mandatory fields (`id`, `email`, `name`, `role`).
-4. Timestamps and string fields must satisfy bounded volumetric length constraints (`maxLength` limits) to prevent Denial of Wallet attacks.
+1. **Identity & Authentication Integrity**: Every write operation (`create`, `update`, `delete`) requires an authenticated Firebase user with `request.auth.token.email_verified == true`. Author/buyer/submitter UID fields in incoming payloads must strictly match `request.auth.uid`.
+2. **Responsible-Admin Payment Confirmation Gate**: All customer orders (`/orders`), Top Vendor boost requests (`/featured_requests`), Helper contact unlocks (`/helper_unlocks`), and Scout unlocks/bookings (`/scout_unlocks`, `/scout_bookings`) MUST be created in status `'pending_confirmation'`. Non-admins cannot self-confirm payments, self-credit wallet balances, or self-activate featured placement.
+3. **PII Isolation (Split Collection Strategy)**:
+   - Public catalogs (`/vendors`, `/products`, `/project_helpers`, `/scouts`, and `/reviews`) store zero unmasked phone numbers, personal emails, residential addresses, or credentials.
+   - Helper and Scout direct contact details live in `/project_helpers/{helperId}/private/contact` and `/scouts/{scoutId}/private/contact`, readable ONLY by admins, the profile owner, or a verified student whose deterministic unlock record (`${uid}__${entityId}`) has been marked `'confirmed'` by the responsible admin.
+   - PII-bearing collections (`/orders`, `/withdrawals`, `/helper_unlocks`, `/scout_unlocks`, `/scout_bookings`, `/service_submissions`) restrict `get` and `list` strictly to document owners (`buyerUid`/`requesterUid`/`studentUid`/`fresherUid`/`submitterUid == request.auth.uid`) or verified admins (`amaechihellis@gmail.com` or `/admins/{uid}`).
+4. **Immutable Ownership & Strict Server Timestamps**: Creation timestamps (`createdAt == request.time`) and update timestamps (`updatedAt == request.time`) are validated against `request.time`. Owner UIDs, parent foreign keys (`vendorId`, `helperId`, `scoutId`), and financial amounts on submitted payment records cannot be altered after creation.
+5. **Path Hardening & Bounded Payloads**: Every single-document ID variable enforces `isValidId()` (`^[a-zA-Z0-9_\\-]+$`, max 128 chars). Every string field enforces `.size()` limits synchronized with `firebase-blueprint.json`, preventing Denial-of-Wallet mega-string attacks.
+6. **Terminal State Locking**: Once orders, withdrawals, unlock requests, featured boosts, or bookings transition to `'confirmed'`, `'approved'`, `'rejected'`, or `'completed'`, non-admin modifications are permanently blocked.
 
 ## 2. The Dirty Dozen Payloads
-1. **Payload 1 (ID Poisoning Attack)**: Document ID containing illegal URI or path traversal characters: `/users/../../system_config` -> Rejected by `isValidId`.
-2. **Payload 2 (Denial of Wallet Mega String)**: A user document with `name` exceeding 100 characters (e.g. 5,000 characters) -> Rejected by length guard.
-3. **Payload 3 (Admin Privilege Escalation via Signup)**: An unauthenticated or standard student user attempting to set `role: "admin"` directly in public signup -> Rejected.
-4. **Payload 4 (Missing Required Fields)**: A user signup missing `email` or `name` -> Rejected by strict schema check.
-5. **Payload 5 (Identity Spoofing on User Document)**: User attempting to overwrite another user's document ID with different owner credentials -> Rejected.
-6. **Payload 6 (Shadow Field Injection)**: An attacker submitting extra undeclared fields like `{ isSuperAdmin: true }` -> Rejected by strict schema validation.
-7. **Payload 7 (Invalid Role Enum)**: Submitting `{ role: "superuser" }` -> Rejected by enum validation.
-8. **Payload 8 (PII Harvesting via Blanket Queries)**: An unauthenticated visitor attempting to query all documents without permission -> Rejected.
-9. **Payload 9 (Oversized Phone String)**: Injecting 2,000 bytes into the `phone` field -> Rejected by string size constraint.
-10. **Payload 10 (Type Poisoning on Verified Flag)**: Submitting `{ verified: "true" }` (string instead of boolean) -> Rejected by type check.
-11. **Payload 11 (Empty User ID)**: Submitting `{ id: "" }` with zero length -> Rejected by ID boundary validator.
-12. **Payload 12 (Invalid Level Length)**: Submitting `{ level: "100L" + "A".repeat(200) }` -> Rejected by size check.
+1. **ID Poisoning Attack**: Attempt to create `/orders/..%2F..%2Fadmins` -> Rejected by `isValidId(orderId)`.
+2. **Self-Confirmation Fraud on Order Create**: Student creates `/orders/ord-fraud-1` with `{ paymentStatus: "confirmed", buyerUid: uid }` -> Rejected because `isValidOrderCreate()` requires `paymentStatus == "pending_confirmation"`.
+3. **Helper Paywall Bypass (Reading Private Contact Before Confirmation)**: Authenticated student reads `/project_helpers/helper-1/private/contact` with `helper_unlocks/{uid}__helper-1` still `'pending_confirmation'` -> Rejected because rule checks `status == 'confirmed'`.
+4. **Identity Spoofing on Order / Unlock Create**: Authenticated user creates an order with `{ buyerUid: "victim_uid_999" }` -> Rejected because `incoming().buyerUid == request.auth.uid` is strictly enforced.
+5. **Shadow / Ghost Field Injection**: User submits `/orders/ord-shadow` containing all required fields plus `{ isAdminOverride: true }` -> Rejected by `incoming().keys().hasOnly([...])`.
+6. **Privilege Escalation on Admin Registry**: Non-admin user attempts to write `/admins/{uid}` -> Rejected because `/admins` allows writes only for `isSuperAdmin()` or existing verified `/admins`.
+7. **Unverified Email Spoofing Attack**: User token has `email == "amaechihellis@gmail.com"` but `email_verified == false` -> Rejected by explicit `request.auth.token.email_verified == true` check.
+8. **Blanket Query PII Harvesting**: Non-admin authenticated user calls `getDocs(collection(db, "orders"))` without `.where("buyerUid", "==", auth.currentUser.uid)` -> Rejected by `allow list` evaluating `resource.data.buyerUid == request.auth.uid`.
+9. **Terminal State Mutation Attack**: Student tries to update a `'rejected'` unlock document back to `'pending_confirmation'` or `'confirmed'` -> Rejected by `update` action rules & terminal state guard.
+10. **Denial-of-Wallet Mega String**: Reviewer submits a 5,000-character review text on `/project_helpers/helper-1/reviews/rev-huge` -> Rejected by `text.size() <= 1000`.
+11. **Timestamp Manipulation**: User creates a submission with `{ createdAt: "2020-01-01" }` or backdated client timestamp -> Rejected by `incoming().createdAt == request.time`.
+12. **Credential Table Enumeration**: Non-admin attempts `list` query on `/partner_auth` to scrape partner login hashes -> Rejected by `allow list: if isSuperAdmin()`.
 
 ## 3. Test Runner
-All payloads have been audited against the rules logic to ensure malicious writes and unauthorized access return `PERMISSION_DENIED`.
+See `/firestore.rules.test.ts` verifying all 12 Dirty Dozen payloads return `PERMISSION_DENIED` while legitimate public browsing, student submissions, and responsible-admin confirmations succeed.

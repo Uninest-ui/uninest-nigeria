@@ -1,0 +1,443 @@
+{
+  "entities": {
+    "AdminUser": {
+      "title": "AdminUser",
+      "description": "Authorized UniNest platform administrator.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "email": { "type": "string", "minLength": 3, "maxLength": 150 },
+        "role": { "type": "string", "enum": ["super_admin", "vendor_admin", "scout_admin", "project_helper_admin"] },
+        "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "role", "name", "createdAt"]
+    },
+    "PlatformStats": {
+      "title": "PlatformStats",
+      "description": "Platform-wide 10% marketplace commission ledger summary.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "vendorAdminBalance": { "type": "number" },
+        "totalConfirmedOrders": { "type": "number" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "vendorAdminBalance", "totalConfirmedOrders", "updatedAt"]
+    },
+    "Vendor": {
+      "title": "Vendor",
+      "description": "Public UniNest Marketplace vendor shop storefront profile (non-PII).",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "ownerUid": { "type": "string", "minLength": 0, "maxLength": 128 },
+        "name": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "university": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "location": { "type": "string", "minLength": 2, "maxLength": 160 },
+        "shopTagline": { "type": "string", "minLength": 0, "maxLength": 300 },
+        "avatar": { "type": "string", "minLength": 0, "maxLength": 250000 },
+        "isFeatured": { "type": "boolean" },
+        "featuredPlan": { "type": "string", "minLength": 0, "maxLength": 80 },
+        "featuredUntil": { "type": "string", "minLength": 0, "maxLength": 60 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "university", "location", "isFeatured", "createdAt", "updatedAt"]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "Marketplace product listing published by a verified vendor (includes 10% fee markup).",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "vendorId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "vendorOwnerUid": { "type": "string", "minLength": 0, "maxLength": 128 },
+        "title": { "type": "string", "minLength": 2, "maxLength": 140 },
+        "category": { "type": "string", "enum": ["Food", "Cakes", "Gadgets", "Tailors & Cloths", "Shoes"] },
+        "vendorPrice": { "type": "number" },
+        "price": { "type": "number" },
+        "image": { "type": "string", "minLength": 1, "maxLength": 250000 },
+        "description": { "type": "string", "minLength": 0, "maxLength": 600 },
+        "status": { "type": "string", "enum": ["published", "removed"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "vendorId", "title", "category", "vendorPrice", "price", "image", "description", "status", "createdAt", "updatedAt"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Marketplace customer order awaiting Vendor Admin transfer confirmation before payout split.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "batchId": { "type": "string", "minLength": 0, "maxLength": 128 },
+        "buyerUid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "productId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "productTitle": { "type": "string", "minLength": 2, "maxLength": 140 },
+        "vendorId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "vendorName": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "vendorOwnerUid": { "type": "string", "minLength": 0, "maxLength": 128 },
+        "qty": { "type": "number" },
+        "total": { "type": "number" },
+        "vendorShare": { "type": "number" },
+        "adminCommission": { "type": "number" },
+        "customerName": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "customerPhone": { "type": "string", "minLength": 6, "maxLength": 40 },
+        "customerLocation": { "type": "string", "minLength": 2, "maxLength": 200 },
+        "deliveryWindow": { "type": "string", "minLength": 2, "maxLength": 80 },
+        "paymentRef": { "type": "string", "minLength": 2, "maxLength": 160 },
+        "paymentStatus": { "type": "string", "enum": ["pending_confirmation", "confirmed", "rejected"] },
+        "createdDateLabel": { "type": "string", "minLength": 1, "maxLength": 40 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "buyerUid", "productId", "productTitle", "vendorId", "vendorName", "qty", "total", "vendorShare", "adminCommission", "customerName", "customerPhone", "customerLocation", "deliveryWindow", "paymentRef", "paymentStatus", "createdDateLabel", "createdAt", "updatedAt"]
+    },
+    "FeaturedRequest": {
+      "title": "FeaturedRequest",
+      "description": "Vendor request for Top Vendor Marketplace placement awaiting Vendor Admin confirmation.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "requesterUid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "vendorId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "vendorName": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "plan": { "type": "string", "minLength": 2, "maxLength": 80 },
+        "amount": { "type": "number" },
+        "method": { "type": "string", "minLength": 2, "maxLength": 80 },
+        "paymentRef": { "type": "string", "minLength": 0, "maxLength": 160 },
+        "status": { "type": "string", "enum": ["pending_confirmation", "confirmed", "rejected"] },
+        "dateLabel": { "type": "string", "minLength": 1, "maxLength": 40 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "requesterUid", "vendorId", "vendorName", "plan", "amount", "method", "status", "dateLabel", "createdAt", "updatedAt"]
+    },
+    "Withdrawal": {
+      "title": "Withdrawal",
+      "description": "Vendor wallet payout request reviewed by Vendor Admin.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "requesterUid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "vendorId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "vendorName": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "location": { "type": "string", "minLength": 0, "maxLength": 160 },
+        "amount": { "type": "number" },
+        "bank": { "type": "string", "minLength": 4, "maxLength": 180 },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "createdDateLabel": { "type": "string", "minLength": 1, "maxLength": 40 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "requesterUid", "vendorId", "vendorName", "amount", "bank", "status", "createdDateLabel", "createdAt", "updatedAt"]
+    },
+    "ProjectHelper": {
+      "title": "ProjectHelper",
+      "description": "Public academic thesis and project specialist profile (masked phone only).",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "ownerUid": { "type": "string", "minLength": 0, "maxLength": 128 },
+        "name": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "specialty": { "type": "string", "minLength": 2, "maxLength": 200 },
+        "campus": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "photo": { "type": "string", "minLength": 1, "maxLength": 250000 },
+        "bio": { "type": "string", "minLength": 0, "maxLength": 600 },
+        "maskedPhone": { "type": "string", "minLength": 4, "maxLength": 40 },
+        "unlockFee": { "type": "number" },
+        "active": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "specialty", "campus", "photo", "bio", "maskedPhone", "unlockFee", "active", "createdAt", "updatedAt"]
+    },
+    "HelperPrivateContact": {
+      "title": "HelperPrivateContact",
+      "description": "Protected helper direct phone, WhatsApp, and email unlocked only after Admin payment confirmation.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "phone": { "type": "string", "minLength": 6, "maxLength": 40 },
+        "whatsapp": { "type": "string", "minLength": 6, "maxLength": 30 },
+        "email": { "type": "string", "minLength": 3, "maxLength": 150 },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "phone", "whatsapp", "email", "updatedAt"]
+    },
+    "HelperUnlock": {
+      "title": "HelperUnlock",
+      "description": "Student payment submission to unlock a Project Helper's direct contact, confirmed by Project Helper Admin.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 256, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "studentUid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "helperId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "helperName": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "studentName": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "studentPhone": { "type": "string", "minLength": 6, "maxLength": 40 },
+        "paymentRef": { "type": "string", "minLength": 2, "maxLength": 160 },
+        "amount": { "type": "number" },
+        "status": { "type": "string", "enum": ["pending_confirmation", "confirmed", "rejected"] },
+        "createdDateLabel": { "type": "string", "minLength": 1, "maxLength": 40 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "studentUid", "helperId", "helperName", "studentName", "studentPhone", "paymentRef", "amount", "status", "createdDateLabel", "createdAt", "updatedAt"]
+    },
+    "PublicReview": {
+      "title": "PublicReview",
+      "description": "Verified student review on a Project Helper or Campus Scout profile.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "targetId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "authorUid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "author": { "type": "string", "minLength": 2, "maxLength": 80 },
+        "rating": { "type": "number" },
+        "text": { "type": "string", "minLength": 2, "maxLength": 1000 },
+        "dateLabel": { "type": "string", "minLength": 1, "maxLength": 40 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "targetId", "authorUid", "author", "rating", "text", "dateLabel", "createdAt"]
+    },
+    "CampusScout": {
+      "title": "CampusScout",
+      "description": "Public Campus Scout guide profile (masked phone only).",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "ownerUid": { "type": "string", "minLength": 0, "maxLength": 128 },
+        "name": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "location": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "specialty": { "type": "string", "minLength": 2, "maxLength": 200 },
+        "photo": { "type": "string", "minLength": 1, "maxLength": 250000 },
+        "bio": { "type": "string", "minLength": 0, "maxLength": 600 },
+        "maskedPhone": { "type": "string", "minLength": 4, "maxLength": 40 },
+        "unlockFee": { "type": "number" },
+        "jobsCompleted": { "type": "number" },
+        "active": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "location", "specialty", "photo", "bio", "maskedPhone", "unlockFee", "jobsCompleted", "active", "createdAt", "updatedAt"]
+    },
+    "ScoutPrivateContact": {
+      "title": "ScoutPrivateContact",
+      "description": "Protected Campus Scout direct phone and WhatsApp unlocked only after Scouts Admin confirmation.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "phone": { "type": "string", "minLength": 6, "maxLength": 40 },
+        "whatsapp": { "type": "string", "minLength": 6, "maxLength": 30 },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "phone", "whatsapp", "updatedAt"]
+    },
+    "ScoutUnlock": {
+      "title": "ScoutUnlock",
+      "description": "Fresher payment submission to unlock a Campus Scout's direct contact, confirmed by Scouts Admin.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 256, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "studentUid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "scoutId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "scoutName": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "studentName": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "studentPhone": { "type": "string", "minLength": 6, "maxLength": 40 },
+        "task": { "type": "string", "minLength": 2, "maxLength": 240 },
+        "paymentRef": { "type": "string", "minLength": 2, "maxLength": 160 },
+        "amount": { "type": "number" },
+        "status": { "type": "string", "enum": ["pending_confirmation", "confirmed", "rejected"] },
+        "createdDateLabel": { "type": "string", "minLength": 1, "maxLength": 40 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "studentUid", "scoutId", "scoutName", "studentName", "studentPhone", "task", "paymentRef", "amount", "status", "createdDateLabel", "createdAt", "updatedAt"]
+    },
+    "ScoutBooking": {
+      "title": "ScoutBooking",
+      "description": "Fresher clearance & escort booking confirmed and assigned by Scouts Admin.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "fresherUid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "fresherName": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "phone": { "type": "string", "minLength": 6, "maxLength": 40 },
+        "university": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "faculty": { "type": "string", "minLength": 2, "maxLength": 160 },
+        "task": { "type": "string", "minLength": 2, "maxLength": 200 },
+        "preferredDate": { "type": "string", "minLength": 2, "maxLength": 80 },
+        "notes": { "type": "string", "minLength": 0, "maxLength": 500 },
+        "paymentRef": { "type": "string", "minLength": 2, "maxLength": 160 },
+        "amount": { "type": "number" },
+        "assignedScoutId": { "type": "string", "minLength": 0, "maxLength": 128 },
+        "assignedScoutOwnerUid": { "type": "string", "minLength": 0, "maxLength": 128 },
+        "paymentStatus": { "type": "string", "enum": ["pending_confirmation", "confirmed", "rejected"] },
+        "status": { "type": "string", "enum": ["pending_confirmation", "paid_pending", "assigned", "completed", "rejected"] },
+        "createdDateLabel": { "type": "string", "minLength": 1, "maxLength": 40 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "fresherUid", "fresherName", "phone", "university", "faculty", "task", "preferredDate", "paymentRef", "amount", "paymentStatus", "status", "createdDateLabel", "createdAt", "updatedAt"]
+    },
+    "PartnerAccount": {
+      "title": "PartnerAccount",
+      "description": "Protected partner/admin role profile managed by platform admins.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "ownerUid": { "type": "string", "minLength": 0, "maxLength": 128 },
+        "role": { "type": "string", "enum": ["vendor_admin", "scout_admin", "project_helper_admin", "vendor", "project_helper", "scout"] },
+        "name": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "loginName": { "type": "string", "minLength": 2, "maxLength": 60 },
+        "code": { "type": "string", "minLength": 4, "maxLength": 60 },
+        "location": { "type": "string", "minLength": 0, "maxLength": 160 },
+        "university": { "type": "string", "minLength": 0, "maxLength": 120 },
+        "helperId": { "type": "string", "minLength": 0, "maxLength": 128 },
+        "avatar": { "type": "string", "minLength": 0, "maxLength": 250000 },
+        "balance": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "role", "name", "loginName", "code", "createdAt", "updatedAt"]
+    },
+    "PartnerAuthLookup": {
+      "title": "PartnerAuthLookup",
+      "description": "SHA-256 keyed lookup document mapping hashed loginName:code credentials to a partner account ID without exposing credential lists.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 16, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "accountId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "role": { "type": "string", "enum": ["vendor_admin", "scout_admin", "project_helper_admin", "vendor", "project_helper", "scout"] },
+        "name": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "location": { "type": "string", "minLength": 0, "maxLength": 160 },
+        "university": { "type": "string", "minLength": 0, "maxLength": 120 },
+        "helperId": { "type": "string", "minLength": 0, "maxLength": 128 },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "accountId", "role", "name", "updatedAt"]
+    },
+    "ScoutLedgerEntry": {
+      "title": "ScoutLedgerEntry",
+      "description": "Credit or payout ledger entry for a Campus Scout.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "scoutId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "dateLabel": { "type": "string", "minLength": 1, "maxLength": 40 },
+        "amount": { "type": "number" },
+        "balanceAfter": { "type": "number" },
+        "channel": { "type": "string", "minLength": 2, "maxLength": 80 },
+        "note": { "type": "string", "minLength": 2, "maxLength": 200 },
+        "type": { "type": "string", "enum": ["credit", "debit"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "scoutId", "dateLabel", "amount", "balanceAfter", "channel", "note", "type", "createdAt"]
+    },
+    "ServiceSubmission": {
+      "title": "ServiceSubmission",
+      "description": "Online STS savings registration, Project Work brief, Student Job application, Custom Market Order, or Inquiry.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "submitterUid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "serviceType": { "type": "string", "enum": ["sts", "project-work", "student-jobs", "market-orders", "inquiry"] },
+        "assignedAdminRole": { "type": "string", "enum": ["vendor_admin", "scout_admin", "project_helper_admin"] },
+        "studentName": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "phone": { "type": "string", "minLength": 6, "maxLength": 40 },
+        "school": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "departmentOrLevel": { "type": "string", "minLength": 0, "maxLength": 160 },
+        "summary": { "type": "string", "minLength": 2, "maxLength": 800 },
+        "status": { "type": "string", "enum": ["pending_review", "confirmed", "rejected"] },
+        "createdDateLabel": { "type": "string", "minLength": 1, "maxLength": 40 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "submitterUid", "serviceType", "assignedAdminRole", "studentName", "phone", "school", "summary", "status", "createdDateLabel", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/admins/{adminId}": {
+      "schema": { "$ref": "#/entities/AdminUser" },
+      "description": "Verified UniNest administrator UIDs."
+    },
+    "/platform_stats/{statId}": {
+      "schema": { "$ref": "#/entities/PlatformStats" },
+      "description": "UniNest 10% Marketplace Commission & order tally."
+    },
+    "/vendors/{vendorId}": {
+      "schema": { "$ref": "#/entities/Vendor" },
+      "description": "Public UniNest Marketplace vendor storefronts."
+    },
+    "/products/{productId}": {
+      "schema": { "$ref": "#/entities/Product" },
+      "description": "Public Marketplace catalog items with automatic 10% fee."
+    },
+    "/orders/{orderId}": {
+      "schema": { "$ref": "#/entities/Order" },
+      "description": "Single & Cart customer orders awaiting Vendor Admin confirmation."
+    },
+    "/featured_requests/{reqId}": {
+      "schema": { "$ref": "#/entities/FeaturedRequest" },
+      "description": "Top Vendor boost payment requests awaiting Vendor Admin confirmation."
+    },
+    "/withdrawals/{withdrawalId}": {
+      "schema": { "$ref": "#/entities/Withdrawal" },
+      "description": "Vendor wallet withdrawal requests reviewed by Vendor Admin."
+    },
+    "/project_helpers/{helperId}": {
+      "schema": { "$ref": "#/entities/ProjectHelper" },
+      "description": "Public Project Helpers directory cards."
+    },
+    "/project_helpers/{helperId}/private/{docId}": {
+      "schema": { "$ref": "#/entities/HelperPrivateContact" },
+      "description": "Protected Project Helper direct phone/WhatsApp/email."
+    },
+    "/project_helpers/{helperId}/reviews/{reviewId}": {
+      "schema": { "$ref": "#/entities/PublicReview" },
+      "description": "Public verified student reviews for a Project Helper."
+    },
+    "/helper_unlocks/{unlockId}": {
+      "schema": { "$ref": "#/entities/HelperUnlock" },
+      "description": "Student unlock payment submissions confirmed by Project Helper Admin."
+    },
+    "/scouts/{scoutId}": {
+      "schema": { "$ref": "#/entities/CampusScout" },
+      "description": "Public Campus Scouts directory cards."
+    },
+    "/scouts/{scoutId}/private/{docId}": {
+      "schema": { "$ref": "#/entities/ScoutPrivateContact" },
+      "description": "Protected Campus Scout direct phone/WhatsApp."
+    },
+    "/scouts/{scoutId}/reviews/{reviewId}": {
+      "schema": { "$ref": "#/entities/PublicReview" },
+      "description": "Public verified fresher reviews for a Campus Scout."
+    },
+    "/scouts/{scoutId}/ledger/{entryId}": {
+      "schema": { "$ref": "#/entities/ScoutLedgerEntry" },
+      "description": "Scout payout and earnings ledger entries."
+    },
+    "/scout_unlocks/{unlockId}": {
+      "schema": { "$ref": "#/entities/ScoutUnlock" },
+      "description": "Fresher unlock payment submissions confirmed by Scouts Admin."
+    },
+    "/scout_bookings/{bookingId}": {
+      "schema": { "$ref": "#/entities/ScoutBooking" },
+      "description": "Fresher clearance bookings confirmed and assigned by Scouts Admin."
+    },
+    "/partner_accounts/{accountId}": {
+      "schema": { "$ref": "#/entities/PartnerAccount" },
+      "description": "Protected partner/admin credentials and role registry."
+    },
+    "/partner_auth/{authKey}": {
+      "schema": { "$ref": "#/entities/PartnerAuthLookup" },
+      "description": "SHA-256 keyed credential verification lookup table."
+    },
+    "/service_submissions/{subId}": {
+      "schema": { "$ref": "#/entities/ServiceSubmission" },
+      "description": "STS, Project Work, Student Jobs, Custom Market Orders, and Inquiry submissions routed to responsible admins."
+    }
+  }
+}

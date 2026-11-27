@@ -1,6 +1,10 @@
 node_modules/
 build/
+dist/
 coverage/
+.aistudio/
+.vercel/
+DRAFT_firestore.rules
 .DS_Store
 *.log
 .env*
