@@ -74,8 +74,29 @@ export async function testConnection(): Promise<boolean> {
 }
 
 export async function signInWithGoogle(): Promise<User> {
-  const cred = await signInWithPopup(auth, googleProvider);
-  return cred.user;
+  try {
+    const cred = await signInWithPopup(auth, googleProvider);
+    return cred.user;
+  } catch (err: any) {
+    const code = err && typeof err.code === 'string' ? err.code : '';
+    const host = typeof window !== 'undefined' ? window.location.hostname : 'this domain';
+    if (code === 'auth/unauthorized-domain') {
+      throw new Error(`Add "${host}" under Authorized Domains in Firebase Authentication settings to enable Google Sign-In here.`);
+    }
+    if (code === 'auth/popup-blocked') {
+      throw new Error('Sign-in pop-up was blocked by your browser. Allow pop-ups for this site and try again.');
+    }
+    if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
+      throw new Error('Google sign-in window was closed before completing.');
+    }
+    if (code === 'auth/operation-not-allowed') {
+      throw new Error('Google Sign-In provider is disabled in Firebase Authentication settings.');
+    }
+    if (code === 'auth/network-request-failed') {
+      throw new Error('Network error while reaching Google Sign-In. Check your internet connection and retry.');
+    }
+    throw err;
+  }
 }
 
 export async function signOutGoogle(): Promise<void> {

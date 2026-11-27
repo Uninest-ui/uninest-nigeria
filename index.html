@@ -5103,16 +5103,18 @@ Hello UniNest Desk, I submitted an online inquiry form. Please connect me with a
           const looksLikeDeptAdmin = DEPT_ADMIN_LOGINS.includes(uname) || Boolean(match && DEPT_ADMIN_ROLES.includes(match.role));
 
           if (cloudConnected) {
-            if (!latestCloudSnap?.user && (looksLikeDeptAdmin || !match) && typeof fb.ensureGoogleAuth === 'function') {
+            let activeCloudUser = latestCloudSnap?.user || fb?.snapshot?.user || null;
+            if (!activeCloudUser && (looksLikeDeptAdmin || !match) && typeof fb.ensureGoogleAuth === 'function') {
               try {
                 await fb.ensureGoogleAuth();
+                activeCloudUser = latestCloudSnap?.user || fb?.snapshot?.user || null;
               } catch (err) {
-                showToast('Sign-In Required', (err && err.message) || 'Connect Google to verify partner credentials.');
+                showToast('Sign-In Required', (err && err.message) || 'Sign in with Google to verify partner credentials.');
                 if (looksLikeDeptAdmin && isCloudSeeded) return;
               }
             }
 
-            if (latestCloudSnap?.user && typeof fb.verifyPartnerCredentials === 'function') {
+            if (activeCloudUser && typeof fb.verifyPartnerCredentials === 'function') {
               const cloudAuth = await fb.verifyPartnerCredentials(uname, code);
               if (cloudAuth && cloudAuth.accountId) {
                 const existing = state.accounts.find(a => a.id === cloudAuth.accountId);

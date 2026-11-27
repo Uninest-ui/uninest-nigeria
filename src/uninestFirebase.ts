@@ -535,16 +535,34 @@ class UniNestFirebaseEngine {
     }
   }
 
+  private async hydrateUserSnapshot(u: User): Promise<void> {
+    if (this.snapshot.user && this.snapshot.user.uid === u.uid) return;
+    const isAdmin = await this.checkIsAdmin(u);
+    this.snapshot.user = {
+      uid: u.uid,
+      email: u.email || '',
+      displayName: u.displayName || u.email || 'UniNest User',
+      emailVerified: Boolean(u.emailVerified),
+      isAdmin,
+    };
+    this.snapshot.authReady = true;
+    this.emit();
+  }
+
   public async ensureGoogleAuth(): Promise<User> {
     if (auth.currentUser && auth.currentUser.emailVerified) {
+      await this.hydrateUserSnapshot(auth.currentUser);
       return auth.currentUser;
     }
     const u = await signInWithGoogle();
+    await this.hydrateUserSnapshot(u);
     return u;
   }
 
   public async signInGoogle(): Promise<User> {
-    return signInWithGoogle();
+    const u = await signInWithGoogle();
+    await this.hydrateUserSnapshot(u);
+    return u;
   }
 
   public async signOutGoogle(): Promise<void> {
